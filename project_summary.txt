@@ -1,0 +1,368 @@
+1. Project Overview
+
+    1.1. Purpose: Spring_AI (repo: chat_llm) is a RAG (Retrieval-Augmented Generation) backend that (a) indexes documentation files and GitHub repository content into a Qdrant vector store, and (b) serves semantic search over that content with cross-encoder reranking. When the vector store yields nothing (or low scores), it falls back to Wikipedia and Stack Overflow, reranks those results too, and merges everything into one ranked list.
+    1.2. Tech stack:
+        1.2.1. Spring Boot 4.0.7, Java 21 (Containerfile runs on JRE 25).
+        1.2.2. Spring AI 2.0.0 (BOM): OpenAI model starter (embeddings), Qdrant vector store starter, Markdown document reader, vector-store advisor.
+        1.2.3. spring-boot-starter-web, validation, actuator; JSP-style Bean Validation on records (@NotBlank, @Pattern, cross-field @AssertTrue), jspecify null-marking.
+        1.2.4. Infrastructure: Qdrant v1.17.0 via docker-compose (ports 6333/6334); Containerfile exposes 8081.
+        1.2.5. Notably absent: Spring Security, JPA/JDBC (commented out), any relational DB, @ControllerAdvice. Despite the artifact name, no chat/generation endpoint exists — only retrieval, reranking and LLM-based query summarization.
+    1.3. Architecture pattern: classic layered REST monolith: Controller → Service → (Qdrant VectorStore | external REST APIs). All DTOs are immutable Java records. The only "persistence" is the Qdrant vector store. A Template Method pattern is used for document indexing (AbstractDocumentationIndexer → DocumentationIndexer).
+
+2. ASCII Architecture Map
+
+                        +-------------------------+
+                        |   HTTP API Consumer     |
+                        +-------------------------+
+                                    |
+        +---------------------------+-----------------------------+
+        |                           |                             |
+        v                           v                             v
+ POST /api/doc/index       POST /api/github/index         POST /api/rag/search
++------------------+  +---------------------+   +----------------------------+
+| Documentation-   |  | GitHubController    |   | RagController              |
+| Controller       |  +---------------------+   +----------------------------+
+| (@Validated,     |            |                            |
+|  multipart)      |            v                            v
++------------------+  +---------------------+   +----------------------------+
+        |             | GitHubRepository-   |   | RerankedRagService         |
+        |             | Indexer             |   |  - SyncLock.readLock (only |
+        v             |  SyncLock.writeLock |   |    when repository-scoped) |
++------------------+  +---------------------+   +----------------------------+
+| AbstractDocumen- |            |                  |       |        |        |
+| tationIndexer    |            v                  |       |        v        v
+| (Template Method)|  +---------------------+      |       |  +-----------+  +------------+
+|  ^               |  | GitHubClient        |      |       |  | AiQuery-  |  | OpenRouter |
+|  | extends       |  | (RestClient, own)   |      |       |  | Summarizer|  | /rerank    |
+| Documentation-   |  +---------------------+      |       |  +-----------+  +------------+
+| Indexer          |            |                  |       |        |
+| (md/txt readers) |            v                  |       |        v
++------------------+   [ api.github.com ]          |       |  [ LLM ${ai.api.url}
+        |                                          |       |    /chat/completions ]
+        |                                          |       +--> [ en.wikipedia.org ]
+        |                                          |       +--> [ api.stackexchange.com
+        |                                          |             via GzipDecompressing- ]
+        |                                          |             [ Interceptor         ]
+        v                                          v
++-------------------------------------------------------------------+
+| VectorStore (Spring AI abstraction, auto-configured Qdrant)       |
+|  - add() embeds chunks via OpenAI embedding model                 |
+|  - similaritySearch() with metadata FilterExpressions             |
+|  - delete() for versioned swap / rollback                         |
++-------------------------------------------------------------------+
+        |
+        v
++---------------------------+
+| Qdrant (docker-compose    |
+|  v1.17.0, :6333 / :6334)  |
++---------------------------+
+
+Config:  AiApiConfig (bean "aiRestClient"), GitHubProperties (@ConfigurationProperties),
+         ObjectMapperConfig (Jackson 2 databind ObjectMapper), DocImportConfig (all runners commented out)
+Util:    ControllerUtils.toHit (Document -> RagHit), HttpRequestUtils, NumberUtils, StringUtils
+DTOs:    immutable records; Controller <-> Service boundary (no entities, no JPA)
+
+3. Package and Class Breakdown
+3.1. Package org.dar316.spring_ai (root)
+
+    3.1.1. SpringAiApplication — Type: Main application class.
+        Responsibility: Bootstraps Spring Boot via @SpringBootApplication.
+        Key methods: main(String[]) — standard SpringApplication.run.
+        Dependencies: none.
+
+3.2. Package org.dar316.spring_ai.config
+
+    3.2.1. AiApiConfig — Type: @Configuration.
+        Responsibility: Defines the aiRestClient bean used to call the LLM chat-completions endpoint for query summarization.
+        Key methods: aiRestClient(baseUrl, apiKey) — builds a RestClient with ${ai.api.url}, Bearer ${ai.api.key}, JSON content type.
+        Dependencies: @Value properties only. (Unused RestTemplate import present.)
+
+    3.2.2. DocImportConfig — Type: @Configuration (effectively inert).
+        Responsibility: Contains three fully commented-out CommandLineRunner experiments (index a file, test raw search, test reranking).
+        Key methods: none active.
+        Dependencies: (commented) DocumentationIndexer, DocSearchService, RerankedRagService.
+
+    3.2.3. GitHubProperties — Type: @Component + @Validated + @ConfigurationProperties(prefix="github").
+        Responsibility: Typed configuration for GitHub access and indexing limits. Nested static classes: Api (baseUrl default https://api.github.com, optional token, null-safe setter) and Index (maxFiles=500, maxFileSizeBytes=512 KiB, maxTotalBytes=8 MiB, maxChunks=10_000; all @Min(1)).
+        Key methods: plain getters/setters.
+        Dependencies: Bean Validation annotations.
+
+    3.2.4. ObjectMapperConfig — Type: @Configuration.
+        Responsibility: Registers a com.fasterxml.jackson.databind.ObjectMapper (Jackson 2 databind) bean. The code comment flags the ambiguity with the newer tools.jackson ObjectMapper (Jackson 3 / Spring Boot 4).
+        Key methods: getObjectMapper().
+        Dependencies: none. Note: potential bean-type confusion with Boot 4's Jackson 3 infrastructure.
+
+3.3. Package org.dar316.spring_ai.controller
+
+    3.3.1. DocumentationController — Type: @RestController (@Validated), base path /api/doc.
+        Responsibility: Accepts a documentation file upload and indexes it.
+        Key methods:
+            index(MultipartFile, technology, technologyVersion) — POST /api/doc/index (multipart); validates file presence + non-blank, size-limited params; normalizes; returns IndexDocumentationResponse.
+            requireOriginalFilename(...) / normalizeRequired(...) — private guard/normalization helpers (throw IllegalArgumentException).
+        Dependencies: DocumentationIndexer (constructor, Objects.requireNonNull).
+
+    3.3.2. GitHubController — Type: @RestController, base path /api/github.
+        Responsibility: Triggers indexing of a GitHub repository ref.
+        Key methods: index(@Valid @RequestBody GithubIndexRequest) — POST /api/github/index; delegates and returns GitHubIndexResponse.
+        Dependencies: GitHubRepositoryIndexer.
+
+    3.3.3. RagController — Type: @RestController, base path /api/rag.
+        Responsibility: Executes the reranked RAG search; optional repository scope via query params repository (@Pattern owner/repo) and repositoryRef (@Size ≤255).
+        Key methods: search(@Valid RagSearchRequest, repository, repositoryRef) — POST /api/rag/search; strips inputs, calls the service, maps Document → RagHit via ControllerUtils.toHit, wraps into RagSearchResponse.
+        Dependencies: RerankedRagService, ControllerUtils.
+        Note: unlike DocumentationController, the class is not annotated @Validated; enforcement of the @Pattern/@Size on @RequestParam depends on Boot 4's method-validation auto-configuration — worth verifying at runtime.
+
+3.4. Package org.dar316.spring_ai.dto (all immutable records; no behavior beyond validation/accessors)
+
+    3.4.1. chatSum — ChatResponse(List<Choice>) → Choice(Message) → Message(String content): minimal model of an OpenAI-style /chat/completions response. Used by AiQuerySummarizer.
+    3.4.2. github —
+        GithubIndexRequest(owner, repository, ref, technology, technologyVersion): validated request for repo indexing. Bug: the repository field's @NotBlank message says "ref cannot be blank" (copy-paste).
+        GitHubIndexResponse(repository, requestedRef, commitSha, indexedFiles, skippedFiles, chunks): indexing result summary.
+    3.4.3. github.client — GitHub API wire models: GitHubCommitResponse(sha, commit) → GitHubCommitDetails(tree) → GitHubTreeReference(sha); ResolvedRevision(commitSha, treeSha); GitHubTreeResponse(truncated, List<GitHubTreeEntry>); GitHubTreeEntry(path, mode, type, size, sha); GitHubBlobResponse(encoding, content, size); TextBlob(text, bytes) (decoded payload). Used by GitHubClient/GitHubRepositoryIndexer.
+    3.4.4. github.repoIndexer — NormalizedRequest(owner, repositoryName, repository "owner/name", ref, technology, technologyVersion); Selection(List<GitHubTreeEntry> files, int skippedFiles). Internal indexer value objects (unused GitHubClient import in Selection).
+    3.4.5. indexer — DocumentationIndexRequest (currently unused — the controller takes multipart params, not this DTO); IndexDocumentationResponse(source, technology, technologyVersion, chunks).
+    3.4.6. rag — RagSearchRequest(query, technology, technologyVersion, topKInitial 1..30, topKReranked 1..10) with cross-field rule @AssertTrue isRerankLimitValid() (topKReranked ≤ topKInitial); RagHit(text, source, technology, technologyVersion, chunkIndex, vectorScore, rerankScore); RagSearchResponse(query, List<RagHit>).
+    3.4.7. rag.wiki — WikiSearchResponse (nested Query(List<SearchResult>), @JsonIgnoreProperties), WikiSummaryResponse(title, extract): Wikipedia API models.
+    3.4.8. rerank — RerankRequest(model, query, documents, top_n) (JSON snake_case via @JsonProperty); RerankResponse(id, model, provider, results, usage); RerankResult(index, relevance_score, document); RerankDocument(text); RerankUsage(search_units, total_tokens). OpenRouter rerank wire model.
+    3.4.9. stackoverflow — StackOverflowSearchResponse and StackOverflowAnswersResponse (nested Item records, withbody filter requirement documented). Packaging mismatch: files live in dto/stackoverflow/ but declare package dto.rag.stackoverflow.
+
+3.5. Package org.dar316.spring_ai.service
+
+    3.5.1. AbstractDocumentationIndexer — Type: abstract base class (Template Method).
+        Responsibility: Whole indexing pipeline for uploaded/loaded documents.
+        Key methods:
+            index(MultipartFile, tech, version) — validates (extension ∈ {txt, md, markdown}), sanitizes filename, delegates.
+            indexResource(Resource, source, tech, version) (final) — the template: readDocument(...) (abstract) → split by +++RAG_SECTION+++ separator → TokenTextSplitter (600 tokens / min 250 chars / max 20 000 chunks / keep separator) → metadata enrichment (source, technology, technology_version, document_version=UUID, chunk_index/count, indexed_at) → store(...).
+            store(...) — add-then-delete swap: vectorStore.add(newChunks) first, then deletes chunks with same source/technology/version but different document_version (FilterExpression).
+            Helpers: validate, splitBySectionSeparator, sanitizeFilename (strips path fragments, rejects ./..), getExtension, requireNonBlank.
+        Dependencies: VectorStore (constructor).
+
+    3.5.2. DocumentationIndexer — Type: @Service, extends 3.5.1.
+        Responsibility: Implements readDocument by file extension: MarkdownDocumentReader (horizontal rule creates documents, code blocks & blockquotes included) for md/markdown, TextReader for txt; attaches base metadata (document_type, language=en).
+        Dependencies: VectorStore (via super).
+
+    3.5.3. AiQuerySummarizer — Type: @Service.
+        Responsibility: Rewrites a raw user query into a compact search phrase for the fallback sources, using the LLM (${ai.summary.model}, temperature 0).
+        Key methods:
+            summarizeQueryForWiki(raw) — extracts a 2–5 word encyclopedic noun phrase.
+            summarizeQueryForStackOverflow(raw) — extracts 3–8 keywords preserving exact exception/class/method names.
+            summarize(...) (private) — POST /chat/completions via aiRestClient; on any error or empty response returns the raw query unchanged (graceful degradation).
+        Dependencies: RestClient aiRestClient (bean from AiApiConfig), ${ai.summary.model}.
+
+    3.5.4. DocSearchService — Type: @Service.
+        Responsibility: Plain vector similarity search filtered by technology + technology_version, with topK and similarity threshold validation.
+        Note: not referenced by any controller in the provided code (only by the commented-out runner) — effectively dead code / legacy.
+        Dependencies: VectorStore.
+
+    3.5.5. RerankedRagService — Type: @Service; the core orchestrator.
+        Responsibility: similarity search → rerank → optional external fallback (Wikipedia + Stack Overflow) → merge.
+        Constructor builds three dedicated RestClients: OpenRouter (${mentor.rerank.openrouter.base-url}), Wikipedia (15 s read timeout, hardcoded User-Agent with contact email), StackExchange (default base URL, 15 s timeout, GzipDecompressingInterceptor). Fails fast if ${mentor.rerank.openrouter.api-key} is blank. Note: the injected RestClient.Builder parameter is never used — the service constructs its own clients statically.
+        Key methods:
+            findAndRerankDocuments(query, tech, version, topKInitial, topKReranked[, repository, repositoryRef]) — validates/normalizes; if repository-scoped, wraps execution in GitHubRepositorySyncLock.withReadLock (blocks concurrent re-indexing of that repo/ref).
+            findAndRerankDocumentsLocked(...) — (a) vector search (filter: technology + version, plus source_type=github/repository/repository_ref when scoped); (b) empty + scoped → returns empty (never leaks generic web data into a repo-scoped query); (c) empty + unscoped → fetch fallback candidates, rerank all, sort desc, limit topKReranked; (d) non-empty → rerank topN, and if best score < ${CHAT_CODING_RAG_MIN_RERANK_SCORE:0.60} (unscoped only) merge with reranked fallback.
+            rerankCandidates(...) — POST /rerank with RerankRequest; maps returned indexes back to original Documents, storing vector_score, rerank_score, rerank_model, rerank_provider in metadata and setting Document.score = relevance_score; throws IllegalStateException on failure.
+            tryRerankCandidates(...) — non-throwing variant for fallback docs.
+            fetchFallbackCandidates(...) — summarizes the query separately per source (via AiQuerySummarizer) and fetches up to one Document each.
+            fetchWikiSummary(topic) — search title (/w/api.php, srlimit=1) then /api/rest_v1/page/summary/{title}; builds a Document (metadata source=wikipedia); returns null on miss/error.
+            fetchStackOverflowAnswer(query) — /2.3/search/advanced (sort=votes, answers≥1, top 5) → picks best question (max score, tie→answer count) → /2.3/questions/{id}/answers (filter=withbody, top 1) → HTML-stripped Document (metadata incl. question id, link, answer score/accepted).
+            normalizeRepositoryScope(...) — enforces owner/repo regex and strict Git-ref rules (no .., @{, / edges, control chars; ≤255).
+        Dependencies: VectorStore, AiQuerySummarizer, GitHubRepositorySyncLock, @Value properties.
+
+    3.5.6. GzipDecompressingInterceptor — Type: ClientHttpRequestInterceptor (plain class, wired manually into the SO client).
+        Responsibility: transparently gunzips responses whose Content-Encoding is exactly gzip; lazily wraps the body in GZIPInputStream, removes Content-Encoding/Content-Length headers. Multi-encoding responses pass through untouched.
+        Dependencies: none.
+
+3.6. Package org.dar316.spring_ai.service.github
+
+    3.6.1. GitHubClient — Type: @Service.
+        Responsibility: thin, defensive GitHub REST client (own RestClient; comment explicitly warns against injecting a shared/rest-client bean bound to the OpenRouter base URL). Headers: Accept v3+json, User-Agent, X-GitHub-Api-Version: 2022-11-28, optional Bearer token.
+        Key methods:
+            resolveRevision(owner, repo, ref) — GET /repos/{o}/{r}/commits/{ref} → ResolvedRevision(commitSha, treeSha); rejects malformed responses.
+            getRecursiveTree(owner, repo, treeSha) — GET .../git/trees/{sha}?recursive=1; 422 if GitHub truncated the tree.
+            getUtf8TextBlob(owner, repo, blobSha) — GET .../git/blobs/{sha}; Base64-decodes; returns Optional.empty() for non-base64, oversized (> maxFileSizeBytes), NUL-containing (binary), or non-UTF-8 blobs; throws 502 on invalid Base64.
+            execute(...) (private) — uniform error mapping: 404→404, 401/403→502 (rate limit/auth), other/network→502 (ResponseStatusException).
+        Dependencies: GitHubProperties.
+
+    3.6.2. GitHubRepositoryIndexer — Type: @Service (final class).
+        Responsibility: end-to-end GitHub repository indexing with all-at-once semantics.
+        Key methods:
+            index(GithubIndexRequest) — normalizes/validates (GitHub name regex, Git-ref rules) → syncLock.withWriteLock(repo, ref) → indexLocked.
+            indexLocked(...) — resolve commit/tree → recursive tree → selectFiles (413 if > maxFiles/maxTotalBytes, 422 if nothing indexable) → per file: fetch blob, createChunks (same +++RAG_SECTION+++ split + identical TokenTextSplitter config as 3.5.1; metadata incl. source_type=github, repository, repository_ref, commit_sha, path, sync_id=UUID, language/type) with cumulative maxChunks guard (413) and incremental vectorStore.add → deletePreviousSyncs (deletes older sync_ids for repo+ref) → GitHubIndexResponse. On RuntimeException after any write, rollbackCurrentSync deletes the current sync_id (best-effort atomic swap).
+            isCandidate(...) — selection policy: only blobs, no symlinks (mode 120000), safe paths (no empty/./.. segments, no NUL), must live at root README, docs/, src/, or be a whitelisted root build file (pom.xml, build.gradle*, Dockerfile, etc.); excludes node_modules/target/dist-style directories, lockfiles, .min.js/.map; extension must be in TEXT_EXTENSIONS (~40 types).
+            languageFor(...) / extensionOf(...) / documentType(...) — metadata classification.
+        Dependencies: VectorStore (Spring AI), GitHubClient, GitHubProperties, GitHubRepositorySyncLock.
+        Note: stray unused import com.openai.models.vectorstores.VectorStore (the field uses the fully-qualified Spring AI type) — leftover, should be removed (risk of confusion; would break compiling if the OpenAI models artifact weren't on the classpath transitively).
+
+    3.6.3. GitHubRepositorySyncLock — Type: @Service.
+        Responsibility: per-key (repository + NUL + ref) fair ReentrantReadWriteLock registry with reference counting (users), so lock entries are removed when idle.
+        Key methods: withReadLock(scope, Supplier), withWriteLock(scope, Supplier); private retain/release/scope; guards against negative usage count.
+        Dependencies: none.
+
+3.7. Package org.dar316.spring_ai.util
+
+    3.7.1. ControllerUtils — static toHit(Document) → RagHit (extracts source, technology, technology_version, chunk_index, vector_score from metadata; Document.getScore() becomes rerankScore). Non-instantiable.
+    3.7.2. HttpRequestUtils — wikiTimeout(int seconds) → JdkClientHttpRequestFactory with read timeout (used for Wiki and StackOverflow clients).
+    3.7.3. NumberUtils — tolerant valueAsDouble/valueAsInteger (Number → cast, else parse, else null); normalize(value, default, min, max) (currently unused).
+    3.7.4. StringUtils — valueAsString(Object) null-safe toString.
+
+4. Data Flow
+4.1. Flow A — Index a documentation file (POST /api/doc/index)
+
+    4.1.1. Client sends multipart form: file + technology + technologyVersion.
+    4.1.2. DocumentationController.index — Bean Validation + manual guards; strips values; extracts a path-sanitized display filename.
+    4.1.3. AbstractDocumentationIndexer.index — validates extension (txt/md/markdown); sanitizes filename for metadata.
+    4.1.4. indexResource (template): DocumentationIndexer.readDocument converts the resource into Documents (Markdown- or TextReader) with base metadata.
+    4.1.5. Documents are split on +++RAG_SECTION+++ markers into "section documents" (section indexes recorded), then chunked by TokenTextSplitter (600 tokens).
+    4.1.6. Each chunk is re-created with enriched metadata (document_version UUID, chunk_index, chunk_count, indexed_at, tech/version).
+    4.1.7. store(): VectorStore.add — Spring AI embeds each chunk via the auto-configured OpenAI embedding model and upserts into Qdrant; then deletes old chunks of the same source/tech/version whose document_version differs (add-then-delete swap).
+    4.1.8. Controller returns IndexDocumentationResponse(filename, technology, version, chunks) as JSON.
+
+4.2. Flow B — Index a GitHub repository (POST /api/github/index)
+
+    4.2.1. Client sends JSON GithubIndexRequest; @Valid runs field constraints.
+    4.2.2. GitHubController.index → GitHubRepositoryIndexer.index → normalization (name regex, ref hygiene) → write lock on repo+ref (concurrent readers of that scope block; other repos unaffected).
+    4.2.3. GitHubClient.resolveRevision — resolve ref → pinned commitSha + treeSha.
+    4.2.4. GitHubClient.getRecursiveTree — full tree; 422 if truncated.
+    4.2.5. selectFiles — filter blobs by path/extension/size policy; 413 if limits exceeded; empty selection → 422.
+    4.2.6. For each selected file: getUtf8TextBlob (skip binary/oversized) → createChunks (section split, token split, GitHub-specific metadata incl. sync_id) → cumulative maxChunks guard → vectorStore.add (embeddings → Qdrant).
+    4.2.7. After all files: deletePreviousSyncs removes chunks from earlier syncs of the same repo+ref (atomic-ish swap).
+    4.2.8. On mid-run failure after any write: rollbackCurrentSync deletes the partial sync_id, then the exception propagates as a mapped HTTP error.
+    4.2.9. Response: GitHubIndexResponse(repository, ref, commitSha, indexedFiles, skippedFiles, chunks); write lock released.
+
+4.3. Flow C — Reranked RAG search (POST /api/rag/search)
+
+    4.3.1. Client sends JSON RagSearchRequest (+ optional repository/repositoryRef query params). Validation enforces top-K bounds and the cross-field rule topKReranked ≤ topKInitial.
+    4.3.2. RagController.search strips inputs → RerankedRagService.findAndRerankDocuments(...).
+    4.3.3. Scope normalization: if both repo params present → validate formats and acquire the read lock for that repo/ref (so re-indexing can't swap data mid-search).
+    4.3.4. Vector search in Qdrant with FilterExpression: always technology + technology_version; scoped adds source_type=github, repository, repository_ref. Top-K = topKInitial.
+    4.3.5. Branch — no candidates: scoped → empty list (immediately). Unscoped → fallback: query is LLM-summarized (AiQuerySummarizer) into a Wiki phrase and a StackOverflow keyword set; each source returns ≤1 Document (independent failure isolation); fallback docs are reranked (tryRerankCandidates), sorted desc, limited to topKReranked.
+    4.3.6. Branch — candidates exist: rerankCandidates calls OpenRouter /rerank; results mapped back to original Documents (metadata gains vector_score, rerank_score, model/provider; score = relevance score).
+    4.3.7. Low-confidence merge: if unscoped and best rerank score < 0.60 (env-configurable), fallback candidates are fetched, reranked, merged, globally sorted, limited.
+    4.3.8. Controller maps each Document via ControllerUtils.toHit → RagHit (DTO transformation) → returns RagSearchResponse(query, results) JSON through the standard Spring message converters.
+
+5. Configuration and Cross-Cutting Concerns
+
+    5.1. Configuration classes & properties:
+        5.1.1. application.yml/application.properties — Not determinable from provided context (file absent from the export). Referenced keys: ai.api.url, ai.api.key, ai.summary.model, mentor.rerank.openrouter.{base-url,api-key,model}, CHAT_CODING_RAG_MIN_RERANK_SCORE (default 0.60), stackoverflow.api.{base-url,key}, github.api.{base-url,token}, github.index.*. Qdrant/OpenAI-embedding connection settings are likewise not shown (needed for the auto-configured VectorStore and embedding model).
+        5.1.2. Config beans: AiApiConfig (LLM RestClient), GitHubProperties (validated @ConfigurationProperties), ObjectMapperConfig (Jackson-2 ObjectMapper; potential Jackson 2 vs Jackson 3 ambiguity on Boot 4), DocImportConfig (all runners commented out → no seed data at startup).
+        5.1.3. Infrastructure: docker-compose.yml only defines Qdrant (no app service, no network wiring for the Spring app); Containerfile packages the fat jar on Temurin 25 JRE, EXPOSE 8081, --enable-native-access=ALL-UNNAMED, 75% max RAM.
+
+    5.2. Security setup: none. No Spring Security dependency; all endpoints — including the two write/index endpoints — are unauthenticated. Only inbound input validation/whitelisting exists. Upstream secrets (GitHub token, OpenRouter key, LLM key, optional SO key) come from configuration — handling/storage of these is Not determinable from provided context.
+
+    5.3. Exception handling strategy: no @ControllerAdvice exists.
+        5.3.1. GitHub flow uses ResponseStatusException → precise statuses (404/413/422/502).
+        5.3.2. Everything else throws IllegalArgumentException/IllegalStateException, which without an advice map to generic 500 responses (even for client-caused input errors) — an inconsistency. Validation failures (MethodArgumentNotValidException / constraint violations) get Boot's default 400 handling.
+        5.3.3. Resilience patterns: fallback sources fail soft (return null/raw query); indexers use add-then-delete swaps and rollback (GitHub) — but in AbstractDocumentationIndexer.store, a failed delete after a successful add leaves duplicate old+new chunks while the endpoint reports an error.
+
+    5.4. AOP / filters / interceptors / schedulers:
+        5.4.1. Only one interceptor: GzipDecompressingInterceptor on the StackExchange client.
+        5.4.2. No AOP, no servlet filters, no MVC interceptors, no @Scheduled jobs.
+        5.4.3. spring-boot-starter-actuator is present, but endpoint exposure config is Not determinable from provided context.
+        5.4.4. Concurrency control: GitHubRepositorySyncLock (fair RW locks per repo+ref) coordinates indexing vs. repository-scoped searches.
+
+6. Summary
+
+This is a cleanly layered, well-guarded RAG microservice: documentation files and whitelisted GitHub repo content are chunked (section-aware, +++RAG_SECTION+++), enriched with consistent metadata, embedded into Qdrant via Spring AI, and served through a search pipeline that applies metadata-scoped vector retrieval, cross-encoder reranking via OpenRouter, and LLM-assisted Wikipedia/Stack Overflow fallback with score-based merging. Strong points: defensive input validation, path/ref sanitization, add-then-delete versioned swaps with rollback for repo syncs, and a per-repo read/write lock preventing read-during-reindex races. Notable issues: repository-scoped correctness relies on callers supplying matching technology/technologyVersion (they're mandatory even for repo searches), there is no security layer on mutating endpoints, no global exception mapping (non-GitHub errors surface as 500s), and a failed old-chunk deletion in AbstractDocumentationIndexer silently leaves duplicates. Cleanups worth doing: the unused com.openai...VectorStore import, the unused injected RestClient.Builder in RerankedRagService, the wrong "ref cannot be blank" message on the repository field, dead code (DocSearchService, DocumentationIndexRequest, commented DocImportConfig), the dto/stackoverflow vs dto.rag.stackoverflow path/package mismatch, and the hardcoded contact email in the Wikipedia/SO User-Agent.
+
+7. Changes Made During This Session
+7.1. GitHub Discussions Indexing
+
+7.1.1. New DTO — GitHubDiscussionResponse
+
+    Type: immutable record in dto/github/client/.
+    Fields: number, title, body, List<GitHubComment> comments, Integer answerCount, Reactions reactions.
+    Nested records: GitHubComment(String body), Reactions(int totalCount).
+    Annotated with @JsonIgnoreProperties(ignoreUnknown = true) to tolerate extra API fields.
+
+7.1.2. GitHubClient — new method getDiscussions(owner, repository)
+
+    Fetches up to 30 recent discussions via GET /repos/{owner}/{repo}/discussions?per_page=30.
+    Uses the existing execute(...) wrapper and applyHeaders(...) for consistent auth/error handling.
+    Gracefully returns List.of() on 404/422 (discussions disabled for that repo) instead of propagating the exception — a discussion-less repo is not a hard failure.
+
+7.1.3. GitHubRepositoryIndexer.indexLocked — modified flow
+
+    Removed the early 422 throw when selection.files().isEmpty(). This was a critical blocking issue: it prevented discussion-only repositories from being indexed.
+    Added indexDiscussions(...) call after the file-indexing loop but before deletePreviousSyncs.
+    Changed the final validation from indexedFiles == 0 to indexedFiles == 0 && discussionChunks == 0 (using && not ||). This was a critical bug fix: the original || would have thrown 422 for any repository that had code files but no discussions.
+
+7.1.4. GitHubRepositoryIndexer.indexDiscussions — new private method
+
+    Fetches discussions via gitHubClient.getDiscussions(...).
+    Pre-ingestion filtering (Strategy 1): skips any discussion where !isAnswered && upvotes < 2 — prevents unresolved noise from entering Qdrant.
+    Volume cap: breaks after 10 indexed discussions to prevent Qdrant overflow in a single sync.
+    Concatenates discussion title, body, and all comments into a single text blob using +++RAG_SECTION+++ separators.
+    Attaches metadata: source_type=github, document_type=discussion, repository, repository_ref, commit_sha, sync_id, path=discussions/{number}, language=en.
+    Expiration timestamp (Strategy 4): adds expires_at = Instant.now().plus(60, DAYS).toEpochMilli() as a numeric epoch-millis metadata field (Qdrant range filters require numeric types, not ISO strings).
+    Applies the same TokenTextSplitter configuration (600/250/50/20_000) as the file indexer.
+    Respects the cumulative maxChunks guard across both files and discussions.
+    Returns the count of added chunks; indexLocked accumulates this into totalChunks and sets currentSyncStored = true if any were added.
+
+7.2. Time-Based Discussion Cleanup
+
+7.2.1. ScheduledDiscussionCleanup — new @Service
+
+    Injects VectorStore.
+    @Scheduled(cron = "0 0 3 * * *") — runs nightly at 03:00 if the app is up.
+    @EventListener(ApplicationReadyEvent.class) — also runs on startup so that missed nightly cleanups are caught up after a restart or redeploy. This addresses the reality that this app is not a 24/7 always-on service.
+    Deletes all documents where source_type == "github" AND document_type == "discussion" AND expires_at < System.currentTimeMillis().
+    Failures are caught and logged; cleanup errors do not crash the application.
+
+7.2.2. SpringAiApplication — @EnableScheduling added
+
+    Required for @Scheduled annotations to be processed by Spring's task scheduler.
+
+7.3. Conversational Chat with RAG-over-History (Method 3)
+
+7.3.1. New DTOs in dto/chat/
+
+    ChatRequest(conversationId, query) — validated with @NotBlank, @Size.
+    ChatResponse(conversationId, answer).
+
+7.3.2. ChatHistoryService — new @Service
+
+    Saves individual messages to Qdrant with metadata: source_type=chat_history, conversation_id, role, timestamp.
+    getRelevantHistory(conversationId, currentQuery, topK) — performs a similaritySearch filtered by source_type=chat_history AND conversation_id={id}. Returns only the semantically relevant past messages for the current query, not the entire raw history.
+
+7.3.3. ChatService — new @Service
+
+    Injects ChatClient.Builder, ChatHistoryService, RerankedRagService, and @Value("${ai.summary.model}") (the cheap qwen3.7-flash model).
+    Query rewriting (rewriteQuery): before hitting RAG, sends the recent chat history + the new follow-up question to the cheap LLM with a prompt asking it to rewrite the follow-up as a standalone, self-contained question. This resolves pronouns and context references (e.g., "Can I use it with JOIN?" → "Can I use SQL UNION with JOIN?"). On any error or empty response, falls back to the raw query.
+    RAG retrieval: passes the rewritten standalone query to RerankedRagService.findAndRerankDocuments(...). This hits Qdrant first, and triggers Wikipedia/StackOverflow fallback if scores are low — the same pipeline as /api/rag/search.
+    Final answer generation: builds a system prompt containing only the retrieved RAG context (not the raw history), then calls the LLM using OpenAiChatOptions.builder().model(cheapChatModel).build() to override the default model and route to the cheap endpoint.
+    History persistence: saves both the user query and the assistant's response to ChatHistoryService for future semantic retrieval.
+    Snowball prevention: the final LLM prompt never receives the raw conversation history — only the rewritten query and the semantically selected RAG context. This prevents the context window from growing unboundedly as the conversation progresses.
+
+7.3.4. ChatController — new @RestController
+
+    POST /api/chat — accepts @Valid @RequestBody ChatRequest, delegates to ChatService.chat(...), returns ChatResponse.
+
+7.4. Tests Added
+
+7.4.1. RerankedRagServiceTest (WireMock + Mockito)
+
+    Uses WireMock on a dynamic port to mock OpenRouter /rerank, Wikipedia, and StackExchange endpoints.
+    Tests two scenarios: (a) high Qdrant score → no fallback triggered, (b) low Qdrant score → fallback fetched, reranked, and merged correctly in descending score order.
+    Uses matchingJsonPath on $.top_n to differentiate the two /rerank calls (1 document for Qdrant, 2 for fallback).
+    Required refactoring RerankedRagService to accept wiki.api.base-url as an injected property instead of a hardcoded https://en.wikipedia.org.
+
+7.4.2. GitHubRepositoryIndexerTest (Mockito only)
+
+    Mocks GitHubClient, VectorStore, and GitHubRepositorySyncLock.
+    whenDiscussionsAreUnanswered_thenTheyAreFilteredOut — verifies that an unanswered discussion with 0 upvotes is skipped while an answered discussion with 5 upvotes is indexed. Uses ArgumentCaptor on vectorStore.add(...) to verify that exactly the valid discussion's chunks were stored with document_type=discussion and expires_at metadata.
+    whenNoFilesAndNoDiscussions_thenThrows422 — verifies the modified validation throws 422 when both paths yield zero chunks.
+
+7.4.3. ChatServiceTest (Mockito only)
+
+    Mocks the ChatClient fluent API chain (ChatClient.Builder → ChatClient → ChatClientRequestSpec → CallResponseSpec).
+    whenFollowUpQuery_thenRewritesQueryAndPreventsSnowball — verifies that:
+        The rewritten standalone query (not the raw "Can I use it with JOIN?") is passed to RerankedRagService.
+        The final system prompt contains the RAG context but does not contain the raw chat history (the snowball effect is prevented).
+        Both the user message and the assistant response are saved to ChatHistoryService.
+    Uses ArgumentCaptor on both the RAG query string and the .system() prompt string to prove the rewriting and context-injection logic.
+
+7.4.4. DocSearchServiceTest (Mockito only)
+
+    7 tests covering all validation branches: blank question, blank technology, null technologyVersion, topK < 1, threshold out of [0.0, 1.0] bounds (both sides), and the happy path.
+    Happy path uses ArgumentCaptor<SearchRequest> to verify that inputs are .strip()-ed and that the FilterExpression is built correctly.
+

@@ -1,0 +1,36 @@
+curl -F "file=@/home/dar316/Pulpit/AI/Spring_AI/docs/spring_ai.txt" \
+            -F "technology=spring_ai" -F "technologyVersion=2.0.0" \
+            http://localhost:8081/api/doc/index
+
+PRZEBUDOWA:
+ ./mvnw clean package -DskipTests
+  podman build -t localhost/spring-ai-rag:local .
+
+WGRAJ:
+curl -X POST http://localhost:8081/api/doc/index \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@/path/to/your/spring-boot-doc.pdf" \
+  -F "technology=Spring Boot" \
+  -F "technologyVersion=3.2.0"
+
+QDRANT:
+podman network rm spring_ai_default
+podman compose up -d
+
+ZAŁADOWANIE SWOJEGO PROJEKTU Z GITHUB:
+curl --fail-with-body \
+        --request POST \
+        --header "Content-Type: application/json" \
+        --data '{
+      "owner": "rhan316",
+      "repository": "chat_llm",
+      "ref": "main",
+      "technology": "spring-boot",
+      "technologyVersion": "3.4"
+    }' \
+        http://127.0.0.1:8081/api/github/index
+
+GIT:
+git add .
+git commit -m "Initial commit"
+git push -u origin main

@@ -1,0 +1,1430 @@
+Recommended way of getting Mockito is declaring a dependency on “mockito-core” library using your favorite build system. With Gradle one can do:
+
+repositories { mavenCentral() }
+dependencies { testImplementation "org.mockito:mockito-core:5.+" }
+
+Maven users can declare a dependency on mockito-core. Mockito publishes every change as a -SNAPSHOT version to a public Sonatype repository.
+
+Users doing manual dependency management can download the jars directly from Maven Central.
+
+Legacy builds with manual dependency management can use the 1.* “mockito-all” distribution. Said distribution has been discontinued in Mockito 2.*.
+now you can verify interactions
+
+import static org.mockito.Mockito.*;
+
+// mock creation
+List mockedList = mock(List.class);
+// or even simpler with Mockito 4.10.0+
+// List mockedList = mock();
+
+// using mock object - it does not throw any "unexpected interaction" exception
+mockedList.add("one");
+mockedList.clear();
+
+// selective, explicit, highly readable verification
+verify(mockedList).add("one");
+verify(mockedList).clear();
+
+and stub method calls
+
+// you can mock concrete classes, not only interfaces
+LinkedList mockedList = mock(LinkedList.class);
+// or even simpler with Mockito 4.10.0+
+// LinkedList mockedList = mock();
+
+// stubbing appears before the actual execution
+when(mockedList.get(0)).thenReturn("first");
+
+// the following prints "first"
+System.out.println(mockedList.get(0));
+
+// the following prints "null" because get(999) was not stubbed
+System.out.println(mockedList.get(999));
+
++++RAG_SECTION+++
+
+Mockito is a mocking framework that tastes really good. It lets you write beautiful tests with a clean & simple API. Mockito doesn’t give you hangover because the tests are very readable and they produce clean verification errors. Read more about features & motivations.
+
+    Massive StackOverflow community voted Mockito the best mocking framework for java. Even though StackOverflow shuns questions that likely raise emotional debates the fact is Mockito has the most votes.
+
+    Top 10 Java library across all libraries, not only the testing tools. In late 2013 there was an analysis made of 30.000 GitHub projects. Although Mockito reached number 9 in the main report, mockito-core and mockito-all are the same tool and therefore the factual position of Mockito is number 4, surpassing famous tools like Guava or Spring. Treat this study as an indicator of a big impact that Mockito makes every day on unit tests written in Java.
+
+    Dan North, the originator of Behavior-Driven Development wrote this back in 2008:
+
+    “We decided during the main conference that we should use JUnit 4 and Mockito because we think they are the future of TDD and mocking in Java”
+
+    Given the current popularity of Mockito, Dan was spot on with his prediction.
+
+Use your own judgement in choosing a testing framework. The Mockito team always respects your choice. Keep writing great tests every day!
+
++++RAG_SECTION+++
+
+0. Migrating to Mockito 2
+
+In order to continue improving Mockito and further improve the unit testing experience, we want you to upgrade to 2.1.0!
+Mockito follows semantic versioning and contains breaking changes only on major version upgrades.
+In the lifecycle of a library, breaking changes are necessary
+to roll out a set of brand new features that alter the existing behavior or even change the API.
+For a comprehensive guide on the new release including incompatible changes,
+see 'What's new in Mockito 2' wiki page.
+We hope that you enjoy Mockito 2!
+
++++RAG_SECTION+++
+
+0.1. Mockito Android support
+
+With Mockito version 2.6.1 we ship "native" Android support. To enable Android support, add the `mockito-android` library as dependency to your project. This artifact is published to the same Mockito organization and can be imported for Android as follows:
+
+Version catalog:
+
+[versions]
+mockito = "5.23.0"
+
+[libraries]
+mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito" }
+
+App Gradle file:
+
+dependencies {
+  testImplementation(libs.mockito)
+  androidTestImplementation(libs.mockito.android)
+}
+
+New in Mockito 5.23.0 - Kotlin support! The `mockito-android` artifact now uses dexmaker-mockito-inline under the hood to provide inline mocking on Android, which supports mocking of final classes and methods. This means it can mock Kotlin classes without having to mark them as open.
+
+Note this requires Android API 28 (Android P) or higher at runtime. Apps with a lower minSdk will still compile, but tests will fail if run on an emulator or device with an API level below 28.
+
+Note you must set android:extractNativeLibs="true" in your androidTest/AndroidManifest.xml for the dexmaker native library to be accessible:
+
+<application android:extractNativeLibs="true" />
+
+Using `mockito-android` in a non-Android environment is unsupported. For JVM tests, use `mockito-core` directly.
+
++++RAG_SECTION+++
+
+0.2. Configuration-free inline mock making
+
+Starting with version 2.7.6, we offer the 'mockito-inline' artifact that enables inline mock making without configuring the MockMaker extension file. To use this, add the `mockito-inline` instead of the `mockito-core` artifact as follows:
+
+repositories {
+  mavenCentral()
+}
+dependencies {
+  testCompile "org.mockito:mockito-inline:+"
+}
+
+Be aware that starting from 5.0.0 the inline mock maker became the default mock maker and this artifact may be abolished in future versions.
+
+For more information about inline mock making, see section 39.
+
++++RAG_SECTION+++
+
+0.3. Explicitly setting up instrumentation for inline mocking (Java 21+)
+
+Starting from Java 21, the JDK restricts the ability of libraries to attach a Java agent to their own JVM. As a result, the inline-mock-maker might not be able to function without an explicit setup to enable instrumentation, and the JVM will always display a warning.
+
+The following are examples about how to set up mockito-core as a Java agent, and it may be more appropriate to choose a different approach depending on your project constraints.
+
+To explicitly attach Mockito during test execution, the library's jar file needs to be specified as -javaagent as an argument to the executing JVM. To enable this in Gradle, the following example adds Mockito to all test tasks using Kotlin DSL. Although omitted for simplicity, using a CommandLineArgumentProvider is recommended by Gradle to ensure task relocatability (documentation):
+
+val mockitoAgent = configurations.create("mockitoAgent")
+dependencies {
+    testImplementation(libs.mockito)
+    mockitoAgent(libs.mockito) { isTransitive = false }
+}
+tasks {
+    test {
+        jvmArgs.add("-javaagent:${mockitoAgent.asPath}")
+    }
+}
+
+The same can be achieved using Groovy DSL:
+
+configurations {
+    mockitoAgent
+}
+dependencies {
+    testImplementation(libs.mockito)
+    mockitoAgent(libs.mockito) {
+        transitive = false
+    }
+}
+tasks {
+    test {
+        jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+    }
+}
+
+Supposing Mockito is declared in the version catalog as the following
+
+[versions]
+mockito = "5.14.0"
+
+[libraries]
+mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+
+To add Mockito as an agent to Maven's surefire plugin, the following configuration is needed:
+
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-dependency-plugin</artifactId>
+    <executions>
+        <execution>
+            <goals>
+                <goal>properties</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <configuration>
+        <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+    </configuration>
+</plugin>
+
+Note however, that @{argLine} needs to exist when surefire performs its late replacement otherwise it will just use the value verbatim which will crash the VM, The forked VM terminated without properly saying goodbye. VM crash or System.exit called., in this case, you may need to adapt your maven configuration, for example by adding an empty <argLine/> property to the POM file.
+
+Alternatively, to enable support for dynamic attach, it is also possible to start a JVM with -XX:+EnableDynamicAgentLoading flag. Do however note that, since this option is not standardized, any future release of a JDK might prohibit this behaviour.
+
++++RAG_SECTION+++
+
+1. Let's verify some behaviour!
+
+The following examples mock a List, because most people are familiar with the interface (such as the add(), get(), clear() methods).
+
+In reality, please don't mock the List class. Use a real instance instead.
+
+//Let's import Mockito statically so that the code looks clearer
+import static org.mockito.Mockito.*;
+
+//mock creation
+List mockedList = mock(List.class);
+
+//using mock object
+mockedList.add("one");
+mockedList.clear();
+
+//verification
+verify(mockedList).add("one");
+verify(mockedList).clear();
+
+Once created, a mock will remember all interactions. Then you can selectively verify whatever interactions you are interested in.
+
++++RAG_SECTION+++
+
+2. How about some stubbing?
+
+//You can mock concrete classes, not just interfaces
+LinkedList mockedList = mock(LinkedList.class);
+
+//stubbing
+when(mockedList.get(0)).thenReturn("first");
+when(mockedList.get(1)).thenThrow(new RuntimeException());
+
+//following prints "first"
+System.out.println(mockedList.get(0));
+
+//following throws runtime exception
+System.out.println(mockedList.get(1));
+
+//following prints "null" because get(999) was not stubbed
+System.out.println(mockedList.get(999));
+
+//Although it is possible to verify a stubbed invocation, usually it's just redundant
+//If your code cares what get(0) returns, then something else breaks (often even before verify() gets executed).
+//If your code doesn't care what get(0) returns, then it should not be stubbed.
+verify(mockedList).get(0);
+
+By default, for all methods that return a value, a mock will return either null, a primitive/primitive wrapper value, or an empty collection, as appropriate. For example 0 for an int/Integer and false for a boolean/Boolean.
+Stubbing can be overridden: for example common stubbing can go to fixture setup but the test methods can override it.
+Please note that overriding stubbing is a potential code smell that points out too much stubbing.
+Once stubbed, the method will always return a stubbed value, regardless of how many times it is called.
+Last stubbing is more important - when you stubbed the same method with the same arguments many times.
+Other words: the order of stubbing matters but it is only meaningful rarely, e.g. when stubbing exactly the same method calls or sometimes when argument matchers are used, etc.
+
++++RAG_SECTION+++
+
+3. Argument matchers
+
+Mockito verifies argument values in natural java style: by using an equals() method.
+Sometimes, when extra flexibility is required then you might use argument matchers:
+
+//stubbing using built-in anyInt() argument matcher
+when(mockedList.get(anyInt())).thenReturn("element");
+
+//stubbing using custom matcher (let's say isValid() returns your own matcher implementation):
+when(mockedList.contains(argThat(isValid()))).thenReturn(true);
+
+//following prints "element"
+System.out.println(mockedList.get(999));
+
+//you can also verify using an argument matcher
+verify(mockedList).get(anyInt());
+
+//argument matchers can also be written as Java 8 Lambdas
+verify(mockedList).add(argThat(someString -> someString.length() > 5));
+
+Argument matchers allow flexible verification or stubbing.
+Click here or here to see more built-in matchers and examples of custom argument matchers / hamcrest matchers.
+
+For information solely on custom argument matchers check out javadoc for ArgumentMatcher class.
+
+Be reasonable with using complicated argument matching.
+The natural matching style using equals() with occasional anyX() matchers tend to give clean and simple tests.
+
+Sometimes it's just better to refactor the code to allow equals() matching or even implement equals() method to help out with testing.
+
+Also, read section 15 or javadoc for ArgumentCaptor class.
+ArgumentCaptor is a special implementation of an argument matcher that captures argument values for further assertions.
+
+Warning on argument matchers:
+
+If you are using argument matchers, all arguments have to be provided by matchers.
+
+The following example shows verification but the same applies to stubbing:
+
+verify(mock).someMethod(anyInt(), anyString(), eq("third argument"));
+//above is correct - eq() is also an argument matcher
+
+verify(mock).someMethod(anyInt(), anyString(), "third argument");
+//above is incorrect - exception will be thrown because third argument is given without an argument matcher.
+
+Matcher methods like any(), eq() do not return matchers.
+Internally, they record a matcher on a stack and return a dummy value (usually null).
+This implementation is due to static type safety imposed by the java compiler.
+The consequence is that you cannot use any(), eq() methods outside of verified/stubbed method.
+
++++RAG_SECTION+++
+
+4. Verifying exact number of invocations / at least x / never
+
+//using mock
+mockedList.add("once");
+
+mockedList.add("twice");
+mockedList.add("twice");
+
+mockedList.add("three times");
+mockedList.add("three times");
+mockedList.add("three times");
+
+//following two verifications work exactly the same - times(1) is used by default
+verify(mockedList).add("once");
+verify(mockedList, times(1)).add("once");
+
+//exact number of invocations verification
+verify(mockedList, times(2)).add("twice");
+verify(mockedList, times(3)).add("three times");
+
+//verification using never(). never() is an alias to times(0)
+verify(mockedList, never()).add("never happened");
+
+//verification using atLeast()/atMost()
+verify(mockedList, atMostOnce()).add("once");
+verify(mockedList, atLeastOnce()).add("three times");
+verify(mockedList, atLeast(2)).add("three times");
+verify(mockedList, atMost(5)).add("three times");
+
+times(1) is the default. Therefore using times(1) explicitly can be omitted.
+
++++RAG_SECTION+++
+
+5. Stubbing void methods with exceptions
+
+doThrow(new RuntimeException()).when(mockedList).clear();
+
+//following throws RuntimeException:
+mockedList.clear();
+
+Read more about doThrow()|doAnswer() family of methods in section 12.
+
++++RAG_SECTION+++
+
+6. Verification in order
+
+// A. Single mock whose methods must be invoked in a particular order
+List singleMock = mock(List.class);
+
+//using a single mock
+singleMock.add("was added first");
+singleMock.add("was added second");
+
+//create an inOrder verifier for a single mock
+InOrder inOrder = inOrder(singleMock);
+
+//following will make sure that add is first called with "was added first", then with "was added second"
+inOrder.verify(singleMock).add("was added first");
+inOrder.verify(singleMock).add("was added second");
+
+// B. Multiple mocks that must be used in a particular order
+List firstMock = mock(List.class);
+List secondMock = mock(List.class);
+
+//using mocks
+firstMock.add("was called first");
+secondMock.add("was called second");
+
+//create inOrder object passing any mocks that need to be verified in order
+InOrder inOrder = inOrder(firstMock, secondMock);
+
+//following will make sure that firstMock was called before secondMock
+inOrder.verify(firstMock).add("was called first");
+inOrder.verify(secondMock).add("was called second");
+
+// Oh, and A + B can be mixed together at will
+
+Verification in order is flexible - you don't have to verify all interactions one-by-one but only those that you are interested in testing in order.
+
+Also, you can create an InOrder object passing only the mocks that are relevant for in-order verification.
+
++++RAG_SECTION+++
+
+7. Making sure interaction(s) never happened on mock
+
+//using mocks - only mockOne is interacted
+mockOne.add("one");
+
+//ordinary verification
+verify(mockOne).add("one");
+
+//verify that method was never called on a mock
+verify(mockOne, never()).add("two");
+
++++RAG_SECTION+++
+
+8. Finding redundant invocations
+
+//using mocks
+mockedList.add("one");
+mockedList.add("two");
+
+verify(mockedList).add("one");
+
+//following verification will fail
+verifyNoMoreInteractions(mockedList);
+
+A word of warning:
+
+Some users who did a lot of classic, expect-run-verify mocking tend to use verifyNoMoreInteractions() very often, even in every test method.
+verifyNoMoreInteractions() is not recommended to use in every test method.
+verifyNoMoreInteractions() is a handy assertion from the interaction testing toolkit. Use it only when it's relevant.
+Abusing it leads to overspecified, less maintainable tests.
+
+See also never() - it is more explicit and communicates the intent well.
+
++++RAG_SECTION+++
+
+9. Shorthand for mocks creation - @Mock annotation
+
+Minimizes repetitive mock creation code.
+Makes the test class more readable.
+Makes the verification error easier to read because the field name is used to identify the mock.
+
+public class ArticleManagerTest {
+
+    @Mock private ArticleCalculator calculator;
+    @Mock private ArticleDatabase database;
+    @Mock private UserProvider userProvider;
+
+    private ArticleManager manager;
+
+    @org.junit.jupiter.api.Test
+    void testSomethingInJunit5(@Mock ArticleDatabase database) {
+
+Important! This needs to be somewhere in the base class or a test runner:
+
+MockitoAnnotations.openMocks(testClass);
+
+You can use built-in runner: MockitoJUnitRunner or a rule: MockitoRule.
+For JUnit5 tests, refer to the JUnit5 extension described in section 45.
+
+Read more here: MockitoAnnotations
+
++++RAG_SECTION+++
+
+10. Stubbing consecutive calls (iterator-style stubbing)
+
+Sometimes we need to stub with different return value/exception for the same method call. Typical use case could be mocking iterators.
+Original version of Mockito did not have this feature to promote simple mocking.
+For example, instead of iterators one could use Iterable or simply collections. Those offer natural ways of stubbing (e.g. using real collections). In rare scenarios stubbing consecutive calls could be useful, though:
+
+when(mock.someMethod("some arg"))
+  .thenThrow(new RuntimeException())
+  .thenReturn("foo");
+
+//First call: throws runtime exception:
+mock.someMethod("some arg");
+
+//Second call: prints "foo"
+System.out.println(mock.someMethod("some arg"));
+
+//Any consecutive call: prints "foo" as well (last stubbing wins).
+System.out.println(mock.someMethod("some arg"));
+
+Alternative, shorter version of consecutive stubbing:
+
+when(mock.someMethod("some arg"))
+  .thenReturn("one", "two", "three");
+
+Warning : if instead of chaining .thenReturn() calls, multiple stubbing with the same matchers or arguments is used, then each stubbing will override the previous one:
+
+//All mock.someMethod("some arg") calls will return "two"
+when(mock.someMethod("some arg"))
+  .thenReturn("one")
+when(mock.someMethod("some arg"))
+  .thenReturn("two")
+
++++RAG_SECTION+++
+
+11. Stubbing with callbacks
+
+Allows stubbing with generic Answer interface.
+
+Yet another controversial feature which was not included in Mockito originally. We recommend simply stubbing with thenReturn() or thenThrow(), which should be enough to test/test-drive any clean and simple code. However, if you do have a need to stub with the generic Answer interface, here is an example:
+
+when(mock.someMethod(anyString())).thenAnswer(
+    new Answer() {
+        public Object answer(InvocationOnMock invocation) {
+            Object[] args = invocation.getArguments();
+            Object mock = invocation.getMock();
+            return "called with arguments: " + Arrays.toString(args);
+        }
+});
+
+//Following prints "called with arguments: [foo]"
+System.out.println(mock.someMethod("foo"));
+
++++RAG_SECTION+++
+
+12. doReturn()|doThrow()|doAnswer()|doNothing()|doCallRealMethod() family of methods
+
+Stubbing void methods requires a different approach from when(Object) because the compiler does not like void methods inside brackets...
+
+Use doThrow() when you want to stub a void method with an exception:
+
+doThrow(new RuntimeException()).when(mockedList).clear();
+
+//following throws RuntimeException:
+mockedList.clear();
+
+You can use doThrow(), doAnswer(), doNothing(), doReturn() and doCallRealMethod() in place of the corresponding call with when(), for any method.
+It is necessary when you:
+- stub void methods
+- stub methods on spy objects (see below)
+- stub the same method more than once, to change the behaviour of a mock in the middle of a test.
+
+but you may prefer to use these methods in place of the alternative with when(), for all of your stubbing calls.
+
+Read more about these methods:
+- doReturn(Object)
+- doThrow(Throwable...)
+- doThrow(Class)
+- doAnswer(Answer)
+- doNothing()
+- doCallRealMethod()
+
++++RAG_SECTION+++
+
+13. Spying on real objects
+
+You can create spies of real objects. When you use the spy then the real methods are called (unless a method was stubbed).
+
+Real spies should be used carefully and occasionally, for example when dealing with legacy code.
+
+Spying on real objects can be associated with "partial mocking" concept.
+Before the release 1.8, Mockito spies were not real partial mocks.
+The reason was we thought partial mock is a code smell.
+At some point we found legitimate use cases for partial mocks (3rd party interfaces, interim refactoring of legacy code).
+
+List list = new LinkedList();
+List spy = spy(list);
+
+//optionally, you can stub out some methods:
+when(spy.size()).thenReturn(100);
+
+//using the spy calls *real* methods
+spy.add("one");
+spy.add("two");
+
+//prints "one" - the first element of a list
+System.out.println(spy.get(0));
+
+//size() method was stubbed - 100 is printed
+System.out.println(spy.size());
+
+//optionally, you can verify
+verify(spy).add("one");
+verify(spy).add("two");
+
+Important gotcha on spying real objects!
+
+Sometimes it's impossible or impractical to use when(Object) for stubbing spies.
+Therefore when using spies please consider doReturn|Answer|Throw() family of methods for stubbing. Example:
+
+List list = new LinkedList();
+List spy = spy(list);
+
+//Impossible: real method is called so spy.get(0) throws IndexOutOfBoundsException (the list is yet empty)
+when(spy.get(0)).thenReturn("foo");
+
+//You have to use doReturn() for stubbing
+doReturn("foo").when(spy).get(0);
+
+Mockito *does not* delegate calls to the passed real instance, instead it actually creates a copy of it.
+So if you keep the real instance and interact with it, don't expect the spied to be aware of those interaction and their effect on real instance state.
+The corollary is that when an *un-stubbed* method is called *on the spy* but *not on the real instance*, you won't see any effects on the real instance.
+
+Watch out for final methods.
+Mockito doesn't mock final methods so the bottom line is: when you spy on real objects + you try to stub a final method = trouble.
+Also you won't be able to verify those method as well.
+
++++RAG_SECTION+++
+
+14. Changing default return values of un-stubbed invocations (Since 1.7)
+
+You can create a mock with specified strategy for its return values.
+It's quite an advanced feature and typically you don't need it to write decent tests.
+However, it can be helpful for working with legacy systems.
+
+It is the default answer so it will be used only when you don't stub the method call.
+
+Foo mock = mock(Foo.class, Mockito.RETURNS_SMART_NULLS);
+Foo mockTwo = mock(Foo.class, new YourOwnAnswer());
+
+Read more about this interesting implementation of Answer: RETURNS_SMART_NULLS
+
++++RAG_SECTION+++
+
+15. Capturing arguments for further assertions (Since 1.8.0)
+
+Mockito verifies argument values in natural java style: by using an equals() method.
+This is also the recommended way of matching arguments because it makes tests clean and simple.
+In some situations though, it is helpful to assert on certain arguments after the actual verification.
+For example:
+
+ArgumentCaptor<Person> argument = ArgumentCaptor.forClass(Person.class);
+verify(mock).doSomething(argument.capture());
+assertEquals("John", argument.getValue().getName());
+
+Warning: it is recommended to use ArgumentCaptor with verification but not with stubbing.
+Using ArgumentCaptor with stubbing may decrease test readability because captor is created outside of assert (aka verify or 'then') block.
+Also it may reduce defect localization because if stubbed method was not called then no argument is captured.
+
+In a way ArgumentCaptor is related to custom argument matchers (see javadoc for ArgumentMatcher class).
+Both techniques can be used for making sure certain arguments were passed to mocks.
+However, ArgumentCaptor may be a better fit if:
+- custom argument matcher is not likely to be reused
+- you just need it to assert on argument values to complete verification
+
+Custom argument matchers via ArgumentMatcher are usually better for stubbing.
+
++++RAG_SECTION+++
+
+16. Real partial mocks (Since 1.8.0)
+
+Finally, after many internal debates and discussions on the mailing list, partial mock support was added to Mockito.
+Previously we considered partial mocks as code smells. However, we found a legitimate use case for partial mocks.
+
+Before release 1.8 spy() was not producing real partial mocks and it was confusing for some users.
+Read more about spying: here or in javadoc for spy(Object) method.
+
+//you can create partial mock with spy() method:
+List list = spy(new LinkedList());
+
+//you can enable partial mock capabilities selectively on mocks:
+Foo mock = mock(Foo.class);
+//Be sure the real implementation is 'safe'.
+//If real implementation throws exceptions or depends on specific state of the object then you're in trouble.
+when(mock.someMethod()).thenCallRealMethod();
+
+As usual you are going to read the partial mock warning:
+
+Object oriented programming is more less tackling complexity by dividing the complexity into separate, specific, SRPy objects.
+How does partial mock fit into this paradigm? Well, it just doesn't...
+Partial mock usually means that the complexity has been moved to a different method on the same object.
+In most cases, this is not the way you want to design your application.
+
+However, there are rare cases when partial mocks come handy:
+dealing with code you cannot change easily (3rd party interfaces, interim refactoring of legacy code etc.)
+However, I wouldn't use partial mocks for new, test-driven and well-designed code.
+
++++RAG_SECTION+++
+
+17. Resetting mocks (Since 1.8.0)
+
+Using this method could be an indication of poor testing.
+Normally, you don't need to reset your mocks, just create new mocks for each test method.
+
+Instead of reset() please consider writing simple, small and focused test methods over lengthy, over-specified tests.
+First potential code smell is reset() in the middle of the test method. This probably means you're testing too much.
+Follow the whisper of your test methods: "Please keep us small and focused on single behavior".
+There are several threads about it on mockito mailing list.
+
+The only reason we added reset() method is to make it possible to work with container-injected mocks.
+For more information see FAQ (here).
+
+Don't harm yourself. reset() in the middle of the test method is a code smell (you're probably testing too much).
+
+List mock = mock(List.class);
+when(mock.size()).thenReturn(10);
+mock.add(1);
+
+reset(mock);
+//at this point the mock forgot any interactions and stubbing
+
++++RAG_SECTION+++
+
+18. Troubleshooting and validating framework usage (Since 1.8.0)
+
+First of all, in case of any trouble, I encourage you to read the Mockito FAQ:
+https://github.com/mockito/mockito/wiki/FAQ
+
+In case of questions you may also post to mockito mailing list:
+https://groups.google.com/group/mockito
+
+Next, you should know that Mockito validates if you use it correctly all the time.
+However, there's a gotcha so please read the javadoc for validateMockitoUsage()
+
++++RAG_SECTION+++
+
+19. Aliases for behavior driven development (Since 1.8.0)
+
+Behavior Driven Development style of writing tests uses //given //when //then comments as fundamental parts of your test methods.
+This is exactly how we write our tests and we warmly encourage you to do so!
+
+Start learning about BDD here: https://en.wikipedia.org/wiki/Behavior-driven_development
+
+The problem is that current stubbing api with canonical role of when word does not integrate nicely with //given //when //then comments.
+It's because stubbing belongs to given component of the test and not to the when component of the test.
+Hence BDDMockito class introduces an alias so that you stub method calls with BDDMockito.given(Object) method.
+Now it really nicely integrates with the given component of a BDD style test!
+
+Here is how the test might look like:
+
+import static org.mockito.BDDMockito.*;
+
+Seller seller = mock(Seller.class);
+Shop shop = new Shop(seller);
+
+public void shouldBuyBread() throws Exception {
+  //given
+  given(seller.askForBread()).willReturn(new Bread());
+
+  //when
+  Goods goods = shop.buyBread();
+
+  //then
+  assertThat(goods, containBread());
+}
+
++++RAG_SECTION+++
+
+20. Serializable mocks (Since 1.8.1)
+
+Mocks can be made serializable. With this feature you can use a mock in a place that requires dependencies to be serializable.
+
+WARNING: This should be rarely used in unit testing.
+
+The behaviour was implemented for a specific use case of a BDD spec that had an unreliable external dependency. This was in a web environment and the objects from the external dependency were being serialized to pass between layers.
+
+To create serializable mock use MockSettings.serializable():
+
+List serializableMock = mock(List.class, withSettings().serializable());
+
+The mock can be serialized assuming all the normal serialization requirements are met by the class.
+
+Making a real object spy serializable is a bit more effort as the spy(...) method does not have an overloaded version which accepts MockSettings. No worries, you will hardly ever use it.
+
+List<Object> list = new ArrayList<Object>();
+List<Object> spy = mock(ArrayList.class, withSettings()
+                .spiedInstance(list)
+                .defaultAnswer(CALLS_REAL_METHODS)
+                .serializable());
+
++++RAG_SECTION+++
+
+21. New annotations: @Captor, @Spy, @InjectMocks (Since 1.8.3)
+
+Release 1.8.3 brings new annotations that may be helpful on occasion:
+
+- @Captor simplifies creation of ArgumentCaptor - useful when the argument to capture is a nasty generic class and you want to avoid compiler warnings
+- @Spy - you can use it instead spy(Object).
+- @InjectMocks - injects mock or spy fields into tested object automatically.
+
+Note that @InjectMocks can also be used in combination with the @Spy annotation, it means that Mockito will inject mocks into the partial mock under test. This complexity is another good reason why you should only use partial mocks as a last resort. See point 16 about partial mocks.
+
+All new annotations are *only* processed on MockitoAnnotations.openMocks(Object).
+Just like for @Mock annotation you can use the built-in runner: MockitoJUnitRunner or rule: MockitoRule.
+
++++RAG_SECTION+++
+
+22. Verification with timeout (Since 1.8.5)
+
+Allows verifying with timeout. It causes a verify to wait for a specified period of time for a desired interaction rather than fails immediately if had not already happened. May be useful for testing in concurrent conditions.
+
+This feature should be used rarely - figure out a better way of testing your multi-threaded system.
+
+Not yet implemented to work with InOrder verification.
+
+Examples:
+
+//passes when someMethod() is called no later than within 100 ms
+//exits immediately when verification is satisfied (e.g. may not wait full 100 ms)
+verify(mock, timeout(100)).someMethod();
+//above is an alias to:
+verify(mock, timeout(100).times(1)).someMethod();
+
+//passes as soon as someMethod() has been called 2 times under 100 ms
+verify(mock, timeout(100).times(2)).someMethod();
+
+//equivalent: this also passes as soon as someMethod() has been called 2 times under 100 ms
+verify(mock, timeout(100).atLeast(2)).someMethod();
+
++++RAG_SECTION+++
+
+23. Automatic instantiation of @Spies, @InjectMocks and constructor injection goodness (Since 1.9.0)
+
+Mockito will now try to instantiate @Spy and will instantiate @InjectMocks fields using constructor injection, setter injection, or field injection.
+
+To take advantage of this feature you need to use MockitoAnnotations.openMocks(Object), MockitoJUnitRunner or MockitoRule.
+
+Read more about available tricks and the rules of injection in the javadoc for InjectMocks
+
+//instead:
+@Spy BeerDrinker drinker = new BeerDrinker();
+//you can write:
+@Spy BeerDrinker drinker;
+
+//same applies to @InjectMocks annotation:
+@InjectMocks LocalPub;
+
++++RAG_SECTION+++
+
+24. One-liner stubs (Since 1.9.0)
+
+Mockito will now allow you to create mocks when stubbing.
+Basically, it allows to create a stub in one line of code.
+This can be helpful to keep test code clean.
+For example, some boring stub can be created and stubbed at field initialization in a test:
+
+public class CarTest {
+  Car boringStubbedCar = when(mock(Car.class).shiftGear()).thenThrow(EngineNotStarted.class).getMock();
+
+  @Test public void should... {}
+
++++RAG_SECTION+++
+
+25. Verification ignoring stubs (Since 1.9.0)
+
+Mockito will now allow to ignore stubbing for the sake of verification.
+Sometimes useful when coupled with verifyNoMoreInteractions() or verification inOrder().
+Helps avoiding redundant verification of stubbed calls - typically we're not interested in verifying stubs.
+
+Warning, ignoreStubs() might lead to overuse of verifyNoMoreInteractions(ignoreStubs(...));
+Bear in mind that Mockito does not recommend bombarding every test with verifyNoMoreInteractions() for the reasons outlined in javadoc for verifyNoMoreInteractions(Object...)
+
+Some examples:
+
+verify(mock).foo();
+verify(mockTwo).bar();
+
+//ignores all stubbed methods:
+verifyNoMoreInteractions(ignoreStubs(mock, mockTwo));
+
+//creates InOrder that will ignore stubbed
+InOrder inOrder = inOrder(ignoreStubs(mock, mockTwo));
+inOrder.verify(mock).foo();
+inOrder.verify(mockTwo).bar();
+inOrder.verifyNoMoreInteractions();
+
+Advanced examples and more details can be found in javadoc for ignoreStubs(Object...)
+
++++RAG_SECTION+++
+
+26. Mocking details (Improved in 2.2.x)
+
+Mockito offers API to inspect the details of a mock object.
+This API is useful for advanced users and mocking framework integrators.
+
+//To identify whether a particular object is a mock or a spy:
+Mockito.mockingDetails(someObject).isMock();
+Mockito.mockingDetails(someObject).isSpy();
+
+//Getting details like type to mock or default answer:
+MockingDetails details = mockingDetails(mock);
+details.getMockCreationSettings().getTypeToMock();
+details.getMockCreationSettings().getDefaultAnswer();
+
+//Getting invocations and stubbings of the mock:
+MockingDetails details = mockingDetails(mock);
+details.getInvocations();
+details.getStubbings();
+
+//Printing all interactions (including stubbing, unused stubs)
+System.out.println(mockingDetails(mock).printInvocations());
+
+For more information see javadoc for MockingDetails.
+
++++RAG_SECTION+++
+
+27. Delegate calls to real instance (Since 1.9.5)
+
+Useful for spies or partial mocks of objects that are difficult to mock or spy using the usual spy API.
+Since Mockito 1.10.11, the delegate may or may not be of the same type as the mock.
+If the type is different, a matching method needs to be found on delegate type otherwise an exception is thrown.
+
+Possible use cases for this feature:
+- Final classes but with an interface
+- Already custom proxied object
+- Special objects with a finalize method, i.e. to avoid executing it 2 times
+
+The difference with the regular spy:
+
+The regular spy (spy(Object)) contains all state from the spied instance and the methods are invoked on the spy. The spied instance is only used at mock creation to copy the state from. If you call a method on a regular spy and it internally calls other methods on this spy, those calls are remembered for verifications, and they can be effectively stubbed.
+
+The mock that delegates simply delegates all methods to the delegate. The delegate is used all the time as methods are delegated onto it. If you call a method on a mock that delegates and it internally calls other methods on this mock, those calls are not remembered for verifications, stubbing does not have effect on them, too. Mock that delegates is less powerful than the regular spy but it is useful when the regular spy cannot be created.
+
+See more information in docs for AdditionalAnswers.delegatesTo(Object).
+
++++RAG_SECTION+++
+
+28. MockMaker API (Since 1.9.5)
+
+Driven by requirements and patches from Google Android guys Mockito now offers an extension point that allows replacing the proxy generation engine. By default, Mockito uses Byte Buddy to create dynamic proxies.
+
+For more details, motivations and examples please refer to the docs for MockMaker.
+
++++RAG_SECTION+++
+
+29. BDD style verification (Since 1.10.0)
+
+Enables Behavior Driven Development (BDD) style verification by starting verification with the BDD then keyword.
+
+given(dog.bark()).willReturn(2);
+
+// when
+...
+
+then(person).should(times(2)).ride(bike);
+
+For more information and an example see BDDMockito.then(Object)
+
++++RAG_SECTION+++
+
+30. Spying or mocking abstract classes (Since 1.10.12, further enhanced in 2.7.13 and 2.7.14)
+
+It is now possible to conveniently spy on abstract classes. Note that overusing spies hints at code design smells (see spy(Object)).
+
+Previously, spying was only possible on instances of objects.
+New API makes it possible to use constructor when creating an instance of the mock.
+This is particularly useful for mocking abstract classes because the user is no longer required to provide an instance of the abstract class.
+At the moment, only parameter-less constructor is supported, let us know if it is not enough.
+
+//convenience API, new overloaded spy() method:
+SomeAbstract spy = spy(SomeAbstract.class);
+
+//Mocking abstract methods, spying default methods of an interface (only available since 2.7.13)
+Function<Foo, Bar> function = spy(Function.class);
+
+//Robust API, via settings builder:
+OtherAbstract spy = mock(OtherAbstract.class, withSettings()
+   .useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+
+//Mocking an abstract class with constructor arguments (only available since 2.7.14)
+SomeAbstract spy = mock(SomeAbstract.class, withSettings()
+  .useConstructor("arg1", 123).defaultAnswer(CALLS_REAL_METHODS));
+
+//Mocking a non-static inner abstract class:
+InnerAbstract spy = mock(InnerAbstract.class, withSettings()
+   .useConstructor().outerInstance(outerInstance).defaultAnswer(CALLS_REAL_METHODS));
+
+For more information please see MockSettings.useConstructor(Object...).
+
++++RAG_SECTION+++
+
+31. Mockito mocks can be serialized / deserialized across classloaders (Since 1.10.0)
+
+Mockito introduces serialization across classloader.
+
+Like with any other form of serialization, all types in the mock hierarchy have to serializable, including answers.
+As this serialization mode require considerably more work, this is an opt-in setting.
+
+// use regular serialization
+mock(Book.class, withSettings().serializable());
+
+// use serialization across classloaders
+mock(Book.class, withSettings().serializable(ACROSS_CLASSLOADERS));
+
+For more details see MockSettings.serializable(SerializableMode).
+
++++RAG_SECTION+++
+
+32. Better generic support with deep stubs (Since 1.10.0)
+
+Deep stubbing has been improved to find generic information if available in the class.
+That means that classes like this can be used without having to mock the behavior.
+
+class Lines extends List<Line> {
+    // ...
+}
+
+lines = mock(Lines.class, RETURNS_DEEP_STUBS);
+
+// Now Mockito understand this is not an Object but a Line
+Line line = lines.iterator().next();
+
+Please note that in most scenarios a mock returning a mock is wrong.
+
++++RAG_SECTION+++
+
+33. Mockito JUnit rule (Since 1.10.17)
+
+Mockito now offers a JUnit rule. Until now in JUnit there were two ways to initialize fields annotated by Mockito annotations such as @Mock, @Spy, @InjectMocks, etc.:
+- Annotating the JUnit test class with a @RunWith(MockitoJUnitRunner.class)
+- Invoking MockitoAnnotations.openMocks(Object) in the @Before method
+
+Now you can choose to use a rule :
+
+@RunWith(YetAnotherRunner.class)
+public class TheTest {
+    @Rule public MockitoRule mockito = MockitoJUnit.rule();
+    // ...
+}
+
+For more information see MockitoJUnit.rule().
+
++++RAG_SECTION+++
+
+34. Switch on or off plugins (Since 1.10.15)
+
+An incubating feature made it's way in mockito that will allow to toggle a mockito-plugin.
+
+More information here PluginSwitch.
+
++++RAG_SECTION+++
+
+35. Custom verification failure message (Since 2.1.0)
+
+Allows specifying a custom message to be printed if verification fails.
+
+Examples:
+
+// will print a custom message on verification failure
+verify(mock, description("This will print on failure")).someMethod();
+
+// will work with any verification mode
+verify(mock, times(2).description("someMethod should be called twice")).someMethod();
+
++++RAG_SECTION+++
+
+36. Java 8 Lambda Matcher Support (Since 2.1.0)
+
+You can use Java 8 lambda expressions with ArgumentMatcher to reduce the dependency on ArgumentCaptor.
+If you need to verify that the input to a function call on a mock was correct, then you would normally use the ArgumentCaptor to find the operands used and then do subsequent assertions on them. While for complex examples this can be useful, it's also long-winded.
+
+Writing a lambda to express the match is quite easy. The argument to your function, when used in conjunction with argThat, will be passed to the ArgumentMatcher as a strongly typed object, so it is possible to do anything with it.
+
+Examples:
+
+// verify a list only had strings of a certain length added to it
+// note - this will only compile under Java 8
+verify(list, times(2)).add(argThat(string -> string.length() < 5));
+
+// Java 7 equivalent - not as neat
+verify(list, times(2)).add(argThat(new ArgumentMatcher<String>(){
+    public boolean matches(String arg) {
+        return arg.length() < 5;
+    }
+}));
+
+// more complex Java 8 example - where you can specify complex verification behaviour functionally
+verify(target, times(1)).receiveComplexObject(argThat(obj -> obj.getSubObject().get(0).equals("expected")));
+
+// this can also be used when defining the behaviour of a mock under different inputs
+// in this case if the input list was fewer than 3 items the mock returns null
+when(mock.someMethod(argThat(list -> list.size()<3))).thenReturn(null);
+
++++RAG_SECTION+++
+
+37. Java 8 Custom Answer Support (Since 2.1.0)
+
+As the Answer interface has just one method it is already possible to implement it in Java 8 using a lambda expression for very simple situations. The more you need to use the parameters of the method call, the more you need to typecast the arguments from InvocationOnMock.
+
+Examples:
+
+// answer by returning 12 every time
+doAnswer(invocation -> 12).when(mock).doSomething();
+
+// answer by using one of the parameters - converting into the right
+// type as your go - in this case, returning the length of the second string parameter
+// as the answer. This gets long-winded quickly, with casting of parameters.
+doAnswer(invocation -> ((String)invocation.getArgument(1)).length())
+    .when(mock).doSomething(anyString(), anyString(), anyString());
+
+For convenience it is possible to write custom answers/actions, which use the parameters to the method call, as Java 8 lambdas. Even in Java 7 and lower these custom answers based on a typed interface can reduce boilerplate.
+In particular, this approach will make it easier to test functions which use callbacks.
+
+The methods AdditionalAnswers.answer(Answer1)} and AdditionalAnswers.answerVoid(VoidAnswer1) can be used to create the answer. They rely on the related answer interfaces in org.mockito.stubbing that support answers up to 5 parameters.
+
+Examples:
+
+// Example interface to be mocked has a function like:
+void execute(String operand, Callback callback);
+
+// the example callback has a function and the class under test
+// will depend on the callback being invoked
+void receive(String item);
+
+// Java 8 - style 1
+doAnswer(AdditionalAnswers.<String,Callback>answerVoid((operand, callback) -> callback.receive("dummy")))
+    .when(mock).execute(anyString(), any(Callback.class));
+
+// Java 8 - style 2 - assuming static import of AdditionalAnswers
+doAnswer(answerVoid((String operand, Callback callback) -> callback.receive("dummy")))
+    .when(mock).execute(anyString(), any(Callback.class));
+
+// Java 8 - style 3 - where mocking function to is a static member of test class
+private static void dummyCallbackImpl(String operation, Callback callback) {
+    callback.receive("dummy");
+}
+
+doAnswer(answerVoid(TestClass::dummyCallbackImpl))
+    .when(mock).execute(anyString(), any(Callback.class));
+
+// Java 7
+doAnswer(answerVoid(new VoidAnswer2<String, Callback>() {
+    public void answer(String operation, Callback callback) {
+        callback.receive("dummy");
+    }})).when(mock).execute(anyString(), any(Callback.class));
+
+// returning a value is possible with the answer() function
+// and the non-void version of the functional interfaces
+// so if the mock interface had a method like
+boolean isSameString(String input1, String input2);
+
+// this could be mocked
+// Java 8
+doAnswer(AdditionalAnswers.<Boolean,String,String>answer((input1, input2) -> input1.equals(input2)))
+    .when(mock).execute(anyString(), anyString());
+
+// Java 7
+doAnswer(answer(new Answer2<String, String, String>() {
+    public String answer(String input1, String input2) {
+        return input1 + input2;
+    }})).when(mock).execute(anyString(), anyString());
+
++++RAG_SECTION+++
+
+38. Meta data and generic type retention (Since 2.1.0)
+
+Mockito now preserves annotations on mocked methods and types as well as generic meta data. Previously, a mock type did not preserve annotations on types unless they were explicitly inherited and never retained annotations on methods. As a consequence, the following conditions now hold true:
+
+@MyAnnotation
+class Foo {
+  List<String> bar() { ... }
+}
+
+Class<?> mockType = mock(Foo.class).getClass();
+assert mockType.isAnnotationPresent(MyAnnotation.class);
+assert mockType.getDeclaredMethod("bar").getGenericReturnType() instanceof ParameterizedType;
+
+When using Java 8, Mockito now also preserves type annotations. This is default behavior and might not hold if an alternative MockMaker is used.
+
++++RAG_SECTION+++
+
+39. Mocking final types, enums and final methods (Since 2.1.0)
+
+Mockito now offers support for mocking final classes and methods by default.
+This is a fantastic improvement that demonstrates Mockito's everlasting quest for improving testing experience.
+Our ambition is that Mockito "just works" with final classes and methods.
+Previously they were considered unmockable, preventing the user from mocking.
+Since 5.0.0, this feature is enabled by default.
+
+This alternative mock maker which uses a combination of both Java instrumentation API and sub-classing rather than creating a new class to represent a mock. This way, it becomes possible to mock final types and methods.
+
+In versions preceding 5.0.0, this mock maker is turned off by default because it is based on completely different mocking mechanism that required more feedback from the community. It can be activated explicitly by the mockito extension mechanism, just create in the classpath a file /mockito-extensions/org.mockito.plugins.MockMaker containing the value mock-maker-inline.
+
+As a convenience, the Mockito team provides an artifact where this mock maker is preconfigured. Instead of using the mockito-core artifact, include the mockito-inline artifact in your project. Note that this artifact is likely to be discontinued once mocking of final classes and methods gets integrated into the default mock maker.
+
+Some noteworthy notes about this mock maker:
+- Mocking final types and enums is incompatible with mock settings like :
+  - explicitly serialization support withSettings().serializable()
+  - extra-interfaces withSettings().extraInterfaces()
+- Some methods cannot be mocked:
+  - Package-visible methods of java.*
+  - native methods
+- This mock maker has been designed around Java Agent runtime attachment ; this require a compatible JVM, that is part of the JDK (or Java 9 VM). When running on a non-JDK VM prior to Java 9, it is however possible to manually add the Byte Buddy Java agent jar using the -javaagent parameter upon starting the JVM.
+
+If you are interested in more details of this feature please read the javadoc of org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker
+
++++RAG_SECTION+++
+
+40. Improved productivity and cleaner tests with "stricter" Mockito (Since 2.+)
+
+To quickly find out how "stricter" Mockito can make you more productive and get your tests cleaner, see:
+- Strict stubbing with JUnit4 Rules - MockitoRule.strictness(Strictness) with Strictness.STRICT_STUBS
+- Strict stubbing with JUnit4 Runner - MockitoJUnitRunner.Strict
+- Strict stubbing with JUnit5 Extension - org.mockito.junit.jupiter.MockitoExtension
+- Strict stubbing with TestNG Listener MockitoTestNGListener
+- Strict stubbing if you cannot use runner/rule - MockitoSession
+- Unnecessary stubbing detection with MockitoJUnitRunner
+- Stubbing argument mismatch warnings, documented in MockitoHint
+
+Mockito is a "loose" mocking framework by default.
+Mocks can be interacted with without setting any expectations beforehand.
+This is intentional and it improves the quality of tests by forcing users to be explicit about what they want to stub / verify.
+It is also very intuitive, easy to use and blends nicely with "given", "when", "then" template of clean test code.
+This is also different from the classic mocking frameworks of the past, they were "strict" by default.
+
+Being "loose" by default makes Mockito tests harder to debug at times.
+There are scenarios where misconfigured stubbing (like using a wrong argument) forces the user to run the test with a debugger.
+Ideally, tests failures are immediately obvious and don't require debugger to identify the root cause.
+Starting with version 2.1 Mockito has been getting new features that nudge the framework towards "strictness".
+We want Mockito to offer fantastic debuggability while not losing its core mocking style, optimized for intuitiveness, explicitness and clean test code.
+
+Help Mockito! Try the new features, give us feedback, join the discussion about Mockito strictness at GitHub issue 769.
+
++++RAG_SECTION+++
+
+41. Advanced public API for framework integrations (Since 2.10.+)
+
+In Summer 2017 we decided that Mockito should offer better API for advanced framework integrations.
+The new API is not intended for users who want to write unit tests.
+It is intended for other test tools and mocking frameworks that need to extend or wrap Mockito with some custom logic.
+During the design and implementation process (issue 1110) we have developed and changed following public API elements:
+- New MockitoPlugins - Enables framework integrators to get access to default Mockito plugins. Useful when one needs to implement custom plugin such as MockMaker and delegate some behavior to the default Mockito implementation.
+- New MockSettings.build(Class) - Creates immutable view of mock settings used later by Mockito. Useful for creating invocations with InvocationFactory or when implementing custom MockHandler.
+- New MockingDetails.getMockHandler() - Other frameworks may use the mock handler to programmatically simulate invocations on mock objects.
+- New MockHandler.getMockSettings() - Useful to get hold of the setting the mock object was created with.
+- New InvocationFactory - Provides means to create instances of Invocation objects. Useful for framework integrations that need to programmatically simulate method calls on mock objects.
+- New MockHandler.getInvocationContainer() - Provides access to invocation container object which has no methods (marker interface). Container is needed to hide the internal implementation and avoid leaking it to the public API.
+- Changed Stubbing - it now extends Answer interface. It is backwards compatible because Stubbing interface is not extensible (see NotExtensible). The change should be seamless to our users.
+- NotExtensible - Public annotation that indicates to the user that she should not provide custom implementations of given type. Helps framework integrators and our users understand how to use Mockito API safely.
+
+Do you have feedback? Please leave comment in issue 1110.
+
++++RAG_SECTION+++
+
+42. New API for integrations: listening on verification start events (Since 2.11.+)
+
+Framework integrations such as Spring Boot needs public API to tackle double-proxy use case (issue 1191).
+We added:
+- New VerificationStartedListener and VerificationStartedEvent enable framework integrators to replace the mock object for verification. The main driving use case is Spring Boot integration. For details see Javadoc for VerificationStartedListener.
+- New public method MockSettings.verificationStartedListeners(VerificationStartedListener...) allows to supply verification started listeners at mock creation time.
+- New handy method MockingDetails.getMock() was added to make the MockingDetails API more complete. We found this method useful during the implementation.
+
++++RAG_SECTION+++
+
+43. New API for integrations: MockitoSession is usable by testing frameworks (Since 2.15.+)
+
+MockitoSessionBuilder and MockitoSession were enhanced to enable reuse by testing framework integrations (e.g. MockitoRule for JUnit):
+- MockitoSessionBuilder.initMocks(Object...) allows to pass in multiple test class instances for initialization of fields annotated with Mockito annotations like Mock. This method is useful for advanced framework integrations (e.g. JUnit Jupiter), when a test uses multiple, e.g. nested, test class instances.
+- MockitoSessionBuilder.name(String) allows to pass a name from the testing framework to the MockitoSession that will be used for printing warnings when Strictness.WARN is used.
+- MockitoSessionBuilder.logger(MockitoSessionLogger) makes it possible to customize the logger used for hints/warnings produced when finishing mocking (useful for testing and to connect reporting capabilities provided by testing frameworks such as JUnit Jupiter).
+- MockitoSession.setStrictness(Strictness) allows to change the strictness of a MockitoSession for one-off scenarios, e.g. it enables configuring a default strictness for all tests in a class but makes it possible to change the strictness for a single or a few tests.
+- MockitoSession.finishMocking(Throwable) was added to avoid confusion that may arise because there are multiple competing failures. It will disable certain checks when the supplied failure is not null.
+
++++RAG_SECTION+++
+
+44. Deprecated org.mockito.plugins.InstantiatorProvider as it was leaking internal API. it was replaced by org.mockito.plugins.InstantiatorProvider2 (Since 2.15.4)
+
+org.mockito.plugins.InstantiatorProvider returned an internal API. Hence it was deprecated and replaced by InstantiatorProvider2. org.mockito.plugins.InstantiatorProvider has now been removed.
+
++++RAG_SECTION+++
+
+45. New JUnit Jupiter (JUnit5+) extension
+
+For integration with JUnit Jupiter (JUnit5+), use the `org.mockito:mockito-junit-jupiter` artifact.
+For more information about the usage of the integration, see the JavaDoc of MockitoExtension.
+
++++RAG_SECTION+++
+
+46. New Mockito.lenient() and MockSettings.lenient() methods (Since 2.20.0)
+
+Strict stubbing feature is available since early Mockito 2.
+It is very useful because it drives cleaner tests and improved productivity.
+
+Strict stubbing reports unnecessary stubs, detects stubbing argument mismatch and makes the tests more DRY (Strictness.STRICT_STUBS).
+This comes with a trade-off: in some cases, you may get false negatives from strict stubbing.
+To remedy those scenarios you can now configure specific stubbing to be lenient, while all the other stubbings and mocks use strict stubbing:
+
+lenient().when(mock.foo()).thenReturn("ok");
+
+If you want all the stubbings on a given mock to be lenient, you can configure the mock accordingly:
+
+Foo mock = Mockito.mock(Foo.class, withSettings().lenient());
+
+For more information refer to lenient().
+Let us know how do you find the new feature by opening a GitHub issue to discuss!
+
+Elaborate example
+
+In below example, 'foo.foo()' is a stubbing that was moved to 'before()' method to avoid duplication.
+Doing so makes one of the test methods ('test3()') fail with 'unnecessary stubbing'.
+To resolve it we can configure 'foo.foo()' stubbing in 'before()' method to be lenient.
+Alternatively, we can configure entire 'foo' mock as lenient.
+
+This example is simplified and not realistic.
+Pushing stubbings to 'before()' method may cause tests to be less readable.
+Some repetition in tests is OK, use your own judgement to write great tests!
+It is not desired to eliminate all possible duplication from the test code because it may add complexity and conceal important test information.
+
+public class SomeTest {
+
+    @Rule public MockitoRule mockito = MockitoJUnit.rule().strictness(STRICT_STUBS);
+
+    @Mock Foo foo;
+    @Mock Bar bar;
+
+    @Before public void before() {
+        when(foo.foo()).thenReturn("ok");
+
+        // it is better to configure the stubbing to be lenient:
+        // lenient().when(foo.foo()).thenReturn("ok");
+
+        // or the entire mock to be lenient:
+        // foo = mock(Foo.class, withSettings().lenient());
+    }
+
+    @Test public void test1() {
+        foo.foo();
+    }
+
+    @Test public void test2() {
+        foo.foo();
+    }
+
+    @Test public void test3() {
+        bar.bar();
+    }
+}
+
+Since: 2.20.0
+
++++RAG_SECTION+++
+
+47. New API for clearing mock state in inline mocking (Since 2.25.0)
+
+In certain specific, rare scenarios (issue #1619) inline mocking causes memory leaks.
+There is no clean way to mitigate this problem completely.
+Hence, we introduced a new API to explicitly clear mock state (only make sense in inline mocking!).
+See example usage in MockitoFramework.clearInlineMocks().
+If you have feedback or a better idea how to solve the problem please reach out.
+
++++RAG_SECTION+++
+
+48. Mocking static methods (since 3.4.0)
+
+When using the inline mock maker, it is possible to mock static method invocations within the current thread and a user-defined scope. This way, Mockito assures that concurrently and sequentially running tests do not interfere.
+
+To make sure a static mock remains temporary, it is recommended to define the scope within a try-with-resources construct.
+In the following example, the Foo type's static method would return foo unless mocked:
+
+assertEquals("foo", Foo.method());
+try (MockedStatic mocked = mockStatic(Foo.class)) {
+  mocked.when(Foo::method).thenReturn("bar");
+  assertEquals("bar", Foo.method());
+  mocked.verify(Foo::method);
+}
+assertEquals("foo", Foo.method());
+
+Due to the defined scope of the static mock, it returns to its original behavior once the scope is released. To define mock behavior and to verify static method invocations, use the MockedStatic that is returned.
+
++++RAG_SECTION+++
+
+49. Mocking object construction (since 3.5.0)
+
+When using the inline mock maker, it is possible to generate mocks on constructor invocations within the current thread and a user-defined scope. This way, Mockito assures that concurrently and sequentially running tests do not interfere.
+
+To make sure a constructor mocks remain temporary, it is recommended to define the scope within a try-with-resources construct.
+In the following example, the Foo type's construction would generate a mock:
+
+assertEquals("foo", new Foo().method());
+try (MockedConstruction mocked = mockConstruction(Foo.class)) {
+  Foo foo = new Foo();
+  when(foo.method()).thenReturn("bar");
+  assertEquals("bar", foo.method());
+  verify(foo).method();
+}
+assertEquals("foo", new Foo().method());
+
+Due to the defined scope of the mocked construction, object construction returns to its original behavior once the scope is released. To define mock behavior and to verify method invocations, use the MockedConstruction that is returned.
+
++++RAG_SECTION+++
+
+50. Avoiding code generation when restricting mocks to interfaces (Since 3.12.2)
+
+The JVM offers the Proxy facility for creating dynamic proxies of interface types. For most applications, Mockito must be capable of mocking classes as supported by the default mock maker, or even final classes, as supported by the inline mock maker. To create such mocks, Mockito requires to setup diverse JVM facilities and must apply code generation. If only interfaces are supposed to be mocked, one can however choose to use a org.mockito.internal.creation.proxy.ProxyMockMaker that is based on the Proxy API which avoids diverse overhead of the other mock makers but also limits mocking to interfaces.
+
+This mock maker can be activated explicitly by the mockito extension mechanism, just create in the classpath a file /mockito-extensions/org.mockito.plugins.MockMaker containing the value mock-maker-proxy.
+
++++RAG_SECTION+++
+
+51. New API for marking classes as unmockable (Since 4.1.0)
+
+In some cases, mocking a class/interface can lead to unexpected runtime behavior. For example, mocking a java.util.List is difficult, given the requirements imposed by the interface. This means that on runtime, depending on what methods the application calls on the list, your mock might behave in such a way that it violates the interface.
+
+For any class/interface you own that is problematic to mock, you can now mark the class with @DoNotMock. For usage of the annotation and how to ship your own (to avoid a compile time dependency on a test artifact), please see its JavaDoc.
+
++++RAG_SECTION+++
+
+52. New strictness attribute for @Mock annotation and MockSettings.strictness() methods (Since 4.6.0)
+
+You can now customize the strictness level for a single mock, either using `@Mock` annotation strictness attribute or using `MockSettings.strictness()`. This can be useful if you want all of your mocks to be strict, but one of the mocks to be lenient.
+
+@Mock(strictness = Strictness.LENIENT)
+Foo mock;
+// using MockSettings.withSettings()
+Foo mock = Mockito.mock(Foo.class, withSettings().strictness(Strictness.WARN));
+
++++RAG_SECTION+++
+
+53. Specifying mock maker for individual mocks (Since 4.8.0)
+
+You may encounter situations where you want to use a different mock maker for a specific test only.
+In such case, you can (temporarily) use MockSettings.mockMaker(String) and Mock.mockMaker() to specify the mock maker for a specific mock which is causing the problem.
+
+// using annotation
+@Mock(mockMaker = MockMakers.SUBCLASS)
+Foo mock;
+// using MockSettings.withSettings()
+Foo mock = Mockito.mock(Foo.class, withSettings().mockMaker(MockMakers.SUBCLASS));
+
++++RAG_SECTION+++
+
+54. Mocking/spying without specifying class (Since 4.10.0)
+
+Instead of calling method mock(Class) or spy(Class) with Class parameter, you can now call method mock() or spy() without parameters:
+
+Foo foo = Mockito.mock();
+Bar bar = Mockito.spy();
+
+Mockito will automatically detect the needed class.
+
+It works only if you assign result of mock() or spy() to a variable or field with an explicit type.
+With an implicit type, the Java compiler is unable to automatically determine the type of a mock and you need to pass in the Class explicitly.
+
++++RAG_SECTION+++
+
+55. Verification with assertions (Since 5.3.0)
+
+To validate arguments during verification, instead of capturing them with ArgumentCaptor, you can now use ArgumentMatchers.assertArg(Consumer)}:
+
+verify(serviceMock).doStuff(assertArg(param -> {
+  assertThat(param.getField1()).isEqualTo("foo");
+  assertThat(param.getField2()).isEqualTo("bar");
+}));
+
++++RAG_SECTION+++
+
+56. Mocking singletons (like Java enums) (Since 5.22.0)
+
+Use the new mockSingleton(Object) API to configure thread-local mocking of singleton objects for which you don't control initialization, assignment, or access. Java enums are a good example. The mocking only applies to the given instance and that instance only behaves as a mock on the current thread.
+
+try (MockedSingleton<MyEnum> mocked = mockSingleton(MyEnum.A)) {
+    when(MyEnum.A.method()).thenReturn("bar");
+    assertEquals("bar", MyEnum.A.method());
+}

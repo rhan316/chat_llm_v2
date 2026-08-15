@@ -1,0 +1,2242 @@
+About Testcontainers for Java
+
+Testcontainers for Java is a Java library that supports JUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.
+
+Testcontainers make the following kinds of tests easier:
+
+    Data access layer integration tests: use a containerized instance of a MySQL, PostgreSQL or Oracle database to test your data access layer code for complete compatibility, but without requiring complex setup on developers' machines and safe in the knowledge that your tests will always start with a known DB state. Any other database type that can be containerized can also be used.
+    Application integration tests: for running your application in a short-lived test mode with dependencies, such as databases, message queues or web servers.
+    UI/Acceptance tests: use containerized web browsers, compatible with Selenium, for conducting automated UI tests. Each test can get a fresh instance of the browser, with no browser state, plugin variations or automated browser upgrades to worry about. And you get a video recording of each test session, or just each session where tests failed.
+    Much more! Check out the various contributed modules or create your own custom container classes using GenericContainer as a base.
+
+Prerequisites
+
+    Docker - please see General Docker requirements
+    A supported JVM testing framework:
+        JUnit 4 - See the JUnit 4 Quickstart Guide
+        Jupiter/JUnit 5
+        Spock
+        Or manually add code to control the container/test lifecycle (See hints for this approach)
+
+Maven dependencies
+
+Testcontainers is distributed as separate JARs with a common version number:
+
+    A core JAR file for core functionality, generic containers and docker-compose support
+    A separate JAR file for each of the specialised modules. Each module's documentation describes the Maven/Gradle dependency to add to your project's build.
+
+For the core library, the latest Maven/Gradle dependency is as follows:
+Gradle
+Maven
+
+testImplementation "org.testcontainers:testcontainers:2.0.5"
+
+You can also check the latest version available on Maven Central.
+Managing versions for multiple Testcontainers dependencies
+
+To avoid specifying the version of each dependency, you can use a BOM or Bill Of Materials.
+
+Using Maven you can add the following to dependencyManagement section in your pom.xml:
+Maven
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-bom</artifactId>
+            <version>2.0.5</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+and then use dependencies without specifying a version:
+Maven
+
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers-mysql</artifactId>
+    <scope>test</scope>
+</dependency>
+
+Using Gradle 5.0 or higher, you can add the following to the dependencies section in your build.gradle:
+Gradle
+
+implementation platform('org.testcontainers:testcontainers-bom:2.0.5') //import bom
+testImplementation('org.testcontainers:testcontainers-mysql') //no version specified
+
+JitPack builds are available for pre-release versions.
+
+Shaded dependencies
+
+Testcontainers depends on other libraries (like docker-java) for it to work.
+Some of them (JUnit, docker-java-{api,transport} and its transitive dependencies, JNA, visible-assertions and others) are part of our public API.
+But there are also "private", implementation detail dependencies (e.g., docker-java-core, Guava, OkHttp, etc.) that are not exposed to public API but prone to conflicts with test code/application under test code. As such, these libraries are 'shaded' into the core Testcontainers JAR and relocated under org.testcontainers.shaded to prevent class conflicts.
+
++++RAG_SECTION+++
+
+It's easy to add Testcontainers to your project - let's walk through a quick example to see how.
+
+Let's imagine we have a simple program that has a dependency on Redis, and we want to add some tests for it. In our imaginary program, there is a RedisBackedCache class which stores data in Redis.
+
+You can see an example test that could have been written for it (without using Testcontainers):
+
+Pre-Testcontainers test code
+
+public class RedisBackedCacheIntTestStep0 {
+
+    private RedisBackedCache underTest;
+
+    @BeforeEach
+    public void setUp() {
+        // Assume that we have Redis running locally?
+        underTest = new RedisBackedCache("localhost", 6379);
+    }
+
+    @Test
+    public void testSimplePutAndGet() {
+        underTest.put("test", "example");
+
+        String retrieved = underTest.get("test");
+        assertThat(retrieved).isEqualTo("example");
+    }
+}
+
+Notice that the existing test has a problem - it's relying on a local installation of Redis, which is a red flag for test reliability. This may work if we were sure that every developer and CI machine had Redis installed, but would fail otherwise. We might also have problems if we attempted to run tests in parallel, such as state bleeding between tests, or port clashes.
+
+Let's start from here, and see how to improve the test with Testcontainers:
+1. Add Testcontainers as a test-scoped dependency
+
+First, add Testcontainers as a dependency as follows:
+
+GradleMaven
+
+testImplementation "org.junit.jupiter:junit-jupiter:5.8.1"
+testImplementation "org.testcontainers:testcontainers:2.0.5"
+testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
+
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <version>5.8.1</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers</artifactId>
+    <version>2.0.5</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers-junit-jupiter</artifactId>
+    <version>2.0.5</version>
+    <scope>test</scope>
+</dependency>
+
+2. Get Testcontainers to run a Redis container during our tests
+
+First, you'll need to annotate the test class with @Testcontainers. Furthermore, add the following to the body of our test class:
+
+JUnit 5 Rule
+
+@Container
+public GenericContainer redis = new GenericContainer(DockerImageName.parse("redis:6-alpine"))
+    .withExposedPorts(6379);
+
+The @Container annotation tells JUnit to notify this field about various events in the test lifecycle. In this case, our rule object is a Testcontainers GenericContainer, configured to use a specific Redis image from Docker Hub, and configured to expose a port.
+
+If we run our test as-is, then regardless of the actual test outcome, we'll see logs showing us that Testcontainers:
+
+    was activated before our test method ran
+    discovered and quickly tested our local Docker setup
+    pulled the image if necessary
+    started a new container and waited for it to be ready
+    shut down and deleted the container after the test
+
+3. Make sure our code can talk to the container
+
+Before Testcontainers, we might have hardcoded an address like localhost:6379 into our tests.
+
+Testcontainers uses randomized ports for each container it starts, but makes it easy to obtain the actual port at runtime. We can do this in our test setUp method, to set up our component under test:
+
+Obtaining a mapped port
+
+String address = redis.getHost();
+Integer port = redis.getFirstMappedPort();
+
+// Now we have an address and port for Redis, no matter where it is running
+underTest = new RedisBackedCache(address, port);
+
+Tip
+
+Notice that we also ask Testcontainers for the container's actual address with redis.getHost();, rather than hard-coding localhost. localhost may work in some environments but not others - for example it may not work on your current or future CI environment. As such, avoid hard-coding the address, and use getHost() instead.
+4. Additional attributes
+
+Additional attributes are available for the @Testcontainers annotation. Those attributes can be helpful when:
+
+    Tests should be skipped instead of failing because Docker is unavailable in the current environment. Set disabledWithoutDocker to true.
+    Enable parallel container initialization instead of sequential (by default). Set parallel to true.
+
+5. Run the tests!
+
+That's it!
+
+Let's look at our complete test class to see how little we had to add to get up and running with Testcontainers:
+
+RedisBackedCacheIntTest
+
+@Testcontainers
+public class RedisBackedCacheIntTest {
+
+    private RedisBackedCache underTest;
+
+    // container {
+    @Container
+    public GenericContainer redis = new GenericContainer(DockerImageName.parse("redis:6-alpine"))
+        .withExposedPorts(6379);
+
+    // }
+
+    @BeforeEach
+    public void setUp() {
+        String address = redis.getHost();
+        Integer port = redis.getFirstMappedPort();
+
+        // Now we have an address and port for Redis, no matter where it is running
+        underTest = new RedisBackedCache(address, port);
+    }
+
+    @Test
+    public void testSimplePutAndGet() {
+        underTest.put("test", "example");
+
+        String retrieved = underTest.get("test");
+        assertThat(retrieved).isEqualTo("example");
+    }
+}
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Creating a container - Testcontainers for Java
+~3 minutes
+Creating a generic container based on an image
+
+Testcontainers' generic container support offers the most flexibility, and makes it easy to use virtually any container images as temporary test dependencies. For example, if you might use it to test interactions with:
+
+    NoSQL databases or other data stores (e.g. redis, elasticsearch, mongo)
+    Web servers/proxies (e.g. nginx, apache)
+    Log services (e.g. logstash, kibana)
+    Other services developed by your team/organization which are already dockerized
+
+With a generic container, you set the container image using a parameter to the rule constructor, e.g.:
+
+new GenericContainer(DockerImageName.parse("jboss/wildfly:9.0.1.Final"))
+
+Specifying an image
+
+Many Container classes in Testcontainers have historically supported:
+
+    a no-args constructor - for example new GenericContainer() and new ElasticsearchContainer(). With these constructors, Testcontainers has traditionally used a default image name (including a fixed image tag/version). This has caused a conflict between the need to keep the defaults sane (i.e. up to date) and the need to avoid silently upgrading these dependencies along with new versions of Testcontainers.
+    a single string-argument constructor, which has taken either a version or an image name as a String. This has caused some ambiguity and confusion.
+
+Since v1.15.0, both of these constructor types have been deprecated, for the reasons given above.
+
+Instead, it is highly recommended that all containers be constructed using a constructor that accepts a DockerImageName object. The DockerImageName class is an unambiguous reference to a docker image.
+
+It is suggested that developers treat DockerImageNames as you would any other potentially-constant value - consider defining a constant in your test codebase that matches the production version of the dependency you are using.
+Examples
+
+A generic container rule can be used with any public docker image; for example:
+
+Creating a Redis container
+
+@Container
+public GenericContainer redis = new GenericContainer(DockerImageName.parse("redis:6-alpine"))
+    .withExposedPorts(6379);
+
+The container, as @Container, will be started before any tests in the class run, and will be destroyed after all tests have run.
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Networking and communicating with containers
+5–7 minutes
+Exposing container ports to the host
+
+It is common to want to connect to a container from your test process, running on the test 'host' machine. For example, you may be testing a class that needs to connect to a backend or data store container.
+
+Generally, each required port needs to be explicitly exposed. For example, we can specify one or more ports as follows:
+
+Exposing ports
+
+public GenericContainer<?> container = new GenericContainer<>(
+    DockerImageName.parse("testcontainers/helloworld:1.1.0")
+)
+    .withExposedPorts(8080, 8081)
+    .withLogConsumer(new Slf4jLogConsumer(log));
+
+Note that this exposed port number is from the perspective of the container.
+
+From the host's perspective Testcontainers actually exposes this on a random free port. This is by design, to avoid port collisions that may arise with locally running software or in between parallel test runs.
+
+Because there is this layer of indirection, it is necessary to ask Testcontainers for the actual mapped port at runtime. This can be done using the getMappedPort method, which takes the original (container) port as an argument:
+
+Retrieving actual ports at runtime
+
+Integer firstMappedPort = container.getMappedPort(8080);
+Integer secondMappedPort = container.getMappedPort(8081);
+
+Warning
+
+Because the randomised port mapping happens during container startup, the container must be running at the time getMappedPort is called. You may need to ensure that the startup order of components in your tests caters for this.
+
+There is also a getFirstMappedPort method for convenience, for the fairly common scenario of a container that only exposes one port:
+
+Retrieving the first mapped port
+
+Integer firstMappedPort = container.getFirstMappedPort();
+
+Getting the container host
+
+When running with a local Docker daemon, exposed ports will usually be reachable on localhost. However, in some CI environments they may instead be reachable on a different host.
+
+As such, Testcontainers provides a convenience method to obtain an address on which the container should be reachable from the host machine.
+
+Getting the container host
+
+String ipAddress = container.getHost();
+
+It is normally advisable to use getHost and getMappedPort together when constructing addresses - for example:
+
+Getting the container host and mapped port
+
+String address = container.getHost() + ":" + container.getMappedPort(8080);
+
+Tip
+
+getHost() is a replacement for getContainerIpAddress() and returns the same result. getContainerIpAddress() is believed to be confusingly named, and will eventually be deprecated.
+Exposing host ports to the container
+
+In some cases it is necessary to make a network connection from a container to a socket that is listening on the host machine. Natively, Docker has limited support for this model across platforms. Testcontainers, however, makes this possible.
+
+In this example, assume that localServerPort is a port on our test host machine where a server (e.g. a web application) is running.
+
+We need to tell Testcontainers to prepare to expose this port to containers:
+
+Exposing the host port
+
+Testcontainers.exposeHostPorts(localServerPort);
+
+Warning
+
+Note that the above command should be invoked before containers are started, but after the server on the host was started.
+Alternatively, use container.withAccessToHost(true) to force the host access mechanism (you still need to call exposeHostPorts to make the port available).
+
+Having done so, we can now access this port from any containers that are launched. From a container's perspective, the hostname will be host.testcontainers.internal and the port will be the same value as localServerPort.
+
+For example, here we construct an HTTP URL for our local web application and tell a Selenium container to get a page from it:
+
+Accessing the exposed host port from a container
+
+final String rootUrl = String.format("http://host.testcontainers.internal:%d/", localServerPort);
+
+final RemoteWebDriver webDriver = new RemoteWebDriver(this.browser.getSeleniumAddress(), new ChromeOptions());
+webDriver.get(rootUrl);
+
+Advanced networking
+
+Docker provides the ability for you to create custom networks and place containers on one or more networks. Then, communication can occur between networked containers without the need of exposing ports through the host. With Testcontainers, you can do this as well.
+
+Warning
+
+Note that Testcontainers currently only allows a container to be on a single network.
+
+Creating custom networks
+
+try (
+    Network network = Network.newNetwork();
+    GenericContainer<?> foo = new GenericContainer<>(TestImages.TINY_IMAGE)
+        .withNetwork(network)
+        .withNetworkAliases("foo")
+        .withCommand(
+            "/bin/sh",
+            "-c",
+            "while true ; do printf 'HTTP/1.1 200 OK\\n\\nyay' | nc -l -p 8080; done"
+        );
+    GenericContainer<?> bar = new GenericContainer<>(TestImages.TINY_IMAGE)
+        .withNetwork(network)
+        .withCommand("top")
+) {
+    foo.start();
+    bar.start();
+
+    String response = bar.execInContainer("wget", "-O", "-", "http://foo:8080").getStdout();
+    assertThat(response).as("received response").isEqualTo("yay");
+}
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Executing commands - Testcontainers for Java
+~2 minutes
+Container startup command
+
+By default the container will execute whatever command is specified in the image's Dockerfile. To override this, and specify a different command, use withCommand. For example:
+
+Specifying a startup command
+
+public GenericContainer redisWithCustomPort = new GenericContainer(DockerImageName.parse("redis:6-alpine"))
+    .withCommand("redis-server --port 7777")
+
+Executing a command
+
+Your test can execute a command inside a running container, similar to a docker exec call:
+
+Executing a command inside a running container
+
+container.execInContainer("touch", "/somefile.txt");
+
+This can be useful for software that has a command line administration tool. You can also get the output (stdout/stderr) and exit code from the command - for example:
+
+Executing a command inside a running container and reading the result
+
+Container.ExecResult lsResult = container.execInContainer("ls", "-al", "/");
+String stdout = lsResult.getStdout();
+int exitCode = lsResult.getExitCode();
+assertThat(stdout).contains("somefile.txt");
+assertThat(exitCode).isZero();
+
+Environment variables
+
+To add environment variables to the container, use withEnv:
+
+new GenericContainer(...)
+        .withEnv("API_TOKEN", "foo")
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Files and volumes - Testcontainers for Java
+2–3 minutes
+Copying files
+
+Files can be copied into the container before startup, or can be copied from the container after the container has started.
+
+Note
+
+This is the recommended approach for portability cross-docker environments.
+Copying to a container before startup
+
+Copying files using MountableFile
+
+GenericContainer<?> container = new GenericContainer<>(TestImages.TINY_IMAGE)
+    .withCommand("sleep", "3000")
+    .withCopyFileToContainer(
+        MountableFile.forClasspathResource("/mappable-resource/"),
+        directoryInContainer
+    )
+
+Using Transferable, file content will be placed in the specified location.
+
+Copying files using Transferable
+
+GenericContainer<?> container = new GenericContainer<>(TestImages.TINY_IMAGE)
+    .withStartupCheckStrategy(new NoopStartupCheckStrategy())
+    .withCopyToContainer(Transferable.of("test"), "/tmp/test")
+    .waitingFor(new WaitForExitedState(state -> state.getExitCodeLong() > 0))
+    .withCommand("sh", "-c", "grep -q test /tmp/test && exit 100")
+
+Setting file mode is also possible.
+
+Copying files using Transferable with file mode
+
+GenericContainer<?> container = new GenericContainer<>(TestImages.TINY_IMAGE)
+    .withStartupCheckStrategy(new NoopStartupCheckStrategy())
+    .withCopyToContainer(Transferable.of("test", 0777), "/tmp/test")
+    .waitingFor(new WaitForExitedState(state -> state.getExitCodeLong() > 0))
+    .withCommand("sh", "-c", "ls -ll /tmp | grep '\\-rwxrwxrwx\\|test' && exit 100")
+
+Copying a file from a running container
+
+Copying files from a container
+
+container.copyFileFromContainer(directoryInContainer + fileName, destinationOnHost);
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Waiting for containers to start or be ready
+6–8 minutes
+
+Wait strategies vs Startup strategies
+
+Wait strategy: is the container in a state that is useful for testing. This is generally approximated as 'can we talk to this container over the network'. However, there are quite a few variations and nuances.
+
+Startup strategy: did a container reach the desired running state. Almost always this just means 'wait until the container is running' - for a daemon process in a container this is the goal. Sometimes we need to wait until the container reaches a running state and then exits - this is the 'one shot startup' strategy, only used for cases where we need to run a one off command in a container but not a daemon.
+Wait Strategies
+
+Ordinarily Testcontainers will wait for up to 60 seconds for the container's first mapped network port to start listening.
+
+This simple measure provides a basic check whether a container is ready for use.
+
+Waiting for the first exposed port to start listening
+
+public GenericContainer nginx = new GenericContainer(DockerImageName.parse("nginx:1.27.0-alpine3.19-slim")) //
+    .withExposedPorts(80);
+
+If the default 60s timeout is not sufficient, it can be altered with the withStartupTimeout() method.
+
+If waiting for a listening TCP port is not sufficient to establish whether the container is ready, you can use the waitingFor() method with other WaitStrategy implementations as shown below.
+HTTP Wait strategy examples
+
+You can choose to wait for an HTTP(S) endpoint to return a particular status code.
+Waiting for 200 OK
+
+public GenericContainer nginxWithHttpWait = new GenericContainer(
+    DockerImageName.parse("nginx:1.27.0-alpine3.19-slim")
+)
+    .withExposedPorts(80)
+    .waitingFor(Wait.forHttp("/"));
+
+Variations on the HTTP wait strategy are supported, including:
+Waiting for multiple possible status codes
+
+Wait.forHttp("/")
+    .forStatusCode(200)
+    .forStatusCode(301);
+
+Waiting for a status code that matches a predicate
+
+Waiting for a status code that matches a predicate
+
+Wait.forHttp("/all")
+    .forStatusCodeMatching(it -> it >= 200 && it < 300 || it == 401);
+
+Using TLS
+
+Wait.forHttp("/all")
+    .usingTls();
+
+Healthcheck Wait strategy examples
+
+If the used image supports Docker's Healthcheck feature, you can directly leverage the healthy state of the container as your wait condition:
+
+Wait.forHealthcheck();
+
+Log output Wait Strategy
+
+In some situations a container's log output is a simple way to determine if it is ready or not. For example, we can wait for a `Ready' message in the container's logs as follows:
+
+public GenericContainer containerWithLogWait = new GenericContainer(DockerImageName.parse("redis:6-alpine"))
+    .withExposedPorts(6379)
+    .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+
+Other Wait Strategies
+
+For further options, check out the Wait convenience class, or the various subclasses of WaitStrategy.
+
+If none of these options meet your requirements, you can create your own subclass of AbstractWaitStrategy with an appropriate wait mechanism in waitUntilReady(). The GenericContainer.waitingFor() method accepts any valid WaitStrategy.
+Startup check Strategies
+
+Ordinarily Testcontainers will check that the container has reached the running state and has not exited. In order to do that inspect is executed against the container and state parameter is extracted.
+
+All logic is implemented in StartupCheckStrategy child classes.
+Running startup strategy example
+
+This is the strategy used by default. Testcontainers just checks if container is running.
+
+Implemented in IsRunningStartupCheckStrategy class.
+One shot startup strategy example
+
+This strategy is intended for use with containers that only run briefly and exit of their own accord. As such, success is deemed to be when the container has stopped with exit code 0.
+
+Using one shot startup strategy
+
+public GenericContainer<?> bboxWithOneShot = new GenericContainer<>(DockerImageName.parse("busybox:1.31.1"))
+    .withCommand(String.format("echo %s", HELLO_TESTCONTAINERS))
+    .withStartupCheckStrategy(
+        new OneShotStartupCheckStrategy().withTimeout(Duration.ofSeconds(3))
+    );
+
+Indefinite one shot startup strategy example
+
+Variant of one shot strategy that does not impose a timeout. Intended for situation such as when a long running task forms part of container startup.
+
+It has to be assumed that the container will stop of its own accord, either with a success or failure exit code.
+
+Using indefinite one shot startup strategy
+
+public GenericContainer<?> bboxWithIndefiniteOneShot = new GenericContainer<>(
+    DockerImageName.parse("busybox:1.31.1")
+)
+    .withCommand("sh", "-c", String.format("sleep 5 && echo \"%s\"", HELLO_TESTCONTAINERS))
+    .withStartupCheckStrategy(
+        new IndefiniteWaitOneShotStartupCheckStrategy()
+    );
+
+Minimum duration startup strategy example
+
+Checks that the container is running and has been running for a defined minimum period of time.
+
+Using minimum duration strategy
+
+public GenericContainer<?> bboxWithMinimumDuration = new GenericContainer<>(
+    DockerImageName.parse("busybox:1.31.1")
+)
+    .withCommand("sh", "-c", String.format("sleep 5 && echo \"%s\"", HELLO_TESTCONTAINERS))
+    .withStartupCheckStrategy(
+        new MinimumDurationRunningStartupCheckStrategy(Duration.ofSeconds(1))
+    );
+
+Other startup strategies
+
+If none of these options meet your requirements, you can create your own subclass of StartupCheckStrategy with an appropriate startup check mechanism in waitUntilStartupSuccessful(). Or you can leave it as is and just implement the checkStartupState(DockerClient dockerClient, String containerId) if you still want to check state periodically.
+Depending on another container
+
+Sometimes, a container relies on another container to be ready before it should start itself. An example of this might be a database that needs to be started before your application container can link to it. You can tell a container that it depends on another container by using the dependsOn method:
+
+Depending on another container
+
+public GenericContainer<?> redis = new GenericContainer<>("redis:6-alpine").withExposedPorts(6379);
+
+@Rule
+public GenericContainer<?> nginx = new GenericContainer<>("nginx:1.27.0-alpine3.19-slim")
+    .dependsOn(redis)
+    .withExposedPorts(80);
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Accessing container logs - Testcontainers for Java
+~4 minutes
+
+It is possible to capture container output using:
+
+    the getLogs() method, which simply returns a String snapshot of a container's entire log output
+    the followOutput() method. This method accepts a Consumer and (optionally) a varargs list stating which of STDOUT, STDERR, or both, should be followed. If not specified, both will be followed.
+
+At present, container output will always begin from the time of container creation.
+Reading all logs (from startup time to present)
+
+getLogs() is the simplest mechanism for accessing container logs, and can be used as follows:
+
+Accessing all output (stdout and stderr)
+
+final String logs = container.getLogs();
+
+Accessing just stdout
+
+final String logs = container.getLogs(OutputFrame.OutputType.STDOUT);
+
+Accessing just stderr
+
+final String logs = container.getLogs(OutputFrame.OutputType.STDERR);
+
+Streaming logs
+
+Testcontainers includes some out-of-the-box Consumer implementations that can be used with the streaming followOutput() model; examples follow.
+Streaming container output to an SLF4J logger
+
+Given an existing SLF4J logger instance named LOGGER:
+
+Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER);
+container.followOutput(logConsumer);
+
+By default both standard out and standard error will both be emitted at INFO level. Standard error may be emitted at ERROR level, if desired:
+
+Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER).withSeparateOutputStreams();
+
+The Mapped Diagnostic Context (MDC) for emitted messages may be configured using the withMdc(...) option:
+
+Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER).withMdc("key", "value");
+
+or using an existing map of key-value pairs:
+
+Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER).withMdc(map);
+
+Capturing container output as a String
+
+To stream logs live or customize the decoding, ToStringConsumer may be used:
+
+ToStringConsumer toStringConsumer = new ToStringConsumer();
+container.followOutput(toStringConsumer, OutputType.STDOUT);
+
+String utf8String = toStringConsumer.toUtf8String();
+
+// Or if the container output is not UTF-8
+String otherString = toStringConsumer.toString(CharSet.forName("ISO-8859-1"));
+
+Waiting for container output to contain expected content
+
+WaitingConsumer will block until a frame of container output (usually a line) matches a provided predicate.
+
+A timeout may be specified, as shown in this example.
+
+WaitingConsumer consumer = new WaitingConsumer();
+
+container.followOutput(consumer, STDOUT);
+
+consumer.waitUntil(frame ->
+    frame.getUtf8String().contains("STARTED"), 30, TimeUnit.SECONDS);
+
+Additionally, as the Java 8 Consumer functional interface is used, Consumers may be composed together. This is useful, for example, to capture all the container output but only when a matching string has been found. e.g.:
+
+WaitingConsumer waitingConsumer = new WaitingConsumer();
+ToStringConsumer toStringConsumer = new ToStringConsumer();
+
+Consumer<OutputFrame> composedConsumer = toStringConsumer.andThen(waitingConsumer);
+container.followOutput(composedConsumer);
+
+waitingConsumer.waitUntil(frame ->
+    frame.getUtf8String().contains("STARTED"), 30, TimeUnit.SECONDS);
+
+String utf8String = toStringConsumer.toUtf8String();
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Creating images on-the-fly - Testcontainers for Java
+4–5 minutes
+Overview
+
+In situations where there is no pre-existing Docker image, Testcontainers can create a new temporary image on-the-fly from a Dockerfile. For example, when the component under test is the Docker image itself, or when an existing base image needs to be customized for specific test(s).
+
+Simply pass a configured instance of ImageFromDockerfile as a constructor parameter to GenericContainer. Testcontainers will docker build a temporary container image, and will use it when creating the container.
+Dockerfile from String, file or classpath resource
+
+ImageFromDockerfile accepts arbitrary files, strings or classpath resources to be used as files in the build context. At least one of these needs to be a Dockerfile.
+
+GenericContainer container = new GenericContainer(
+    new ImageFromDockerfile()
+            .withFileFromString("folder/someFile.txt", "hello")
+            .withFileFromClasspath("test.txt", "mappable-resource/test-resource.txt")
+            .withFileFromClasspath("Dockerfile", "mappable-dockerfile/Dockerfile"))
+
+The following methods may be used to provide the Dockerfile and any other required build context files:
+
+    withFileFromString(buildContextPath, content)
+    withFileFromClasspath(buildContextPath, classpathPath)
+    withFileFromPath(buildContextPath, filesystemPath)
+    withFileFromFile(buildContextPath, filesystemFile)
+
+Info
+
+In older versions of Testcontainers (before 1.3.0) it was necessary to explicitly declare each file that needed to be present in the Docker build context. This can be replaced with the following syntax:
+
+Passing an entire directory of files to the Dockerfile build context
+
+new ImageFromDockerfile()
+    .withFileFromPath(".", RESOURCE_PATH)),
+
+Where RESOURCE_PATH is the path to a directory containing a Dockerfile and any files that it needs to refer to. Doing this is equivalent to docker build RESOURCE_PATH on the command line.
+
+To mimic docker build ., RESOURCE_PATH would simply be set to . as well.
+Dockerfile DSL
+
+If a static Dockerfile is not sufficient (e.g. your test needs to cover many variations that are best generated programmatically), there is a DSL available to allow Dockerfiles to be defined in code. e.g.:
+
+new GenericContainer(
+        new ImageFromDockerfile()
+                .withDockerfileFromBuilder(builder ->
+                        builder
+                                .from("alpine:3.17")
+                                .run("apk add --update nginx")
+                                .cmd("nginx", "-g", "daemon off;")
+                                .build()))
+                .withExposedPorts(80);
+
+See ParameterizedDockerfileContainerTest for a very basic example of using this in conjunction with JUnit parameterized testing.
+Automatic deletion
+
+Temporary container images will be automatically removed when the test JVM shuts down. If this is not desired and the image should be retained between tests, pass a stable image name and false flag to the ImageFromDockerfile constructor.
+
+Retaining the image between tests will use Docker's image cache to accelerate subsequent test runs.
+
+By default the no-args constructor will use an image name of the form testcontainers/ + random string:
+
+    public ImageFromDockerfile()
+    public ImageFromDockerfile(String dockerImageName)
+    public ImageFromDockerfile(String dockerImageName, boolean deleteOnExit)
+
+Alternative Dockerfiles
+
+Normally Docker will automatically build an image from any /Dockerfile that it finds in the root of the build context. To override this behaviour, use .withDockerfilePath("./Name-Of-Other-Dockerfile").
+Build Args
+
+Build Args may be used to allow lightweight parameterization.
+
+To specify build args, use .withBuildArg("varname", "value") or provide a Map of args using .withBuildArgs(map).
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Using Jib - Testcontainers for Java
+~1 minute
+
+Jib is a library for building Docker images. You can use it as an alternative to Testcontainers default DockerfileBuilder.
+
+GenericContainer with JibImage
+
+GenericContainer<?> busybox = new GenericContainer<>(
+    new JibImage(
+        "busybox:1.35",
+        jibContainerBuilder -> {
+            return jibContainerBuilder.setEntrypoint("echo", "Hello World");
+        }
+    )
+)
+    .withStartupCheckStrategy(new OneShotStartupCheckStrategy().withTimeout(Duration.ofSeconds(3)))
+
+Hint
+
+The Testcontainers library JAR will not automatically add a jib-core JAR to your project. Minimum version required is com.google.cloud.tools:jib-core:0.22.0.
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Custom configuration - Testcontainers for Java
+6–8 minutes
+
+You can override some default properties if your environment requires that.
+Configuration locations
+
+The configuration will be loaded from multiple locations. Properties are considered in the following order:
+
+    Environment variables
+    .testcontainers.properties in user's home folder. Example locations:
+    Linux: /home/myuser/.testcontainers.properties
+    Windows: C:/Users/myuser/.testcontainers.properties
+    macOS: /Users/myuser/.testcontainers.properties
+    testcontainers.properties on the classpath.
+
+Note that when using environment variables, configuration property names should be set in upper case with underscore separators, preceded by TESTCONTAINERS_ - e.g. checks.disable becomes TESTCONTAINERS_CHECKS_DISABLE.
+
+The classpath testcontainers.properties file may exist within the local codebase (e.g. within the src/test/resources directory) or within library dependencies that you may have. Any such configuration files will have their contents merged. If any keys conflict, the value will be taken on the basis of the first value found in:
+
+    'local' classpath (i.e. where the URL of the file on the classpath begins with file:), then
+    other classpath locations (i.e. JAR files) - considered in alphabetical order of path to provide deterministic ordering.
+
+Disabling the startup checks
+
+    checks.disable = [true|false]
+
+Before running any containers Testcontainers will perform a set of startup checks to ensure that your environment is configured correctly. Usually they look like this:
+
+        ℹ︎ Checking the system...
+        ✔ Docker version should be at least 1.6.0
+        ✔ File should be mountable
+        ✔ A port exposed by a docker container should be accessible
+
+It takes a couple of seconds, but if you want to speed up your tests, you can disable the checks once you have everything configured. Add
+checks.disable=true to your $HOME/.testcontainers.properties to completely disable them.
+Customizing images
+
+Note
+
+This approach is discouraged and deprecated, but is documented for completeness. Overriding individual image names via configuration may be removed in 2021. See Image Name Substitution for other strategies for substituting image names to pull from other registries.
+
+Testcontainers uses public Docker images to perform different actions like startup checks, VNC recording and others. Some companies disallow the usage of Docker Hub, but you can override *.image properties with your own images from your private registry to workaround that.
+
+    ryuk.container.image = testcontainers/ryuk:0.3.3 Performs fail-safe cleanup of containers, and always required (unless Ryuk is disabled)
+
+    tinyimage.container.image = alpine:3.17
+    Used to check whether images can be pulled at startup, and always required (unless startup checks are disabled)
+
+    sshd.container.image = testcontainers/sshd:1.4.0
+    Required if exposing host ports to containers
+
+    vncrecorder.container.image = testcontainers/vnc-recorder:1.3.0 Used by VNC recorder in Testcontainers' Selenium integration
+
+    socat.container.image = alpine/socat
+    compose.container.image = docker/compose:1.8.0
+    Required if using Docker Compose
+
+    kafka.container.image = confluentinc/cp-kafka
+    Used by KafkaContainer
+
+    localstack.container.image = localstack/localstack
+    Used by LocalStack
+
+    pulsar.container.image = apachepulsar/pulsar:2.2.0
+    Used by Apache Pulsar
+
+Customizing Ryuk resource reaper
+
+    ryuk.container.image = testcontainers/ryuk:0.3.3 The resource reaper is responsible for container removal and automatic cleanup of dead containers at JVM shutdown
+
+    ryuk.container.privileged = true In some environments ryuk must be started in privileged mode to work properly (--privileged flag)
+
+Disabling Ryuk
+
+Ryuk must be started as a privileged container.
+If your environment already implements automatic cleanup of containers after the execution, but does not allow starting privileged containers, you can turn off the Ryuk container by setting TESTCONTAINERS_RYUK_DISABLED environment variable to true.
+
+Tip
+
+Note that Testcontainers will continue doing the cleanup at JVM's shutdown, unless you kill -9 your JVM process.
+Customizing image pull behaviour
+
+    pull.timeout = 120 By default Testcontainers will timeout if pull takes more than this duration (in seconds)
+
+    pull.pause.timeout = 30 By default Testcontainers will abort the pull of an image if the pull appears stalled (no data transferred) for longer than this duration (in seconds).
+
+Customizing client ping behaviour
+
+    client.ping.timeout = 10 Specifies for how long Testcontainers will try to connect to the Docker client to obtain valid info about the client before giving up and trying next strategy, if applicable (in seconds).
+
+Customizing Docker host detection
+
+Testcontainers will attempt to detect the Docker environment and configure everything to work automatically.
+
+However, sometimes customization is required. Testcontainers will respect the following environment variables:
+
+    DOCKER_HOST = unix:///var/run/docker.sock
+    See Docker environment variables
+
+    TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE
+    Path to Docker's socket. Used by Ryuk, Docker Compose, and a few other containers that need to perform Docker actions.
+    Example: /var/run/docker-alt.sock
+
+    TESTCONTAINERS_HOST_OVERRIDE
+    Docker's host on which ports are exposed.
+    Example: docker.svc.local
+
+For advanced users, the Docker host connection can be configured via configuration in ~/.testcontainers.properties. Note that these settings require use of the EnvironmentAndSystemPropertyClientProviderStrategy. The example below illustrates usage:
+
+docker.client.strategy=org.testcontainers.dockerclient.EnvironmentAndSystemPropertyClientProviderStrategy
+docker.host=tcp\://my.docker.host\:1234     # Equivalent to the DOCKER_HOST environment variable. Colons should be escaped.
+docker.tls.verify=1                         # Equivalent to the DOCKER_TLS_VERIFY environment variable
+docker.cert.path=/some/path                 # Equivalent to the DOCKER_CERT_PATH environment variable
+
+In addition, you can deactivate this behaviour by specifying:
+
+dockerconfig.source=autoIgnoringUserProperties # 'auto' by default
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Image name substitution - Testcontainers for Java
+7–9 minutes
+
+Testcontainers supports automatic substitution of Docker image names.
+
+This allows replacement of an image name specified in test code with an alternative name - for example, to replace the name of a Docker Hub image dependency with an alternative hosted on a private image registry.
+
+This is advisable to avoid Docker Hub rate limiting, and some companies will prefer this for policy reasons.
+
+This page describes four approaches for image name substitution:
+
+    Manual substitution - not relying upon an automated approach
+    Using an Image Name Substitutor:
+        Developing a custom function for transforming image names on the fly
+        Overriding image names individually in configuration
+
+It is assumed that you have already set up a private registry hosting all the Docker images your build requires.
+Manual substitution
+
+Consider this if:
+
+    You use only a few images and updating code is not a chore
+    All developers and CI machines in your organisation have access to a common registry server
+    You also use one of the automated mechanisms to substitute the images that Testcontainers itself requires
+
+This approach simply entails modifying test code manually, e.g. changing:
+
+For example, you may have a test that uses the mysql container image from Docker Hub:
+
+Direct Docker Hub image name
+
+// Referring directly to an image on Docker Hub (mysql:8.0.36)
+final MySQLContainer<?> mysql = new MySQLContainer<>(
+    DockerImageName.parse("mysql:8.0.36")
+)
+// start the container and use it for testing
+
+to:
+
+Private registry image name
+
+// Referring directly to an image on a private registry - image name will vary
+final MySQLContainer<?> mysql = new MySQLContainer<>(
+    DockerImageName.parse("registry.mycompany.com/mirror/mysql:8.0.36")
+        .asCompatibleSubstituteFor("mysql")
+)
+// start the container and use it for testing
+
+Automatically modifying Docker Hub image names
+
+Testcontainers can be configured to modify Docker Hub image names on the fly to apply a prefix string.
+
+Consider this if:
+
+    Developers and CI machines need to use different image names. For example, developers are able to pull images from Docker Hub, but CI machines need to pull from a private registry
+    Your private registry has copies of images from Docker Hub where the names are predictable, and just adding a prefix is enough. For example, registry.mycompany.com/mirror/mysql:8.0.36 can be derived from the original Docker Hub image name (mysql:8.0.36) with a consistent prefix string: registry.mycompany.com/mirror/
+
+In this case, image name references in code are unchanged. i.e. you would leave as-is:
+
+Unchanged direct Docker Hub image name
+
+// Referring directly to an image on Docker Hub (mysql:8.0.36)
+final MySQLContainer<?> mysql = new MySQLContainer<>(
+    DockerImageName.parse("mysql:8.0.36")
+)
+// start the container and use it for testing
+
+You can then configure Testcontainers to apply the prefix registry.mycompany.com/mirror/ to every image that it tries to pull from Docker Hub. This can be done in one of two ways:
+
+    Setting environment variables TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=registry.mycompany.com/mirror/
+    Via config file, setting hub.image.name.prefix in either:
+        the ~/.testcontainers.properties file in your user home directory, or
+        a file named testcontainers.properties on the classpath
+
+Testcontainers will automatically apply the prefix to every image that it pulls from Docker Hub - please verify that all the required images exist in your registry.
+
+Testcontainers will not apply the prefix to:
+
+    non-Hub image names (e.g. where another registry is set)
+    Docker Hub image names where the hub registry is explicitly part of the name (i.e. anything with a docker.io or registry.hub.docker.com host part)
+
+Developing a custom function for transforming image names on the fly
+
+Consider this if:
+
+    You have complex rules about which private registry images should be used as substitutes, e.g.:
+        non-deterministic mapping of names meaning that a name prefix cannot be used
+        rules depending upon developer identity or location
+    or you wish to add audit logging of images used in the build
+    or you wish to prevent accidental usage of images that are not on an approved list
+
+In this case, image name references in code are unchanged. i.e. you would leave as-is:
+
+Unchanged direct Docker Hub image name
+
+// Referring directly to an image on Docker Hub (mysql:8.0.36)
+final MySQLContainer<?> mysql = new MySQLContainer<>(
+    DockerImageName.parse("mysql:8.0.36")
+)
+// start the container and use it for testing
+
+You can implement a custom image name substitutor by:
+
+    subclassing org.testcontainers.utility.ImageNameSubstitutor
+    configuring Testcontainers to use your custom implementation
+
+The following is an example image substitutor implementation:
+
+Example Image Substitutor
+
+public class ExampleImageNameSubstitutor extends ImageNameSubstitutor {
+
+    @Override
+    public DockerImageName apply(DockerImageName original) {
+        // convert the original name to something appropriate for
+        // our build environment
+        return DockerImageName.parse(
+            // your code goes here - silly example of capitalising
+            // the original name is shown
+            original.asCanonicalNameString().toUpperCase()
+        );
+    }
+
+    @Override
+    protected String getDescription() {
+        // used in logs
+        return "example image name substitutor";
+    }
+}
+
+Testcontainers can be configured to find it at runtime via configuration. To do this, create or modify a file on the classpath named testcontainers.properties.
+
+For example:
+
+src/test/resources/testcontainers.properties
+
+image.substitutor=com.mycompany.testcontainers.ExampleImageNameSubstitutor
+
+Note that it is also possible to provide this same configuration property:
+
+    in a testcontainers.properties file at the root of a library JAR file (useful if you wish to distribute a drop-in image substitutor JAR within an organization)
+    in a properties file in the user's home directory (~/.testcontainers.properties; note the leading .)
+    or as an environment variable (e.g. TESTCONTAINERS_IMAGE_SUBSTITUTOR=com.mycompany.testcontainers.ExampleImageNameSubstitutor).
+
+Please see the documentation on configuration mechanisms for more information.
+
+Also, you can use the ServiceLoader mechanism to provide the fully qualified class name of the ImageNameSubstitutor implementation:
+
+src/test/resources/META-INF/services/org.testcontainers.utility.ImageNameSubstitutor
+
+com.mycompany.testcontainers.ExampleImageNameSubstitutor
+
+Overriding image names individually in configuration
+
+Note
+
+This approach is discouraged and deprecated, but is documented for completeness. Please consider one of the other approaches outlined in this page instead. Overriding individual image names via configuration may be removed in the future.
+
+Consider this if:
+
+    You have many references to image names in code and changing them is impractical, and
+    None of the other options are practical for you
+
+In this case, image name references in code are left unchanged. i.e. you would leave as-is:
+
+Unchanged direct Docker Hub image name
+
+// Referring directly to an image on Docker Hub (mysql:8.0.36)
+final MySQLContainer<?> mysql = new MySQLContainer<>(
+    DockerImageName.parse("mysql:8.0.36")
+)
+// start the container and use it for testing
+
+You can force Testcontainers to substitute in a different image using a configuration file, which allows some (but not all) container names to be substituted.
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Advanced options - Testcontainers for Java
+5–6 minutes
+Container labels
+
+To add a custom label to the container, use withLabel:
+
+Adding a single label
+
+public GenericContainer containerWithLabel = new GenericContainer(DockerImageName.parse("alpine:3.17"))
+    .withLabel("key", "value");
+
+Additionally, multiple labels may be applied together from a map:
+
+Adding multiple labels
+
+private Map<String, String> mapOfLabels = new HashMap<>();
+// populate map, e.g. mapOfLabels.put("key1", "value1");
+
+public GenericContainer containerWithMultipleLabels = new GenericContainer(DockerImageName.parse("alpine:3.17"))
+    .withLabels(mapOfLabels);
+
+Image Pull Policy
+
+By default, the container image is retrieved from the local Docker images cache. This works well when running against a specific version, but for images with a static tag (i.e. 'latest') this may lead to a newer version not being pulled.
+
+It is possible to specify an Image Pull Policy to determine at runtime whether an image should be pulled or not:
+
+Setting image pull policy
+
+GenericContainer<?> container = new GenericContainer<>(imageName)
+    .withImagePullPolicy(PullPolicy.alwaysPull())
+
+... or providing a function:
+
+Custom image pull policy
+
+GenericContainer<?> container = new GenericContainer<>(imageName)
+    .withImagePullPolicy(
+        new AbstractImagePullPolicy() {
+            @Override
+            protected boolean shouldPullCached(DockerImageName imageName, ImageData localImageData) {
+                return System.getenv("ALWAYS_PULL_IMAGE") != null;
+            }
+        }
+    )
+
+You can also configure Testcontainers to use your custom implementation by using pull.policy
+
+src/test/resources/testcontainers.properties
+
+pull.policy=com.mycompany.testcontainers.ExampleImagePullPolicy
+
+You can also use the provided implementation to always pull images
+
+src/test/resources/testcontainers.properties
+
+pull.policy=org.testcontainers.images.AlwaysPullPolicy
+
+Please see the documentation on configuration mechanisms for more information.
+Customizing the container
+Using docker-java
+
+It is possible to use the docker-java API directly to customize containers before creation. This is useful if there is a need to use advanced Docker features that are not exposed by the Testcontainers API. Any customizations you make using withCreateContainerCmdModifier will be applied on top of the container definition that Testcontainers creates, but before it is created.
+
+For example, this can be used to change the container hostname:
+
+Using modifier to change hostname
+
+@Rule
+public GenericContainer theCache = new GenericContainer<>(DockerImageName.parse("redis:6-alpine"))
+    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("the-cache"));
+
+... or modify container memory (see this if it does not appear to work):
+
+Using modifier to change memory limits
+
+private long memoryInBytes = 32l * 1024l * 1024l;
+
+private long memorySwapInBytes = 64l * 1024l * 1024l;
+
+@Rule
+public GenericContainer memoryLimitedRedis = new GenericContainer<>(DockerImageName.parse("redis:6-alpine"))
+    .withCreateContainerCmdModifier(cmd -> {
+        cmd.getHostConfig()
+            .withMemory(memoryInBytes)
+            .withMemorySwap(memorySwapInBytes);
+    });
+
+Note
+
+It is recommended to use this sparingly, and follow changes to the docker-java API if you choose to use this. It is typically quite stable, though.
+
+For what is possible, consult the docker-java CreateContainerCmd source code.
+Using CreateContainerCmdModifier
+
+Testcontainers provides a CreateContainerCmdModifier to customize docker-java CreateContainerCmd via Service Provider Interface (SPI) mechanism.
+
+CreateContainerCmd example implementation
+
+package org.testcontainers.custom;
+
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import org.testcontainers.core.CreateContainerCmdModifier;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class TestCreateContainerCmdModifier implements CreateContainerCmdModifier {
+
+    @Override
+    public CreateContainerCmd modify(CreateContainerCmd createContainerCmd) {
+        Map<String, String> labels = new HashMap<>();
+        labels.put("project", "testcontainers-java");
+        labels.put("scope", "global");
+        createContainerCmd.getLabels().putAll(labels);
+        return createContainerCmd;
+    }
+}
+
+The previous implementation should be registered in META-INF/services/org.testcontainers.core.CreateContainerCmdModifier file.
+
+Warning
+
+CreateContainerCmdModifier implementation will apply to all containers created by Testcontainers.
+Parallel Container Startup
+
+Usually, containers are started sequentially when more than one container is used. Using Startables.deepStart(container1, container2, ...).join() will start all containers in parallel. This can be advantageous to reduce the impact of the container startup overhead.
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Reusable Containers (Experimental) - Testcontainers for Java
+~2 minutes
+
+Warning
+
+Reusable Containers is still an experimental feature and the behavior can change. Those containers won't stop after all tests are finished.
+
+The Reusable feature keeps the containers running and next executions with the same container configuration will reuse it. To use it, start the container manually by calling start() method, do not call stop() method directly or indirectly via try-with-resources or JUnit integration, and enable it manually through an opt-in mechanism per environment. To reuse a container, the container configuration must be the same.
+
+Note
+
+Reusable containers are not suited for CI usage and as an experimental feature not all Testcontainers features are fully working (e.g., resource cleanup or networking).
+How to use it
+
+    Enable Reusable Containers
+        through environment variable TESTCONTAINERS_REUSE_ENABLE=true
+        through user property file ~/.testcontainers.properties, by adding testcontainers.reuse.enable=true
+        not through classpath properties file see this comment
+    Define a container and subscribe to reuse the container using withReuse(true)
+
+GenericContainer container = new GenericContainer("redis:6-alpine")
+    .withExposedPorts(6379)
+    .withReuse(true)
+
+    Start the container manually by using container.start()
+
+Reusable Container with Testcontainers JDBC URL
+
+If using the Testcontainers JDBC URL support the URL must follow the pattern of jdbc:tc:mysql:8.0.36:///databasename?TC_REUSABLE=true. TC_REUSABLE=true is set as a parameter of the JDBC URL.
+
++++RAG_SECTION+++
+
+Overview
+
+You might want to use Testcontainers' database support:
+
+    Instead of H2 database for DAO unit tests that depend on database features that H2 doesn't emulate. Testcontainers is not as performant as H2, but does give you the benefit of 100% database compatibility (since it runs a real DB inside of a container).
+    Instead of a database running on the local machine or in a VM for DAO unit tests or end-to-end integration tests that need a database to be present. In this context, the benefit of Testcontainers is that the database always starts in a known state, without any contamination between test runs or on developers' local machines.
+
+Note
+
+Of course, it's still important to have as few tests that hit the database as possible, and make good use of mocks for components higher up the stack.
+
+See JDBC and R2DBC for information on how to use Testcontainers with SQL-like databases.
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+JDBC support - Testcontainers for Java
+6–7 minutes
+
+You can obtain a temporary database in one of two ways:
+
+    Using a specially modified JDBC URL: after making a very simple modification to your system's JDBC URL string, Testcontainers will provide a disposable stand-in database that can be used without requiring modification to your application code.
+    JUnit @Rule/@ClassRule: this mode starts a database inside a container before your tests and tears it down afterwards.
+
+Database containers launched via JDBC URL scheme
+
+As long as you have Testcontainers and the appropriate JDBC driver on your classpath, you can simply modify regular JDBC connection URLs to get a fresh containerized instance of the database each time your application starts up.
+
+N.B:
+
+    TC needs to be on your application's classpath at runtime for this to work
+    For Spring Boot (Before version 2.3.0) you need to specify the driver manually spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver
+
+Original URL: jdbc:mysql://localhost:3306/databasename
+
+Insert tc: after jdbc: as follows. Note that the hostname, port and database name will be ignored; you can leave these as-is or set them to any value.
+
+Note
+
+We will use /// (host-less URIs) from now on to emphasis the unimportance of the host:port pair.
+From Testcontainers' perspective, jdbc:mysql:8.0.36://localhost:3306/databasename and jdbc:mysql:8.0.36:///databasename is the same URI.
+
+Warning
+
+If you're using the JDBC URL support, there is no need to instantiate an instance of the container - Testcontainers will do it automagically.
+JDBC URL examples
+Using ClickHouse
+
+jdbc:tc:clickhouse:18.10.3:///databasename
+Using CockroachDB
+
+jdbc:tc:cockroach:v21.2.3:///databasename
+Using CrateDB
+
+jdbc:tc:cratedb:5.2.3:///databasename
+Using DB2
+
+jdbc:tc:db2:11.5.0.0a:///databasename
+Using MariaDB
+
+jdbc:tc:mariadb:10.3.39:///databasename
+Using MySQL
+
+jdbc:tc:mysql:8.0.36:///databasename
+Using MSSQL Server
+
+jdbc:tc:sqlserver:2017-CU12:///databasename
+Using OceanBase
+
+jdbc:tc:oceanbasece:4.2.1-lts:///databasename
+Using Oracle
+
+jdbc:tc:oracle:21-slim-faststart:///databasename
+Using PostGIS
+
+jdbc:tc:postgis:9.6-2.5:///databasename
+Using PostgreSQL
+
+jdbc:tc:postgresql:9.6.8:///databasename
+Using QuestDB
+
+jdbc:tc:questdb:6.5.3:///databasename
+Using TimescaleDB
+
+jdbc:tc:timescaledb:2.1.0-pg13:///databasename
+Using PGVector
+
+jdbc:tc:pgvector:pg16:///databasename
+Using TiDB
+
+jdbc:tc:tidb:v6.1.0:///databasename
+Using Timeplus
+
+jdbc:tc:timeplus:2.3.21:///databasename
+Using Trino
+
+jdbc:tc:trino:352://localhost/memory/default
+Using YugabyteDB
+
+jdbc:tc:yugabyte:2.14.4.0-b26:///databasename
+Using a classpath init script
+
+Testcontainers can run an init script after the database container is started, but before your code is given a connection to it. The script must be on the classpath, and is referenced as follows:
+
+jdbc:tc:mysql:8.0.36:///databasename?TC_INITSCRIPT=somepath/init_mysql.sql
+
+This is useful if you have a fixed script for setting up database schema, etc.
+Using an init script from a file
+
+If the init script path is prefixed file:, it will be loaded from a file (relative to the working directory, which will usually be the project root).
+
+jdbc:tc:mysql:8.0.36:///databasename?TC_INITSCRIPT=file:src/main/resources/init_mysql.sql
+Using an init function
+
+Instead of running a fixed script for DB setup, it may be useful to call a Java function that you define. This is intended to allow you to trigger database schema migration tools. To do this, add TC_INITFUNCTION to the URL as follows, passing a full path to the class name and method:
+
+jdbc:tc:mysql:8.0.36:///databasename?TC_INITFUNCTION=org.testcontainers.jdbc.JDBCDriverTest::sampleInitFunction
+
+The init function must be a public static method which takes a java.sql.Connection as its only parameter, e.g.
+
+public class JDBCDriverTest {
+    public static void sampleInitFunction(Connection connection) throws SQLException {
+        // e.g. run schema setup or Flyway/liquibase/etc DB migrations here...
+    }
+    ...
+
+Running container in daemon mode
+
+By default database container is being stopped as soon as last connection is closed. There are cases when you might need to start container and keep it running till you stop it explicitly or JVM is shutdown. To do this, add TC_DAEMON parameter to the URL as follows:
+
+jdbc:tc:mysql:8.0.36:///databasename?TC_DAEMON=true
+
+With this parameter database container will keep running even when there's no open connections.
+Running container with tmpfs options
+
+Container can have tmpfs mounts for storing data in host memory. This is useful if you want to speed up your database tests. Be aware that the data will be lost when the container stops.
+
+To pass this option to the container, add TC_TMPFS parameter to the URL as follows:
+
+jdbc:tc:postgresql:9.6.8:///databasename?TC_TMPFS=/testtmpfs:rw
+
+If you need more than one option, separate them by comma (e.g. TC_TMPFS=key:value,key1:value1&other_parameters=foo).
+
+For more information about tmpfs mount, see the official Docker documentation.
+Database container objects
+
+In case you can't use the URL support, or need to fine-tune the container, you can instantiate it yourself.
+
+Add a @Rule or @ClassRule to your test class, e.g.:
+
+public class SimpleMySQLTest {
+    @Rule
+    public MySQLContainer mysql = new MySQLContainer();
+
+Now, in your test code (or a suitable setup method), you can obtain details necessary to connect to this database:
+
+    mysql.getJdbcUrl() provides a JDBC URL your code can connect to
+    mysql.getUsername() provides the username your code should pass to the driver
+    mysql.getPassword() provides the password your code should pass to the driver
+
+Note that if you use @Rule, you will be given an isolated container for each test method. If you use @ClassRule, you will get on isolated container for all the methods in the test class.
+
+Examples/Tests:
+
+    MySQL
+    PostgreSQL
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Postgres Module - Testcontainers for Java
+2–3 minutes
+
+Testcontainers module for PostgresSQL
+Usage example
+
+You can start a PostgreSQL container instance from any Java application by using:
+
+Container creation
+
+PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:9.6.12")
+
+See Database containers for documentation and usage that is common to all relational database container types.
+Testcontainers JDBC URL
+
+    PostgreSQL: jdbc:tc:postgresql:9.6.8:///databasename
+    PostGIS: jdbc:tc:postgis:9.6-2.5:///databasename
+    TimescaleDB: jdbc:tc:timescaledb:2.1.0-pg13:///databasename
+    PGvector: jdbc:tc:pgvector:pg16:///databasename
+
+See JDBC for documentation.
+Compatible images
+
+PostgreSQLContainer can also be used with the following images:
+
+    pgvector/pgvector
+
+Using pgvector
+
+PostgreSQLContainer pgvector = new PostgreSQLContainer("pgvector/pgvector:pg16")
+
+    postgis/postgis
+
+Using PostGIS
+
+PostgreSQLContainer postgis = new PostgreSQLContainer(
+    DockerImageName.parse("postgis/postgis:16-3.4-alpine").asCompatibleSubstituteFor("postgres")
+)
+
+    timescale/timescaledb
+
+Using TimescaleDB
+
+PostgreSQLContainer timescaledb = new PostgreSQLContainer(
+    DockerImageName.parse("timescale/timescaledb:2.14.2-pg16").asCompatibleSubstituteFor("postgres")
+)
+
+Adding this module to your project dependencies
+
+Add the following dependency to your pom.xml/build.gradle file:
+
+GradleMaven
+
+testImplementation "org.testcontainers:testcontainers-postgresql:2.0.5"
+
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers-postgresql</artifactId>
+    <version>2.0.5</version>
+    <scope>test</scope>
+</dependency>
+
+Hint
+
+Adding this Testcontainers library JAR will not automatically add a database driver JAR to your project. You should ensure that your project also has a suitable database driver as a dependency.
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Docker Compose Module - Testcontainers for Java
+7–9 minutes
+Benefits
+
+Similar to generic container support, it's also possible to run a bespoke set of services specified in a docker-compose.yml file.
+
+This is especially useful for projects where Docker Compose is already used in development or other environments to define services that an application may be dependent upon.
+
+The ComposeContainer leverages Compose V2, making it easy to use the same dependencies from the development environment within tests.
+Example
+
+A single class ComposeContainer, defined based on a docker-compose.yml file, should be sufficient to launch any number of services required by our tests:
+
+Create a ComposeContainer
+
+public ComposeContainer environment = new ComposeContainer(
+    DockerImageName.parse("docker:25.0.5"),
+    new File("src/test/resources/composev2/compose-test.yml")
+)
+    .withExposedService("redis-1", REDIS_PORT)
+    .withExposedService("db-1", 3306);
+
+Note
+
+Make sure the service names use a - rather than _ as separator.
+
+In this example, Docker Compose file should have content such as:
+
+services:
+  redis:
+    image: redis
+  db:
+    image: mysql:8.0.36
+
+Note that it is not necessary to define ports to be exposed in the YAML file, as this would inhibit the reuse/inclusion of the file in other contexts.
+
+Instead, Testcontainers will spin up a small ambassador container, which will proxy between the Compose-managed containers and ports that are accessible to our tests.
+ComposeContainer vs DockerComposeContainer
+
+So far, we discussed ComposeContainer, which supports docker compose version 2.
+
+On the other hand, DockerComposeContainer utilizes Compose V1, which has been marked deprecated by Docker.
+
+The two APIs are quite similar, and most examples provided on this page can be applied to both of them.
+Accessing a Container
+
+ComposeContainer provides methods for discovering how your tests can interact with the containers:
+
+    getServiceHost(serviceName, servicePort) returns the IP address where the container is listening (via an ambassador container)
+    getServicePort(serviceName, servicePort) returns the Docker mapped port for a port that has been exposed (via an ambassador container)
+
+Let's use this API to create the URL that will enable our tests to access the Redis service:
+
+Access a Service's host and port
+
+String serviceHost = environment.getServiceHost("redis-1", REDIS_PORT);
+int serviceWithInstancePort = environment.getServicePort("redis-1", REDIS_PORT);
+
+Wait Strategies and Startup Timeouts
+
+Ordinarily Testcontainers will wait for up to 60 seconds for each exposed container's first mapped network port to start listening. This simple measure provides a basic check whether a container is ready for use.
+
+There are overloaded withExposedService methods that take a WaitStrategy where we can specify a timeout strategy per container.
+
+We can either use the fluent API to crate a custom strategy or use one of the already existing ones, accessible via the static factory methods from of the Wait class.
+
+For instance, we can wait for exposed port and set a custom timeout:
+
+Wait for the exposed port and use a custom timeout
+
+ComposeContainer compose = new ComposeContainer(
+    DockerImageName.parse("docker:25.0.5"),
+    new File("src/test/resources/composev2/compose-test.yml")
+)
+    .withExposedService(
+        "redis-1",
+        REDIS_PORT,
+        Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30))
+    )
+
+Needless to say, we can define different strategies for each service in our Docker Compose setup.
+
+For example, our Redis container can wait for a successful redis-cli command, while our db service waits for a specific log message:
+
+Wait for a custom command and a log message
+
+ComposeContainer compose = new ComposeContainer(
+    DockerImageName.parse("docker:25.0.5"),
+    new File("src/test/resources/composev2/compose-test.yml")
+)
+    .withExposedService("redis-1", REDIS_PORT, Wait.forSuccessfulCommand("redis-cli ping"))
+    .withExposedService("db-1", 3306, Wait.forLogMessage(".*ready for connections.*\\n", 1))
+
+The 'Local Compose' Mode
+
+We can override Testcontainers' default behaviour and make it use a docker-compose binary installed on the local machine.
+
+This will generally yield an experience that is closer to running docker compose locally, with the caveat that Docker Compose needs to be present on dev and CI machines.
+
+Use ComposeContainer in 'Local Compose' mode
+
+compose =
+    new ComposeContainer(COMPOSE_FILE)
+
+Build Working Directory
+
+We can select what files should be copied only via withCopyFilesInContainer:
+
+Use ComposeContainer in 'Local Compose' mode
+
+ComposeContainer environment = new ComposeContainer(
+    DockerImageName.parse("docker:25.0.5"),
+    new File("src/test/resources/compose-file-copy-inclusions/compose-test-only.yml")
+)
+    .withExposedService("app", 8080)
+    .withCopyFilesInContainer("Dockerfile", "EnvVariableRestEndpoint.java", "test")
+
+In this example, only docker compose and env files are copied over into the container that will run the Docker Compose file.
+By default, all files in the same directory as the compose file are copied over.
+
+We can use file and directory references. They are always resolved relative to the directory where the compose file resides.
+
+Note
+
+This can be used with DockerComposeContainer and ComposeContainer, but only in the containerized Compose (not with Local Compose mode).
+Using private repositories in Docker compose
+
+When Docker Compose is used in container mode (not local), it needs to be made aware of Docker settings for private repositories. By default, those setting are located in $HOME/.docker/config.json.
+
+There are 3 ways to specify location of the config.json for Docker Compose:
+
+    Use DOCKER_CONFIG_FILE environment variable.
+
+    export DOCKER_CONFIG_FILE=/some/location/config.json
+
+    Use dockerConfigFile java property
+
+    java -DdockerConfigFile=/some/location/config.json
+
+    Don't specify anything. In this case default location $HOME/.docker/config.json, if present, will be used.
+
+Docker Compose and Credential Store / Credential Helpers
+
+Modern Docker tends to store credentials using the credential store/helper mechanism rather than storing credentials in Docker's configuration file. So, your config.json may look something like:
+
+{
+  "auths" : {
+    "https://index.docker.io/v1/" : {
+    }
+  },
+  "credsStore" : "osxkeychain"
+}
+
+When run inside a container, Docker Compose cannot access the Keychain, thus making the configuration useless. To work around this problem, there are two options:
+Putting auths in a config file
+
+Create a config.json in separate location with real authentication keys, like:
+
+{
+  "auths" : {
+    "https://index.docker.io/v1/" : {
+     "auth": "QWEADSZXC..."
+    }
+  },
+  "credsStore" : "osxkeychain"
+}
+
+and specify the location to Testcontainers using any of the two first methods from above.
+Using 'local compose' mode
+
+Local Compose mode, mentioned above, will allow compose to directly access the Docker auth system (to the same extent that running the docker-compose CLI manually works).
+Adding this module to your project dependencies
+
+Docker Compose support is part of the core Testcontainers library.
+
+Add the following dependency to your pom.xml/build.gradle file:
+
+GradleMaven
+
+testImplementation "org.testcontainers:testcontainers:2.0.5"
+
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers</artifactId>
+    <version>2.0.5</version>
+    <scope>test</scope>
+</dependency>
+
++++RAG_SECTION+++
+
+java.testcontainers.org
+Jupiter / JUnit 5 - Testcontainers for Java
+4–5 minutes
+
+This module provides an API that is based on the JUnit Jupiter extension model.
+
+The extension supports two modes:
+
+    containers that are restarted for every test method
+    containers that are shared between all methods of a test class
+
+Note that Jupiter/JUnit 5 integration is packaged as a separate library JAR; see below for details.
+Extension
+
+Jupiter integration is provided by means of the @Testcontainers annotation.
+
+The extension finds all fields that are annotated with @Container and calls their container lifecycle methods (methods on the Startable interface). Containers declared as static fields will be shared between test methods. They will be started only once before any test method is executed and stopped after the last test method has executed. Containers declared as instance fields will be started and stopped for every test method.
+
+Note: This extension has only been tested with sequential test execution. Using it with parallel test execution is unsupported and may have unintended side effects.
+
+Example:
+
+Mixed Lifecycle
+
+@Testcontainers
+class MixedLifecycleTests {
+
+    // will be shared between test methods
+    @Container
+    private static final MySQLContainer MY_SQL_CONTAINER = new MySQLContainer("mysql:8.0.36");
+
+    // will be started before and stopped after each test method
+    @Container
+    private PostgreSQLContainer postgresqlContainer = new PostgreSQLContainer("postgres:9.6.12")
+        .withDatabaseName("foo")
+        .withUsername("foo")
+        .withPassword("secret");
+
+    @Test
+    void test() {
+        assertThat(MY_SQL_CONTAINER.isRunning()).isTrue();
+        assertThat(postgresqlContainer.isRunning()).isTrue();
+    }
+}
+
+Examples
+
+To use the Testcontainers extension annotate your test class with @Testcontainers.
+Restarted containers
+
+To define a restarted container, define an instance field inside your test class and annotate it with the @Container annotation.
+
+Restarted Containers
+
+@Testcontainers
+class TestcontainersNestedRestartedContainerTests {
+
+    @Container
+    private final GenericContainer<?> topLevelContainer = new GenericContainer<>(JUnitJupiterTestImages.HTTPD_IMAGE)
+        .withExposedPorts(80);
+
+
+⋯
+
+    @Test
+    void top_level_container_should_be_running() {
+        assertThat(topLevelContainer.isRunning()).isTrue();
+
+        ⋯
+
+    }
+
+    @Nested
+    class NestedTestCase {
+
+        @Container
+        private final GenericContainer<?> nestedContainer = new GenericContainer<>(JUnitJupiterTestImages.HTTPD_IMAGE)
+            .withExposedPorts(80);
+
+        @Test
+        void both_containers_should_be_running() {
+            // top level container is restarted for nested methods
+            assertThat(topLevelContainer.isRunning()).isTrue();
+            // nested containers are only available inside their nested class
+            assertThat(nestedContainer.isRunning()).isTrue();
+
+            ⋯
+
+        }
+
+
+⋯
+
+    }
+}
+
+Shared containers
+
+Shared containers are defined as static fields in a top level test class and have to be annotated with @Container. Note that shared containers can't be declared inside nested test classes. This is because nested test classes have to be defined non-static and can't therefore have static fields.
+Singleton containers
+
+Note that the singleton container pattern is also an option when using JUnit 5.
+Limitations
+
+This extension has only been tested with sequential test execution. Using it with parallel test execution is unsupported and may have unintended side effects.
+Adding Testcontainers JUnit 5 support to your project dependencies
+
+Add the following dependency to your pom.xml/build.gradle file:
+
+GradleMaven
+
+testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
+
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers-junit-jupiter</artifactId>
+    <version>2.0.5</version>
+    <scope>test</scope>
+</dependency>
+
++++RAG_SECTION+++
+
+Manual container lifecycle control
+
+Testcontainers is fully usable with any test framework, or with no framework at all.
+Manually starting/stopping containers
+
+Containers can be started and stopped in code using start() and stop() methods. Additionally, container classes implement AutoCloseable. This enables better assurance that the container will be stopped at the appropriate time.
+
+try (GenericContainer container = new GenericContainer("imagename")) {
+    container.start();
+    // ... use the container
+    // no need to call stop() afterwards
+}
+
+Singleton containers
+
+Sometimes it might be useful to define a container that is only started once for several test classes. There is no special support for this use case provided by the Testcontainers extension. Instead this can be implemented using the following pattern:
+
+abstract class AbstractContainerBaseTest {
+
+    static final MySQLContainer MY_SQL_CONTAINER;
+
+    static {
+        MY_SQL_CONTAINER = new MySQLContainer();
+        MY_SQL_CONTAINER.start();
+    }
+}
+
+class FirstTest extends AbstractContainerBaseTest {
+
+    @Test
+    void someTestMethod() {
+        String url = MY_SQL_CONTAINER.getJdbcUrl();
+
+        // create a connection and run test as normal
+    }
+}
+
+The singleton container is started only once when the base class is loaded. The container can then be used by all inheriting test classes. At the end of the test suite the Ryuk container that is started by Testcontainers core will take care of stopping the singleton container.
+
++++RAG_SECTION+++
+
+EXAMPLES:
+
+package com.example;
+
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.utility.DockerImageName;
+
+@SpringBootTest(
+    classes = DemoApplication.class,
+    webEnvironment = WebEnvironment.RANDOM_PORT,
+    properties = { "spring.datasource.url=jdbc:tc:postgresql:11-alpine:///databasename" }
+)
+@ActiveProfiles("test")
+abstract class AbstractIntegrationTest {
+
+    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:6-alpine"))
+        .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void redisProperties(DynamicPropertyRegistry registry) {
+        redis.start();
+        registry.add("spring.redis.host", redis::getHost);
+        registry.add("spring.redis.port", redis::getFirstMappedPort);
+    }
+}
+
+package com.example;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class DemoControllerTest extends AbstractIntegrationTest {
+
+    @Autowired
+    TestRestTemplate restTemplate;
+
+    @Autowired
+    DemoRepository demoRepository;
+
+    @Test
+    void simpleTest() {
+        String fooResource = "/foo";
+
+        restTemplate.put(fooResource, "bar");
+
+        assertThat(restTemplate.getForObject(fooResource, String.class)).as("value is set").isEqualTo("bar");
+    }
+
+    @Test
+    void simpleJPATest() {
+        DemoEntity demoEntity = new DemoEntity();
+        demoEntity.setValue("Some value");
+        demoRepository.save(demoEntity);
+
+        DemoEntity result = restTemplate.getForObject("/" + demoEntity.getId(), DemoEntity.class);
+
+        assertThat(result.getValue()).as("value is set").isEqualTo("Some value");
+    }
+}
+
+
+
+testcontainers.com
+Getting started with Testcontainers in a Java Spring Boot Project
+10–13 minutes
+
+In this guide, you will learn how to
+
+    Create a Spring Boot application
+
+    Implement a REST API endpoint using Spring MVC, Spring Data JPA, and Postgres
+
+    Test REST API using Testcontainers and RestAssured.
+
+Prerequisites
+
+    Java 17+
+
+    Your favorite IDE (Intellij IDEA, Eclipse, NetBeans, VS Code)
+
+    A Docker environment supported by Testcontainers https://www.testcontainers.org/supported_docker_environment/
+
+What we are going to achieve in this guide
+
+We are going to create a Spring Boot project using Spring Data JPA together with Postgres and implement a REST API endpoint to return all the customer details that are stored in the database. Then we will test this API using the Testcontainers Postgres module and RestAssured.
+
+You can create a new Spring Boot project from Spring Initializr by selecting the Spring Web, Spring Data JPA, PostgreSQL Driver and Testcontainers starters.
+
+If you have selected the Maven build tool you can see that the following Spring Boot starters as well as the Testcontainers Postgres module dependencies are added to the pom.xml.
+
+<properties>
+    <java.version>17</java.version>
+    <testcontainers.version>1.19.8</testcontainers.version>
+</properties>
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>postgresql</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+
+If you have selected the Gradle build tool instead, then the build.gradle file is configured with the selected dependencies.
+
+ext {
+    set('testcontainers.version', "1.19.8")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+}
+
+Using the Testcontainers' BOM (Bill Of Material) is highly recommended so that you don’t have to repeat the Testcontainers version for every individual Testcontainers module dependency
+Create JPA entity
+
+First let us start with creating a JPA entity Customer.java.
+
+package com.testcontainers.demo;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "customers")
+class Customer {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(nullable = false)
+  private String name;
+
+  @Column(nullable = false, unique = true)
+  private String email;
+
+  public Customer() {}
+
+  public Customer(Long id, String name, String email) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+}
+
+Create Spring Data JPA repository
+
+Spring Data JPA is an abstraction on top of JPA and provides basic CRUD operations, sorting and pagination capabilities and dynamic query generation from method names.
+
+Let us create a Spring Data JPA repository interface for the Customer entity.
+
+package com.testcontainers.demo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+interface CustomerRepository extends JpaRepository<Customer, Long> {}
+
+Add schema creation script
+
+As we are not using any in-memory database, we need to create the Postgres database tables by some means. The recommended approach is to use some database migration tool like Flyway or Liquibase, but for this guide we will use simple schema initialization support provided by Spring Boot.
+
+Create a schema.sql file with the following content under the src/main/resources directory.
+
+create table if not exists customers (
+    id bigserial not null,
+    name varchar not null,
+    email varchar not null,
+    primary key (id),
+    UNIQUE (email)
+);
+
+We also need to enable schema initialization by adding the following property in the src/main/resources/application.properties file.
+
+spring.sql.init.mode=always
+
+Create REST API endpoint
+
+Finally, create a controller to implement a REST API endpoint to fetch all customers from the database.
+
+package com.testcontainers.demo;
+
+import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+class CustomerController {
+
+  private final CustomerRepository repo;
+
+  CustomerController(CustomerRepository repo) {
+    this.repo = repo;
+  }
+
+  @GetMapping("/api/customers")
+  List<Customer> getAll() {
+    return repo.findAll();
+  }
+}
+
+Write test for API endpoint
+
+We are going to write a test for the REST API GET /api/customers endpoint by starting the Spring context using the @SpringBootTest annotation and invoke the APIs using RestAssured.
+
+First let us add the rest-assured library dependency.
+
+If you are using Maven then add the following dependency in pom.xml file.
+
+<dependency>
+    <groupId>io.rest-assured</groupId>
+    <artifactId>rest-assured</artifactId>
+    <scope>test</scope>
+</dependency>
+
+If you are using Gradle build tool then add the following dependency in build.gradle file.
+
+testImplementation 'io.rest-assured:rest-assured'
+
+But in order to successfully start our Spring context we need a Postgres database up and running and configure the context to talk to that database. This is where Testcontainers comes into the picture.
+
+We can use the Testcontainers library to spin up a Postgres database instance as a Docker container and configure the application to talk to that database as follows:
+
+package com.testcontainers.demo;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.hasSize;
+
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import java.util.List;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class CustomerControllerTest {
+
+  @LocalServerPort
+  private Integer port;
+
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
+    "postgres:16-alpine"
+  );
+
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+  }
+
+  @AfterAll
+  static void afterAll() {
+    postgres.stop();
+  }
+
+  @DynamicPropertySource
+  static void configureProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url", postgres::getJdbcUrl);
+    registry.add("spring.datasource.username", postgres::getUsername);
+    registry.add("spring.datasource.password", postgres::getPassword);
+  }
+
+  @Autowired
+  CustomerRepository customerRepository;
+
+  @BeforeEach
+  void setUp() {
+    RestAssured.baseURI = "http://localhost:" + port;
+    customerRepository.deleteAll();
+  }
+
+  @Test
+  void shouldGetAllCustomers() {
+    List<Customer> customers = List.of(
+      new Customer(null, "John", "john@mail.com"),
+      new Customer(null, "Dennis", "dennis@mail.com")
+    );
+    customerRepository.saveAll(customers);
+
+    given()
+      .contentType(ContentType.JSON)
+      .when()
+      .get("/api/customers")
+      .then()
+      .statusCode(200)
+      .body(".", hasSize(2));
+  }
+}
+
+Let us understand what is going on in this test.
+
+    We have annotated the test class with the @SpringBootTest annotation together with the webEnvironment config, so that the test will run by starting the entire application on a random available port.
+
+    We have created an instance of PostgreSQLContainer using the postgres:16-alpine Docker image. The Postgres container is started using JUnit 5 @BeforeAll callback method which gets executed before running any test method within a test instance.
+
+    The Postgres database runs on port 5432 inside the container and maps to a random available port on the host.
+
+    We have registered the database connection properties dynamically obtained from the Postgres container using Spring Boot’s DynamicPropertyRegistry.
+
+    We have injected the random port on which the Spring Boot application started using @LocalServerPort and registered the RestAssured baseURI.
+
+    We are deleting all customer rows using JUnit 5 @BeforeEach callback method which gets executed before every test method. This will ensure the predictable data setup for every test and circumvent any kind of test pollution.
+
+    Finally, in the shouldGetAllCustomers() test, we have initialized the test data and invoked the GET /api/customers API endpoint and verified that 2 customer records are returned from the API.
+
+Run tests
+
+# If you are using Maven
+./mvnw test
+
+# If you are using Gradle
+./gradlew test
+
+You should see the Postgres docker container is started and all tests should PASS. You can also notice that after tests are executed the containers are stopped and removed automatically.
+Summary
+
+The Testcontainers library helped us to write integration tests by using the same type of database, Postgres, that we use in production as opposed to Mocks or in-memory databases. As we are not using mocks and talking to the real services, we are free to do any code refactoring and still ensure that the application is working as expected.
+Further Reading
+

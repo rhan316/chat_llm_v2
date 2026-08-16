@@ -1,0 +1,3098 @@
+Development Quickstart
+
+further read
+
+    Makefile & ./manage
+
+    Buildhosts
+
+SearXNG loves developers; Developers do not need to worry about tool chains, the usual developer tasks can be comfortably executed via make.
+
+Don’t hesitate, just clone SearXNG’s sources and start hacking right now ..
+
+git clone https://github.com/searxng/searxng.git searxng
+
+For the developer environment, mise en place is recommended:
+
+$ curl https://mise.run | sh
+
+The tools required for a developer environment are provided via mise.toml, trust the project:
+
+$ mise trust
+
+Here is how a minimal workflow looks like:
+
+    start hacking
+
+    run your code: make run
+
+    format & test your code: make format and make test
+
+If you think at some point something fails, go back to start. Otherwise, choose a meaningful commit message and we are happy to receive your pull request. To not end in wild west we have some directives, please pay attention to our “How to contribute” guideline.
+
+If you want to debug with the good old Python Debugger pdb: Alternatively to make run (2.) which starts a Granian server you can jump into the developer environment and start a python based HTTP server by:
+
+$ ./manage dev.env
+...
+(dev.env)$ SEARXNG_DEBUG=1 searxng-run
+
+Since this is a pure Python solution, you can set breakpoints in your code with pdb.set_trace() and the debugger will wait for you in the terminal prompt.
+
+Any other script or command line provided by SearXNG can also be used in the same environment, here are a few examples:
+
+# tools related to favicons
+(dev.env)$ python -m searx.favicons
+
+# tools related to DATA stored in searx/data
+(dev.env)$ python -m searx.data --help
+
+# tools related to engines
+(dev.env)$ python -m searx.enginelib --help
+
+# to test one of the update scripts
+(dev.env)$ searxng_extra/update/update_engine_traits.py --help
+
+# to test the update of the wikidata units
+(dev.env)$ searxng_extra/update/update_wikidata_units.py
+
+further read
+
+    NVM make nvm.install nvm.status
+
+    make themes.*
+
+If you implement themes, you will need to setup a Node.js environment. Before you call make run (2.), you need to compile the modified styles and JavaScript: make node.clean themes.all. If Biome or Stylelint reports issues, try make themes.fix.
+
+Alternatively you can also compile selective the theme you have modified, e.g. the simple theme.
+
+make themes.simple
+
+Tip
+
+To get live builds while modifying CSS & JS use: LIVE_THEME=simple make run
+
+further read
+
+    make static.build.*
+
+If you finished your tests you can start to commit your changes. To separate the modified source code from the build products first run:
+
+make static.build.restore
+
+This will restore the old build products and only your changes of the code remain in the working tree which can now be added & committed. When all sources are committed, you can commit the build products simply by:
+
+make static.build.commit
+
+Committing the build products should be the last step, just before you send us your PR. There is also a make target to rewind this last build commit:
+
+make static.build.drop
+
++++
+
+Extended Types
+
+This module implements the type extensions applied by SearXNG.
+
+    flask.request is replaced by sxng_request
+
+    flask.Request is replaced by SXNG_Request
+
+    httpx.response is replaced by SXNG_Response
+
+searx.extended_types.sxng_request: SXNG_Request
+
+    A replacement for flask.request with type cast SXNG_Request.
+
+class searx.extended_types.SXNG_Request(environ: WSGIEnvironment, populate_request: bool = True, shallow: bool = False)[source]
+
+    SearXNG extends the class flask.Request with properties from this class definition, see type cast sxng_request.
+
+    user_plugins: list[str]
+
+        list of searx.plugins.Plugin.id (the id of the plugins)
+
+    preferences: searx.preferences.Preferences
+
+        The preferences of the request.
+
+    errors: list[str]
+
+        A list of errors (translated text) added by searx.webapp in case of errors.
+
+    start_time: float
+
+        Start time of the request, timeit.default_timer added by searx.webapp to calculate the total time of the request.
+
+    render_time: float
+
+        Duration of the rendering, calculated and added by searx.webapp.
+
+    timings: list[searx.results.Timing]
+
+        A list of searx.results.Timing of the engines, calculatid in and hold by searx.results.ResultContainer.timings.
+
+    remote_addr: str
+
+        The address of the client sending the request.
+
+class searx.extended_types.SXNG_Response(status_code: int, *, headers: Headers | Mapping[str, str] | Mapping[bytes, bytes] | Sequence[Tuple[str, str]] | Sequence[Tuple[bytes, bytes]] | None = None, content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None, text: str | None = None, html: str | None = None, json: Any = None, stream: SyncByteStream | AsyncByteStream | None = None, request: Request | None = None, extensions: Mapping[str, Any] | None = None, history: list[Response] | None = None, default_encoding: str | Callable[[bytes], str] = 'utf-8')[source]
+
+    SearXNG extends the class httpx.Response with properties from this class (type cast of httpx.Response).
+
+    response = httpx.get("https://example.org")
+    response = typing.cast(SXNG_Response, response)
+    if response.ok:
+       ...
+    query_was = search_params["query"]
+
++++
+
+Result Types
+
+To understand the typification of the results, let’s take a brief look at the structure of SearXNG .. At its core, SearXNG is nothing more than an aggregator that aggregates the results from various sources, renders them via templates and displays them to the user.
+
+The sources can be:
+
+    engines
+
+    plugins
+
+    answerers
+
+The sources provide the results, which are displayed in different areas depending on the type of result. The areas are:
+
+area main results
+
+    It is the main area in which – as is typical for search engines – the results that a search engine has found for the search term are displayed.
+
+area answers
+
+    This area displays short answers that could be found for the search term.
+
+area info box
+
+    An area in which additional information can be displayed, e.g. excerpts from wikipedia or other sources such as maps.
+
+area suggestions
+
+    Suggestions for alternative search terms can be found in this area. These can be clicked on and a search is carried out with these search terms.
+
+area corrections
+
+    Results in this area are like the suggestion of alternative search terms, which usually result from spelling corrections
+
+At this point it is important to note that all sources can contribute results to all of the areas mentioned above.
+
+In most cases, however, the engines will fill the main results and the answerers will generally provide the contributions for the answer area. Not necessary to mention here but for a better understanding: the plugins can also filter out or change results from the main results area (e.g. the URL of the link).
+
+The result items are organized in the results.ResultContainer and after all sources have delivered their results, this container is passed to the templating to build a HTML output. The output is usually HTML, but it is also possible to output the result lists as JSON or RSS feed. Thats quite all we need to know before we dive into typification of result items.
+
+Hint
+
+Typification of result items: we are at the very first beginng!
+
+The first thing we have to realize is that there is no typification of the result items so far, we have to build it up first .. and that is quite a big task, which we will only be able to accomplish gradually.
+
+The foundation for the typeless results was laid back in 2013 in the very first commit @ae9fb1d, and the principle has not changed since then. At the time, the approach was perfectly adequate, but we have since evolved and the demands on SearXNG increase with every feature request.
+
+Motivation: in the meantime, it has become very difficult to develop new features that require structural changes and it is especially hard for newcomers to find their way in this typeless world. As long as the results are only simple key/value dictionaries, it is not even possible for the IDEs to support the application developer in his work.
+
+Planning: The procedure for subsequent typing will have to be based on the circumstances ..
+
+Attention
+
+As long as there is no type defined for a kind of result the HTML template specify what the properties of a type are.
+
+In this sense, you will either find a type definition here in the documentation or, if this does not yet exist, a description of the HTML template.
+
+    Result
+        Result
+        LegacyResult
+    Main Search Results
+        Main Results
+        Key-Value Results
+        Code Results
+        Paper Results
+        File Results
+        Image Results
+    Answer Results
+        BaseAnswer
+        Answer
+        Translations
+        WeatherAnswer
+        AnswerSet
+    Correction Results
+    Suggestion Results
+    Infobox Results
+
++++
+
+Result
+
+Basic types for the typification of results.
+
+    Result base class
+
+    LegacyResult for internal use only
+
+class searx.result_types._base.Result(*, url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None)[source]
+
+    Base class of all result types Result Types.
+
+    url: str | None
+
+        A link related to this result
+
+    engine: str | None
+
+        Name of the engine this result comes from. In case of plugins a prefix plugin: is set, in case of answerer prefix answerer: is set.
+
+        The field is optional and is initialized from the context if necessary.
+
+    parsed_url: ParseResult | None
+
+        urllib.parse.ParseResult of Result.url.
+
+        The field is optional and is initialized from the context if necessary.
+
+    normalize_result_fields()[source]
+
+        Normalize fields url and parse_sql.
+
+            If field url is set and field parse_url is unset, init parse_url from field url. The url field is initialized with the resulting value in parse_url, if url and parse_url are not equal.
+
+    filter_urls(filter_func: Callable[[Result | LegacyResult, str, str], str | bool])[source]
+
+        A filter function is passed in the filter_func argument to filter and/or modify the URLs.
+
+        The filter function receives the result object as the first argument and the field name (str) in the second argument. In the third argument the URL string value is passed to the filter function.
+
+        The filter function is applied to all fields that contain a URL, in addition to the familiar url field, these include fields such as:
+
+        ["url", "iframe_src", "audio_src", "img_src", "thumbnail_src", "thumbnail"]
+
+        and the urls list of items of the infobox.
+
+        For each field, the filter function is called and returns a bool or a string value:
+
+            True: leave URL in field unchanged
+
+            False: remove URL field from result (or remove entire result)
+
+            str: modified URL to be used instead
+
+        See Filter URLs example.
+
+    defaults_from(other: Result)[source]
+
+        Fields not set in self will be updated from the field values of the other. If a field is set (exists) but contains an empty string or the value None, it is also considered not set.
+
+class searx.result_types._base.LegacyResult(*args: Any, **kwargs: Any)[source]
+
+    A wrapper around a legacy result item. The SearXNG core uses this class for untyped dictionaries / to be downward compatible.
+
+    This class is needed until we have implemented an Result class for each result type and the old usages in the codebase have been fully migrated.
+
+    There is only one place where this class is used, in the searx.results.ResultContainer.
+
+    Attention
+
+    Do not use this class in your own implementations!
+
+    filter_urls(filter_func: Callable[[Result | LegacyResult, str, str], str | bool])[source]
+
+        See Result.filter_urls
+
++++
+
+Main Search Results
+
+In the area main results the results that a search engine has found for the search term are displayed.
+
+There is still no typing for all items in the Main Result List. The following types have been implemented so far ..
+
+    Main Results
+        MainResult
+    Key-Value Results
+        KeyValue
+    Code Results
+        Code
+    Paper Results
+        Paper
+    File Results
+        File
+    Image Results
+        Image
+        ImageRef
+
+The LegacyResult is used internally for the results that have not yet been typed. The templates can be used as orientation until the final typing is complete.
+
+    default.html / Result
+
+    videos.html
+
+    torrent.html
+
+    map.html
+
+    packages
+
+    products.html
+
++++
+
+Main Results
+
+class searx.result_types._base.MainResult(template: str = 'default.html', title: str = '', content: str = '', img_src: str = '', iframe_src: str = '', audio_src: str = '', thumbnail: str = '', publishedDate: datetime | None = None, pubdate: str = '', length: timedelta | None = None, views: str = '', author: str = '', metadata: str = '', priority: Literal['', 'high', 'low']='', engines: set[str] = <factory>, open_group: bool = False, close_group: bool = False, positions: list[int] = <factory>, score: float = 0, category: str = '', *, url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None)[source]
+
+    Base class of all result types displayed in area main results.
+
+    template: str
+
+        Name of the template used to render the result.
+
+        By default result_templates/default.html is used.
+
+    title: str
+
+        Link title of the result item.
+
+    content: str
+
+        Extract or description of the result item
+
+    img_src: str
+
+        URL of a image that is displayed in the result item.
+
+    iframe_src: str
+
+        URL of an embedded <iframe> / the frame is collapsible.
+
+    audio_src: str
+
+        URL of an embedded <audio controls>.
+
+    thumbnail: str
+
+        URL of a thumbnail that is displayed in the result item.
+
+    publishedDate: datetime | None
+
+        The date on which the object was published.
+
+    pubdate: str
+
+        String representation of MainResult.publishedDate
+
+        Deprecated: it is still partially used in the templates, but will one day be completely eliminated.
+
+    length: timedelta | None
+
+        Playing duration in seconds.
+
+    views: str
+
+        View count in humanized number format.
+
+    author: str
+
+        Author of the title.
+
+    metadata: str
+
+        Miscellaneous metadata.
+
+    priority: Literal['', 'high', 'low']
+
+        The priority can be set via Hostnames, for example.
+
+    engines: set[str]
+
+        In a merged results list, the names of the engines that found this result are listed in this field.
+
+    normalize_result_fields()[source]
+
+        Normalize fields url and parse_sql.
+
+            If field url is set and field parse_url is unset, init parse_url from field url. The url field is initialized with the resulting value in parse_url, if url and parse_url are not equal.
+
++++
+
+Key-Value Results
+
+Typification of the keyvalue results. Results of this type are rendered in the keyvalue.html template.
+
+class searx.result_types.keyvalue.KeyValue(title: str = '', content: str = '', img_src: str = '', iframe_src: str = '', audio_src: str = '', thumbnail: str = '', publishedDate: ~datetime.datetime | None = None, pubdate: str = '', length: ~datetime.timedelta | None = None, views: str = '', author: str = '', metadata: str = '', priority: ~typing.Literal['', 'high', 'low'] = '', engines: set[str] = <factory>, open_group: bool = False, close_group: bool = False, positions: list[int] = <factory>, score: float = 0, category: str = '', *, template: str = 'keyvalue.html', url: str | None = None, engine: str | None = '', parsed_url: ~urllib.parse.ParseResult | None = None, kvmap: dict[str, ~typing.Any] | ~collections.OrderedDict[str, ~typing.Any], caption: str = '', key_title: str = '', value_title: str = '')[source]
+
+    Bases: MainResult
+
+    Simple table view which maps key names (first col) to values (second col).
+
+    kvmap: dict[str, Any] | OrderedDict[str, Any]
+
+        Dictionary with keys and values. To sort keys, use OrderedDict.
+
+    caption: str
+
+        Optional caption for this result.
+
+    key_title: str
+
+        Optional title for the key column.
+
+    value_title: str
+
+        Optional title for the value column.
+
++++
+
+Code Results
+
+Typification of the code results. Results of this type are rendered in the code.html template. For highlighting the code passages, Pygments is used.
+
+final class searx.result_types.code.Code(title: str = '', content: str = '', img_src: str = '', iframe_src: str = '', audio_src: str = '', thumbnail: str = '', publishedDate: datetime | None = None, pubdate: str = '', length: timedelta | None = None, views: str = '', author: str = '', metadata: str = '', priority: Literal['', 'high', 'low']='', engines: set[str] = <factory>, open_group: bool = False, close_group: bool = False, positions: list[int] = <factory>, score: float = 0, category: str = '', *, template: str = 'code.html', url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, repository: str | None = None, codelines: list[tuple[int, str]]=<factory>, hl_lines: set[int] = <factory>, code_language: str = '<guess>', filename: str | None = None, strip_new_lines: bool = True, strip_whitespace: bool = False)[source]
+
+    Bases: MainResult
+
+    Result type suitable for displaying code passages.
+
+    repository: str | None
+
+        A link related to a repository related to the result.
+
+    codelines: list[tuple[int, str]]
+
+        A list of two digit tuples where the first item is the line number and the second item is the code line.
+
+    hl_lines: set[int]
+
+        A list of line numbers to highlight.
+
+    code_language: str
+
+        Pygment’s short name of the lexer, e.g. text for the pygments.lexers.special.TextLexer. For a list of available languages consult: Pygments languages. If the language is not in this list, a ValueError is raised.
+
+        The default is <guess> which has a special meaning;
+
+            If Code.filename is set, Pygment’s factory method pygments.lexers.guess_lexer_for_filename is used to determine the language of the codelines.
+
+            else Pygment’s pygments.lexers.guess_lexer factory is used.
+
+        In case the language can’t be detected, the fallback is text.
+
+    filename: str | None
+
+        Optional file name, can help to <guess> the language of the code (in case of ambiguous short code examples). If Code.title is not set, its default is the filename.
+
+    strip_new_lines: bool
+
+        Strip leading and trailing newlines for each returned fragment (default: True). Single file might return multiple code fragments.
+
+    strip_whitespace: bool
+
+        Strip all leading and trailing whitespace for each returned fragment (default: False). Single file might return multiple code fragments. Enabling this might break code indentation.
+
+    HTML(**options) → str[source]
+
+        Rendered HTML, additional options are accepted, for more details have a look at HtmlFormatter.
+
++++
+
+Paper Results
+
+Typification of the paper results.
+
+Results of this type are rendered in the paper.html template.
+
+Related topics:
+
+    BibTeX field types
+
+    BibTeX format
+
+final class searx.result_types.paper.Paper(title: str = '', img_src: str = '', iframe_src: str = '', audio_src: str = '', thumbnail: str = '', publishedDate: datetime | None = None, pubdate: str = '', length: timedelta | None = None, views: str = '', author: str = '', metadata: str = '', priority: Literal['', 'high', 'low']='', engines: set[str] = <factory>, open_group: bool = False, close_group: bool = False, positions: list[int] = <factory>, score: float = 0, category: str = '', *, template: str = 'paper.html', content: str = '', url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, date_of_publication: DateTime | None = None, comments: str = '', tags: list[str] = <factory>, type: str = '', authors: list[str] | set[str] = <factory>, editor: str = '', publisher: str = '', journal: str = '', volume: str | int = '', pages: str = '', number: str = '', doi: str = '', issn: list[str] = <factory>, isbn: list[str] = <factory>, pdf_url: str = '', html_url: str = '')[source]
+
+    Bases: MainResult
+
+    Result type suitable for displaying scientific papers and other documents.
+
+    date_of_publication: DateTime | None
+
+        Date the document was published.
+
+    comments: str
+
+        Free text display in italic below the content.
+
+    tags: list[str]
+
+        Free tag list.
+
+    type: str
+
+        Short description of medium type, e.g. book, pdf or html …
+
+    authors: list[str] | set[str]
+
+        List of authors of the work (authors with a “s” suffix, the “author” is in the MainResult.author).
+
+    editor: str
+
+        Editor of the book/paper.
+
+    publisher: str
+
+        Name of the publisher.
+
+    journal: str
+
+        Name of the journal or magazine the article was published in.
+
+    volume: str | int
+
+        Volume number.
+
+    pages: str
+
+        Page range where the article is.
+
+    number: str
+
+        Number of the report or the issue number for a journal article.
+
+    doi: str
+
+        DOI number (like 10.1038/d41586-018-07848-2).
+
+    issn: list[str]
+
+        List of ISSN numbers like 1476-4687
+
+    isbn: list[str]
+
+        List of ISBN numbers like 9780201896831
+
+    pdf_url: str
+
+        URL to the full article, the PDF version
+
+    html_url: str
+
+        URL to full article, HTML version
+
++++
+
+File Results
+
+Typification of the file results. Results of this type are rendered in the file.html template.
+
+final class searx.result_types.file.File(title: str = '', content: str = '', img_src: str = '', iframe_src: str = '', audio_src: str = '', thumbnail: str = '', publishedDate: datetime | None = None, pubdate: str = '', length: timedelta | None = None, views: str = '', metadata: str = '', priority: Literal['', 'high', 'low']='', engines: set[str] = <factory>, open_group: bool = False, close_group: bool = False, positions: list[int] = <factory>, score: float = 0, category: str = '', *, template: str = 'file.html', author: str = '', url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, filename: str = '', size: str = '', time: str = '', mimetype: str = '', abstract: str = '', embedded: str = '', mtype: str = '', subtype: str = '')[source]
+
+    Bases: MainResult
+
+    Class for results of type file
+
+    filename: str
+
+        Name of the file.
+
+    size: str
+
+        Size of bytes in human readable notation (MB for 1024 * 1024 Bytes file size.)
+
+    time: str
+
+        Indication of a time, such as the date of the last modification or the date of creation. This is a simple string, the date of which can be freely chosen according to the context.
+
+    mimetype: str
+
+        Mimetype/Subtype of the file. For audio and video, a URL can be passed in the File.embedded field to embed the referenced media in the result. If no value is specified, the MIME type is determined from self.filename or, alternatively, from self.embedded (if either of the two values is set).
+
+    abstract: str
+
+        Abstract of the file.
+
+    embedded: str
+
+        URL of an embedded media type (audio or video) / is collapsible.
+
+    mtype: str
+
+        Used for displaying File.embedded. Its value is automatically populated from the base type of File.mimetype, and can be explicitly set to enforce e.g. audio or video when mimetype is something like “application/ogg” but its know the content is for example a video.
+
+    subtype: str
+
+        Used for displaying File.embedded. Its value is automatically populated from the subtype type of File.mimetype, and can be explicitly set to enforce a subtype for the File.embedded element.
+
++++
+
+Image Results
+
+Typification of the image results. Results of this type are rendered in the images.html template.
+
+final class searx.result_types.image.Image(title: str = '', content: str = '', img_src: str = '', iframe_src: str = '', audio_src: str = '', thumbnail: str = '', publishedDate: datetime | None = None, pubdate: str = '', length: timedelta | None = None, views: str = '', author: str = '', metadata: str = '', priority: Literal['', 'high', 'low']='', engines: set[str] = <factory>, open_group: bool = False, close_group: bool = False, positions: list[int] = <factory>, score: float = 0, category: str = '', *, template: str = 'images.html', url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, thumbnail_src: str = '', resolution: str = '', img_format: str = '', source: str = '', filesize: str = '', formats: list[ImageRef] = <factory>)[source]
+
+    Bases: MainResult
+
+    Result type suitable for displaying images.
+
+    The images are displayed as small thumbnails in the main results list. Clicking on the preview opens a gallery view in which all further metadata for the image is displayed.
+
+    thumbnail_src: str
+
+        URL of a preview of the image.
+
+    resolution: str
+
+        The resolution of the image (e.g. 1920 x 1080 pixel)
+
+    img_format: str
+
+        The format of the image MainResult.img_src (e.g. png).
+
+    source: str
+
+        Source of the image.
+
+    filesize: str
+
+        Size of bytes in human readable notation (e.g. 1MB for 1024*1024 Bytes filesize).
+
+    formats: list[ImageRef]
+
+        List of links to alternative image formats.
+
+    filter_urls(filter_func: Callable[[Result | LegacyResult, str, str], str | bool])[source]
+
+        A filter function is passed in the filter_func argument to filter and/or modify the URLs.
+
+        The filter function receives the result object as the first argument and the field name (str) in the second argument. In the third argument the URL string value is passed to the filter function.
+
+        The filter function is applied to all fields that contain a URL, in addition to the familiar url field, these include fields such as:
+
+        ["url", "iframe_src", "audio_src", "img_src", "thumbnail_src", "thumbnail"]
+
+        and the urls list of items of the infobox.
+
+        For each field, the filter function is called and returns a bool or a string value:
+
+            True: leave URL in field unchanged
+
+            False: remove URL field from result (or remove entire result)
+
+            str: modified URL to be used instead
+
+        See Filter URLs example.
+
+class searx.result_types.image.ImageRef(*, url: str, subtype: Literal['png', 'svg+xml', 'jpeg', 'bmp', 'x-icon', 'tiff'], label: str = '', mtype: Literal['image'] = 'image')[source]
+
+    Reference to an (alternative) image format
+
+    url: str
+
+        URL of the image reference.
+
+    subtype: Literal['png', 'svg+xml', 'jpeg', 'bmp', 'x-icon', 'tiff']
+
+        Subtype (mimetype) of the image format.
+
+    label: str
+
+        Label of the reference, default is build from the uppercase of Image.ImageRef.subtype.
+
++++
+
+Answer Results
+
+The area answers is an area in which additional information can be displayed.
+
+Typification of the answer results. Results of this type are rendered in the answers.html template.
+
+class searx.result_types.answer.BaseAnswer(*, url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None)[source]
+
+    Bases: Result
+
+    Base class of all answer types. It is not intended to build instances of this class (aka abstract).
+
+class searx.result_types.answer.Answer(*, url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, template: str = 'answer/legacy.html', answer: str)[source]
+
+    Bases: BaseAnswer
+
+    Simple answer type where the answer is a simple string with an optional url field field to link a resource (article, map, ..) related to the answer.
+
+    answer: str
+
+        Text of the answer.
+
+class searx.result_types.answer.Translations(*, url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, template: str = 'answer/translations.html', translations: list[Item])[source]
+
+    Bases: BaseAnswer
+
+    Answer type with a list of translations.
+
+    The items in the list of Translations.translations are of type Translations.Item:
+
+    def response(resp):
+        results = []
+        ...
+        foo_1 = Translations.Item(
+            text="foobar",
+            synonyms=["bar", "foo"],
+            examples=["foo and bar are placeholders"],
+        )
+        foo_url="https://www.deepl.com/de/translator#en/de/foo"
+        ...
+        Translations(results=results, translations=[foo], url=foo_url)
+
+    template: str
+
+        The template in answer/translations.html
+
+    translations: list[Item]
+
+        List of translations.
+
+    class Item(*, text: str, transliteration: str = '', examples: list[str] = <factory>, definitions: list[str] = <factory>, synonyms: list[str] = <factory>)[source]
+
+        Bases: Struct
+
+        A single element of the translations / a translation. A translation consists of at least a mandatory text property (the translation) , optional properties such as definitions, synonyms and examples are possible.
+
+        text: str
+
+            Translated text.
+
+        transliteration: str
+
+            Transliteration of the requested translation.
+
+        examples: list[str]
+
+            List of examples for the requested translation.
+
+        definitions: list[str]
+
+            List of definitions for the requested translation.
+
+        synonyms: list[str]
+
+            List of synonyms for the requested translation.
+
+class searx.result_types.answer.WeatherAnswer(*, url: str | None = None, engine: str | None = '', parsed_url: ParseResult | None = None, template: str = 'answer/weather.html', current: Item, forecasts: list[Item] = <factory>, service: str = '')[source]
+
+    Bases: BaseAnswer
+
+    Answer type for weather data.
+
+    template: str
+
+        The template is located at answer/weather.html
+
+    current: Item
+
+        Current weather at location.
+
+    forecasts: list[Item]
+
+        Weather forecasts for location.
+
+    service: str
+
+        Weather service from which this information was provided.
+
+    class Item(*, location: GeoLocation, temperature: Temperature, condition: Literal['clear sky', 'partly cloudy', 'cloudy', 'fair', 'fog', 'light rain and thunder', 'light rain showers and thunder', 'light rain showers', 'light rain', 'rain and thunder', 'rain showers and thunder', 'rain showers', 'rain', 'heavy rain and thunder', 'heavy rain showers and thunder', 'heavy rain showers', 'heavy rain', 'light sleet and thunder', 'light sleet showers and thunder', 'light sleet showers', 'light sleet', 'sleet and thunder', 'sleet showers and thunder', 'sleet showers', 'sleet', 'heavy sleet and thunder', 'heavy sleet showers and thunder', 'heavy sleet showers', 'heavy sleet', 'light snow and thunder', 'light snow showers and thunder', 'light snow showers', 'light snow', 'snow and thunder', 'snow showers and thunder', 'snow showers', 'snow', 'heavy snow and thunder', 'heavy snow showers and thunder', 'heavy snow showers', 'heavy snow'], datetime: DateTime | None = None, summary: str | None = None, feels_like: Temperature | None = None, pressure: Pressure | None = None, humidity: RelativeHumidity | None = None, wind_from: Compass, wind_speed: WindSpeed | None = None, cloud_cover: int | None = None)[source]
+
+        Bases: Struct
+
+        Weather parameters valid for a specific point in time.
+
+        location: GeoLocation
+
+            The geo-location the weather data is from (e.g. Berlin, Germany).
+
+        temperature: Temperature
+
+            Air temperature at 2m above the ground.
+
+        condition: Literal['clear sky', 'partly cloudy', 'cloudy', 'fair', 'fog', 'light rain and thunder', 'light rain showers and thunder', 'light rain showers', 'light rain', 'rain and thunder', 'rain showers and thunder', 'rain showers', 'rain', 'heavy rain and thunder', 'heavy rain showers and thunder', 'heavy rain showers', 'heavy rain', 'light sleet and thunder', 'light sleet showers and thunder', 'light sleet showers', 'light sleet', 'sleet and thunder', 'sleet showers and thunder', 'sleet showers', 'sleet', 'heavy sleet and thunder', 'heavy sleet showers and thunder', 'heavy sleet showers', 'heavy sleet', 'light snow and thunder', 'light snow showers and thunder', 'light snow showers', 'light snow', 'snow and thunder', 'snow showers and thunder', 'snow showers', 'snow', 'heavy snow and thunder', 'heavy snow showers and thunder', 'heavy snow showers', 'heavy snow']
+
+            Standardized designations that summarize the weather situation (e.g. light sleet showers and thunder).
+
+        datetime: DateTime | None
+
+            Time of the forecast - not needed for the current weather.
+
+        summary: str | None
+
+            One-liner about the weather forecast / current weather conditions. If unset, a summary is build up from temperature and current weather conditions.
+
+        feels_like: Temperature | None
+
+            Apparent temperature, the temperature equivalent perceived by humans, caused by the combined effects of air temperature, relative humidity and wind speed. The measure is most commonly applied to the perceived outdoor temperature.
+
+        pressure: Pressure | None
+
+            Air pressure at sea level (e.g. 1030 hPa)
+
+        humidity: RelativeHumidity | None
+
+            Amount of relative humidity in the air at 2m above the ground. The unit is %, e.g. 60%)
+
+        wind_from: Compass
+
+            The directon which moves towards / direction the wind is coming from.
+
+        wind_speed: WindSpeed | None
+
+            Speed of wind / wind speed at 10m above the ground (10 min average).
+
+        cloud_cover: int | None
+
+            Amount of sky covered by clouds / total cloud cover for all heights (cloudiness, unit: %)
+
+        property url: str | None
+
+            Determines a data URL with a symbol for the weather conditions. If no symbol can be assigned, None is returned.
+
+class searx.result_types.answer.AnswerSet[source]
+
+    Bases: object
+
+    Aggregator for BaseAnswer items in a result container.
+
++++
+
+Correction Results
+
+Hint
+
+There is still no typing for these result items. The templates can be used as orientation until the final typing is complete.
+
+The area corrections shows the user alternative search terms.
+
+A result of this type is a very simple dictionary with only one key/value pair
+
+{"correction" : "lorem ipsum .."}
+
+From this simple dict another dict is build up:
+
+# use RawTextQuery to get the corrections URLs with the same bang
+{"url" : "!bang lorem ipsum ..", "title": "lorem ipsum .." }
+
+and used in the template corrections.html:
+
+titlestr
+
+    Corrected search term.
+urlstr
+
+    Not really an URL, its the value to insert in a HTML form for a SearXNG query.
+
++++
+
+Suggestion Results
+
+Hint
+
+There is still no typing for these result items. The templates can be used as orientation until the final typing is complete.
+
+The area suggestions shows the user alternative search terms.
+
+A result of this type is a very simple dictionary with only one key/value pair
+
+{"suggestion" : "lorem ipsum .."}
+
+From this simple dict another dict is build up:
+
+{"url" : "!bang lorem ipsum ..", "title": "lorem ipsum" }
+
+and used in the template suggestions.html:
+
+# use RawTextQuery to get the suggestion URLs with the same bang
+{"url" : "!bang lorem ipsum ..", "title": "lorem ipsum" }
+
+titlestr
+
+    Suggested search term
+urlstr
+
+    Not really an URL, its the value to insert in a HTML form for a SearXNG query.
+
++++
+
+Infobox Results
+
+Hint
+
+There is still no typing for these result items. The templates can be used as orientation until the final typing is complete.
+
+The area info box is an area where addtional infos shown to the user.
+
+Fields used in the infobox.html:
+
+img_src: str
+
+    URL of a image or thumbnail that is displayed in the infobox.
+infobox: str
+
+    Title of the info box.
+content: str
+
+    Text of the info box.
+
+The infobox has additional subsections for attributes, urls and relatedTopics:
+
+attributes: List[dict]
+
+    A list of attributes. An attribute is a dictionary with keys:
+
+        label str: (mandatory)
+
+        value str: (mandatory)
+
+        image List[dict] (optional)
+
+        A list of images. An image is a dictionary with keys:
+
+            src str: URL of an image/thumbnail (mandatory)
+
+            alt str: alternative text for the image (mandatory)
+
+urls: List[dict]
+
+    A list of links. An link is a dictionary with keys:
+
+        url str: URL of the link (mandatory)
+
+        title str: Title of the link (mandatory)
+
+relatedTopics: List[dict]
+
+    A list of topics. An topic is a dictionary with keys:
+
+        name: str: (mandatory)
+
+        suggestions: List[dict] (optional)
+
+        A list of suggestions. A suggestion is simple dictionary with just one key/value pair:
+
+            suggestion: str: suggested search term (mandatory)
+
++++
+
+Simple Theme Templates
+
+The simple template is complex, it consists of many different elements and also uses macros and include statements. The following is a rough overview that we would like to give the developer at hand, details must still be taken from the sources.
+
+A result item can be of different media types. The media type of a result is defined by the result_type.Result.template. To set another media-type as default.html, the field template in the result item must be set to the desired type.
+Result template macros
+result_header
+
+Execpt image.html and some others this macro is used in nearly all result types in the Main Result List.
+
+Fields used in the template macro result_header:
+
+urlstr
+
+    Link URL of the result item.
+titlestr
+
+    Link title of the result item.
+img_src, thumbnailstr
+
+    URL of a image or thumbnail that is displayed in the result item.
+
+result_sub_header
+
+Execpt image.html and some others this macro is used in nearly all result types in the Main Result List.
+
+Fields used in the template macro result_sub_header:
+
+publishedDatedatetime.datetime
+
+    The date on which the object was published.
+length: datetime.timedelta
+
+    Playing duration in seconds.
+views: str
+
+    View count in humanized number format.
+authorstr
+
+    Author of the title.
+metadatastr
+
+    Miscellaneous metadata.
+
+engine_data_form
+
+The engine_data_form macro is used in results,html in a HTML <form/> element. The intention of this macro is to pass data of a engine from one response to the searx.search.SearchQuery of the next request.
+
+To pass data, engine’s response handler can append result items of typ engine_data. This is by example used to pass a token from the response to the next request:
+
+def response(resp):
+    ...
+    results.append({
+       'engine_data': token,
+       'key': 'next_page_token',
+    })
+    ...
+    return results
+
+def request(query, params):
+    page_token = params['engine_data'].get('next_page_token')
+
+Main Result List
+
+The media types of the main result type are the template files in the result_templates.
+default.html
+
+Displays result fields from:
+
+    result_header and
+
+    result_sub_header
+
+Additional fields used in the default.html:
+
+contentstr
+
+    General text of the result item.
+iframe_srcstr
+
+    URL of an embedded <iframe> / the frame is collapsible.
+audio_srcuri,
+
+    URL of an embedded <audio controls>.
+
+videos.html
+
+Displays result fields from:
+
+    result_header and
+
+    result_sub_header
+
+Additional fields used in the videos.html:
+
+iframe_srcstr
+
+    URL of an embedded <iframe> / the frame is collapsible.
+
+    The videos are displayed as small thumbnails in the main results list, there is an additional button to collaps/open the embeded video.
+contentstr
+
+    Description of the code fragment.
+
+torrent.html
+
+Displays result fields from:
+
+    result_header and
+
+    result_sub_header
+
+Additional fields used in the torrent.html:
+
+magnetlink:
+
+    URL of the magnet link.
+torrentfile
+
+    URL of the torrent file.
+seedint
+
+    Number of seeders.
+leechint
+
+    Number of leecher
+filesizeint
+
+    Size in Bytes (rendered to human readable unit of measurement).
+filesint
+
+    Number of files.
+
+map.html
+
+Displays result fields from:
+
+    result_header and
+
+    result_sub_header
+
+Additional fields used in the map.html:
+
+contentstr
+
+    Description of the item.
+address_labelstr
+
+    Label of the address / default _('address').
+geojsonGeoJSON
+
+    Geometries mapped to HTMLElement.dataset (data-map-geojson) and used by Leaflet.
+boundingbox[ min-lon, min-lat, max-lon, max-lat]
+
+    A bbox area defined by min longitude , min latitude , max longitude and max latitude. The bounding box is mapped to HTMLElement.dataset (data-map-boundingbox) and is used by Leaflet.
+longitude, latitudestr
+
+    Geographical coordinates, mapped to HTMLElement.dataset (data-map-lon, data-map-lat) and is used by Leaflet.
+address{...}
+
+    A dicticonary with the address data:
+
+    address = {
+        'name'          : str,  # name of object
+        'road'          : str,  # street name of object
+        'house_number'  : str,  # house number of object
+        'postcode'      : str,  # postcode of object
+        'country'       : str,  # country of object
+        'country_code'  : str,
+        'locality'      : str,
+    }
+
+    country_codestr
+
+        Country code of the object.
+    localitystr
+
+        The name of the city, town, township, village, borough, etc. in which this object is located.
+
+links[link1, link2, ...]
+
+    A list of links with labels:
+
+    links.append({
+        'label'       : str,
+        'url'         : str,
+        'url_label'   : str,  # set by some engines but unused (oscar)
+    })
+
+data[data1, data2, ...]
+
+    A list of additional data, shown in two columns and containing a label and value.
+
+    data.append({
+       'label'   : str,
+       'value'   : str,
+       'key'     : str,  # set by some engines but unused
+    })
+
+typestr # set by some engines but unused (oscar)
+
+    Tag label from OSM_KEYS_TAGS[‘tags’].
+type_iconstr # set by some engines but unused (oscar)
+
+    Type’s icon.
+osm{...}
+
+    OSM-type and OSM-ID, can be used to Lookup OSM data (Nominatim). There is also a discussion about “place_id is not a persistent id” and the perma_id.
+
+    osm = {
+        'type': str,
+        'id':   str,
+    }
+
+    typestr
+
+        Type of osm-object (if OSM-Result).
+    id :
+
+        ID of osm-object (if OSM-Result).
+
+    Hint
+
+    The osm property is set by engine openstreetmap.py, but it is not used in the map.html template yet.
+
+paper.html
+
+Displays result fields from:
+
+    result_header
+
+Additional fields used in the paper.html:
+
+contentstr
+
+    An abstract or excerpt from the document.
+commentsstr
+
+    Free text display in italic below the content.
+tagsList[str]
+
+    Free tag list.
+typestr
+
+    Short description of medium type, e.g. book, pdf or html …
+authorsList[str]
+
+    List of authors of the work (authors with a “s” suffix, the “author” is in the result_sub_header).
+editorstr
+
+    Editor of the book/paper.
+publisherstr
+
+    Name of the publisher.
+journalstr
+
+    Name of the journal or magazine the article was published in.
+volumestr
+
+    Volume number.
+pagesstr
+
+    Page range where the article is.
+numberstr
+
+    Number of the report or the issue number for a journal article.
+doistr
+
+    DOI number (like 10.1038/d41586-018-07848-2).
+issnList[str]
+
+    ISSN number like 1476-4687
+isbnList[str]
+
+    ISBN number like 9780201896831
+pdf_urlstr
+
+    URL to the full article, the PDF version
+html_urlstr
+
+    URL to full article, HTML version
+
+packages
+
+Displays result fields from:
+
+    result_header
+
+Additional fields used in the packages.html:
+
+package_namestr
+
+    The name of the package.
+versionstr
+
+    The current version of the package.
+maintainerstr
+
+    The maintainer or author of the project.
+publishedDatedatetime
+
+    Date of latest update or release.
+tagsList[str]
+
+    Free tag list.
+popularitystr
+
+    The popularity of the package, e.g. rating or download count.
+license_namestr
+
+    The name of the license.
+license_urlstr
+
+    The web location of a license copy.
+homepagestr
+
+    The url of the project’s homepage.
+source_code_url: str
+
+    The location of the project’s source code.
+linksdict
+
+    Additional links in the form of {'link_name': 'http://example.com'}
+
+products.html
+
+Displays result fields from:
+
+    result_header and
+
+    result_sub_header
+
+Additional fields used in the products.html:
+
+contentstr
+
+    Description of the product.
+pricestr
+
+    The price must include the currency.
+shippingstr
+
+    Shipping details.
+source_countrystr
+
+    Place from which the shipment is made.
+
++++
+
+Search API
+
+SearXNG supports querying via a simple HTTP API. Two endpoints, / and /search, are supported for both GET and POST methods. The GET method expects parameters as URL query parameters, while the POST method expects parameters as form data (application/x-www-form-urlencoded).
+
+If you want to consume the results as JSON, CSV, or RSS, you need to set the format parameter accordingly. Supported formats are defined in settings.yml, under the search: section. Requesting an unset format will return a 403 Forbidden error. Be aware that many public instances have these formats disabled.
+
+Endpoints:
+
+GET /
+GET /search
+POST /
+POST /search
+
+example cURL calls:
+
+curl 'https://searx.example.org/search?q=searxng&format=json'
+curl -X POST 'https://searx.example.org/search' -d 'q=searxng&format=csv'
+curl -L -X POST -d 'q=searxng&format=json' 'https://searx.example.org/'
+
+Parameters
+
+Further reading ..
+
+    Engine Overview
+
+    settings.yml
+
+    Configured Engines
+
+qrequired
+
+    The search query. This string is passed to external search services. Thus, SearXNG supports syntax of each search service. For example, site:github.com SearXNG is a valid query for Google. However, if simply the query above is passed to any search engine which does not filter its results based on this syntax, you might not get the results you wanted.
+
+    See more at Search syntax
+categoriesoptional
+
+    Comma separated list, specifies the active search categories (see Configured Engines)
+languagedefault from search:
+
+    Code of the language.
+pagenodefault 1
+
+    Search page number.
+time_rangeoptional[ day, month, year ]
+
+    Time range of search for engines which support it. See if an engine supports time range search in the preferences page of an instance.
+formatoptional[ json, csv, rss ]
+
+    Output format of results. Format needs to be activated in search:.
+safesearchdefault from search:[ 0, 1, 2 ]
+
+    Filter search results of engines which support safe search. See if an engine supports safe search in the preferences page of an instance.
+themedefault simple[ simple ]
+
+    Theme of instance.
+
+    Please note, available themes depend on an instance. It is possible that an instance administrator deleted, created or renamed themes on their instance. See the available options in the preferences page of the instance.
+
++++
+
+Plugin Development
+
+Further reading ..
+
+    List of plugins
+
+    SearXNG settings
+
+Plugins can extend or replace functionality of various components of SearXNG.
+
+Entry points (hooks) define when a plugin runs. Right now only three hooks are implemented. So feel free to implement a hook if it fits the behaviour of your plugin / a plugin doesn’t need to implement all the hooks.
+
+    pre search: Plugin.pre_search
+
+    post search: Plugin.post_search
+
+    on each result item: Plugin.on_result
+
+Below you will find some examples, for more coding examples have a look at the built-in plugins git://searx/plugins/ or Only show green hosted results.
+Add Answer example
+
+Here is an example of a very simple plugin that adds a “Hello World” into the answer area:
+
+from flask_babel import gettext as _
+from searx.plugins import Plugin
+from searx.result_types import Answer
+
+class MyPlugin(Plugin):
+
+    id = "hello world"
+
+    def __init__(self, plg_cfg):
+        super().__init__(plg_cfg)
+        self.info = PluginInfo(id=self.id, name=_("Hello"), description=_("demo plugin"))
+
+    def post_search(self, request, search):
+        return [ Answer(answer="Hello World") ]
+
+Filter URLs example
+
+Further reading ..
+
+    Result.filter_urls(..)
+
+The Result.filter_urls(..) can be used to filter and/or modify URL fields. In the following example, the filter function my_url_filter:
+
+def my_url_filter(result, field_name, url_src) -> bool | str:
+    if "google" in url_src:
+        return False              # remove URL field from result
+    if "facebook" in url_src:
+        new_url = url_src.replace("facebook", "fb-dummy")
+        return new_url            # return modified URL
+    return True                   # leave URL in field unchanged
+
+is applied to all URL fields in the Plugin.on_result hook:
+
+class MyUrlFilter(Plugin):
+    ...
+    def on_result(self, request, search, result) -> bool:
+        result.filter_urls(my_url_filter)
+        return True
+
+Implementation
+
+class searx.plugins.Plugin(plg_cfg: PluginCfg)[source]
+
+    Abstract base class of all Plugins.
+
+    id: str = ''
+
+        The ID (suffix) in the HTML form.
+
+    active: ClassVar[bool]
+
+        Plugin is enabled/disabled by default (PluginCfg.active).
+
+    keywords: list[str] = []
+
+        Keywords in the search query that activate the plugin. The keyword is the first word in a search query. If a plugin should be executed regardless of the search query, the list of keywords should be empty (which is also the default in the base class for Plugins).
+
+    info: PluginInfo
+
+        Information about the plugin, see PluginInfo.
+
+    log: Logger
+
+        A logger object, is automatically initialized when calling the constructor (if not already set in the subclass).
+
+    init(app: flask.Flask) → bool[source]
+
+        Initialization of the plugin, the return value decides whether this plugin is active or not. Initialization only takes place once, at the time the WEB application is set up. The base method always returns True, the method can be overwritten in the inheritances,
+
+            True plugin is active
+
+            False plugin is inactive
+
+    pre_search(request: SXNG_Request, search: SearchWithPlugins) → bool[source]
+
+        Runs BEFORE the search request and returns a boolean:
+
+            True to continue the search
+
+            False to stop the search
+
+    on_result(request: SXNG_Request, search: SearchWithPlugins, result: Result) → bool[source]
+
+        Runs for each result of each engine and returns a boolean:
+
+            True to keep the result
+
+            False to remove the result from the result list
+
+        The result can be modified to the needs.
+
+        Hint
+
+        If Result.url is modified, Result.parsed_url must be changed accordingly:
+
+        result["parsed_url"] = urlparse(result["url"])
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → None | list[Result | LegacyResult] | EngineResults[source]
+
+        Runs AFTER the search request. Can return a list of Result objects to be added to the final result list.
+
+class searx.plugins.PluginInfo(id: str, name: str, description: str, preference_section: Literal['general', 'ui', 'privacy', 'query'] | None='general', examples: list[str] = <factory>, keywords: list[str] = <factory>)[source]
+
+    Object that holds information about a plugin, these infos are shown to the user in the Preferences menu.
+
+    To be able to translate the information into other languages, the text must be written in English and translated with flask_babel.gettext.
+
+    id: str
+
+        The ID-selector in HTML/CSS #<id>.
+
+    name: str
+
+        Name of the plugin.
+
+    description: str
+
+        Short description of the answerer.
+
+    preference_section: Literal['general', 'ui', 'privacy', 'query'] | None = 'general'
+
+        Section (tab/group) in the preferences where this plugin is shown to the user.
+
+        The value query is reserved for plugins that are activated via a keyword as part of a search query, see:
+
+            PluginInfo.examples
+
+            Plugin.keywords
+
+        Those plugins are shown in the preferences in tab Special Queries.
+
+    examples: list[str]
+
+        List of short examples of the usage / of query terms.
+
+    keywords: list[str]
+
+        See Plugin.keywords
+
+class searx.plugins.PluginStorage[source]
+
+    A storage for managing the plugins of SearXNG.
+
+    plugin_list: set[Plugin]
+
+        The list of Plugins in this storage.
+
+    load_settings(cfg: dict[str, dict[str, Any]])[source]
+
+        Load plugins configured in SearXNG’s settings plugins:.
+
+    register(plugin: Plugin)[source]
+
+        Register a Plugin. In case of name collision (if two plugins have same ID) a KeyError exception is raised.
+
+    init(app: flask.Flask) → None[source]
+
+        Calls the method Plugin.init of each plugin in this storage. Depending on its return value, the plugin is removed from this storage or not.
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → None[source]
+
+        Extend search.result_container <searx.results.ResultContainer> with result items from plugins listed in search.user_plugins.
+
+class searx.plugins.PluginCfg(active: bool = False)[source]
+
+    Settings of a plugin.
+
+    mypackage.mymodule.MyPlugin:
+      active: true
+
+    active: bool = False
+
+        Plugin is active by default and the user can opt-out in the preferences.
+
++++
+
+Calculator
+
+final class searx.plugins.calculator.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Parses and solves mathematical expressions.
+
+    id: str = 'calculator'
+
+        The ID (suffix) in the HTML form.
+
++++
+
+Hash Values
+
+class searx.plugins.hash_plugin.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Plugin converts strings to different hash digests. The results are displayed in area for the “answers”.
+
+    id: str = 'hash_plugin'
+
+        The ID (suffix) in the HTML form.
+
+    keywords: list[str] = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+
+        Keywords in the search query that activate the plugin. The keyword is the first word in a search query. If a plugin should be executed regardless of the search query, the list of keywords should be empty (which is also the default in the base class for Plugins).
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → EngineResults[source]
+
+        Returns a result list only for the first page.
+
++++
+
+Hostnames
+
+During the initialization phase, the plugin checks whether a hostnames: configuration exists. If this is not the case, the plugin is not included in the PluginStorage (it is not available for selection).
+
+    hostnames.replace: A mapping of regular expressions to hostnames to be replaced by other hostnames.
+
+    hostnames:
+      replace:
+        '(.*\.)?youtube\.com$': 'invidious.example.com'
+        '(.*\.)?youtu\.be$': 'invidious.example.com'
+        ...
+
+    hostnames.remove: A list of regular expressions of the hostnames whose results should be taken from the results list.
+
+    hostnames:
+      remove:
+        - '(.*\.)?facebook.com$'
+        - ...
+
+    hostnames.high_priority: A list of regular expressions for hostnames whose result should be given higher priority. The results from these hosts are arranged higher in the results list.
+
+    hostnames:
+      high_priority:
+        - '(.*\.)?wikipedia.org$'
+        - ...
+
+    hostnames.lower_priority: A list of regular expressions for hostnames whose result should be given lower priority. The results from these hosts are arranged lower in the results list.
+
+    hostnames:
+      low_priority:
+        - '(.*\.)?google(\..*)?$'
+        - ...
+
+If the URL matches the pattern of high_priority AND low_priority, the higher priority wins over the lower priority.
+
+Alternatively, you can also specify a file name for the mappings or lists to load these from an external file:
+
+hostnames:
+  replace: 'rewrite-hosts.yml'
+  remove:
+    - '(.*\.)?facebook.com$'
+    - ...
+  low_priority:
+    - '(.*\.)?google(\..*)?$'
+    - ...
+  high_priority:
+    - '(.*\.)?wikipedia.org$'
+    - ...
+
+The rewrite-hosts.yml from the example above must be in the folder in which the settings.yml file is already located (/etc/searxng). The file then only contains the lists or the mapping tables without further information on the namespaces. In the example above, this would be a mapping table that looks something like this:
+
+'(.*\.)?youtube\.com$': 'invidious.example.com'
+'(.*\.)?youtu\.be$': 'invidious.example.com'
+
+class searx.plugins.hostnames.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Rewrite hostnames, remove results or prioritize them.
+
+    id: str = 'hostnames'
+
+        The ID (suffix) in the HTML form.
+
+    on_result(request: SXNG_Request, search: SearchWithPlugins, result: Result) → bool[source]
+
+        Runs for each result of each engine and returns a boolean:
+
+            True to keep the result
+
+            False to remove the result from the result list
+
+        The result can be modified to the needs.
+
+        Hint
+
+        If Result.url is modified, Result.parsed_url must be changed accordingly:
+
+        result["parsed_url"] = urlparse(result["url"])
+
+    init(app: flask.Flask) → bool[source]
+
+        Initialization of the plugin, the return value decides whether this plugin is active or not. Initialization only takes place once, at the time the WEB application is set up. The base method always returns True, the method can be overwritten in the inheritances,
+
+            True plugin is active
+
+            False plugin is inactive
+
+searx.plugins.hostnames.filter_url_field(result: Result | LegacyResult, field_name: str, url_src: str) → bool | str[source]
+
+    Returns bool True to use URL unchanged (False to ignore URL). If URL should be modified, the returned string is the new URL to use.
+
++++
+
+Infinite scroll
+
+final class searx.plugins.infinite_scroll.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Automatically loads the next page when scrolling to bottom of the current page.
+
+    id: str = 'infiniteScroll'
+
+        The ID (suffix) in the HTML form.
+
++++
+
+Self-Info
+
+class searx.plugins.self_info.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Simple plugin that displays information about user’s request, including the IP or HTTP User-Agent. The information is displayed in area for the “answers”.
+
+    id: str = 'self_info'
+
+        The ID (suffix) in the HTML form.
+
+    keywords: list[str] = ['ip', 'user-agent']
+
+        Keywords in the search query that activate the plugin. The keyword is the first word in a search query. If a plugin should be executed regardless of the search query, the list of keywords should be empty (which is also the default in the base class for Plugins).
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → EngineResults[source]
+
+        Returns a result list only for the first page.
+
++++
+
+Tor check
+
+A plugin to check if the ip address of the request is a Tor exit-node if the user searches for tor-check. It fetches the tor exit node list from url_exit_list and parses all the IPs into a list, then checks if the user’s IP address is in it.
+
+searx.plugins.tor_check.url_exit_list = 'https://check.torproject.org/exit-addresses'
+
+    URL to load Tor exit list from.
+
+class searx.plugins.tor_check.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Rewrite hostnames, remove results or prioritize them.
+
+    id: str = 'tor_check'
+
+        The ID (suffix) in the HTML form.
+
+    keywords: list[str] = ['tor-check', 'tor_check', 'torcheck', 'tor', 'tor check']
+
+        Keywords in the search query that activate the plugin. The keyword is the first word in a search query. If a plugin should be executed regardless of the search query, the list of keywords should be empty (which is also the default in the base class for Plugins).
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → EngineResults[source]
+
+        Runs AFTER the search request. Can return a list of Result objects to be added to the final result list.
+
++++
+
+Unit Converter
+
+A plugin for converting measured values from one unit to another unit (a unit converter).
+
+The plugin looks up the symbols (given in the query term) in a list of converters, each converter is one item in the list (compare ADDITIONAL_UNITS). If the symbols are ambiguous, the matching units of measurement are evaluated. The weighting in the evaluation results from the sorting of the list of unit converters.
+
+class searx.plugins.unit_converter.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Convert between units. The result is displayed in area for the “answers”.
+
+    id: str = 'unit_converter'
+
+        The ID (suffix) in the HTML form.
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → EngineResults[source]
+
+        Runs AFTER the search request. Can return a list of Result objects to be added to the final result list.
+
++++
+
+Time Zone
+
+final class searx.plugins.time_zone.SXNGPlugin(plg_cfg: PluginCfg)[source]
+
+    Plugin to display the current time at different timezones (usually the query city).
+
+    id: str = 'time_zone'
+
+        The ID (suffix) in the HTML form.
+
+    keywords: list[str] = ['time', 'timezone', 'now', 'clock', 'timezones']
+
+        Keywords in the search query that activate the plugin. The keyword is the first word in a search query. If a plugin should be executed regardless of the search query, the list of keywords should be empty (which is also the default in the base class for Plugins).
+
+    post_search(request: SXNG_Request, search: SearchWithPlugins) → EngineResults[source]
+
+        The plugin uses the searx.weather.GeoLocation class, which is already implemented in the context of weather forecasts, to determine the time zone. The searx.weather.DateTime class is used for the localized display of date and time.
+
++++
+
+Answerer Development
+
+The answerers give instant answers related to the search query, they usually provide answers of type Answer.
+
+Here is an example of a very simple answerer that adds a “Hello” into the answer area:
+
+from flask_babel import gettext as _
+from searx.answerers import Answerer
+from searx.result_types import Answer
+
+class MyAnswerer(Answerer):
+
+    keywords = [ "hello", "hello world" ]
+
+    def info(self):
+        return AnswererInfo(name=_("Hello"), description=_("lorem .."), keywords=self.keywords)
+
+    def answer(self, request, search):
+        return [ Answer(answer="Hello") ]
+
+class searx.answerers.Answerer[source]
+
+    Abstract base class of answerers.
+
+    keywords: list[str]
+
+        Keywords to which the answerer has answers.
+
+    abstractmethod answer(query: str) → list[BaseAnswer][source]
+
+        Function that returns a list of answers to the question/query.
+
+    abstractmethod info() → AnswererInfo[source]
+
+        Information about the answerer, see AnswererInfo.
+
+class searx.answerers.AnswererInfo(name: str, description: str, examples: list[str], keywords: list[str])[source]
+
+    Object that holds information about an answerer, these infos are shown to the user in the Preferences menu.
+
+    To be able to translate the information into other languages, the text must be written in English and translated with flask_babel.gettext.
+
+    name: str
+
+        Name of the answerer.
+
+    description: str
+
+        Short description of the answerer.
+
+    examples: list[str]
+
+        List of short examples of the usage / of query terms.
+
+    keywords: list[str]
+
+        See Answerer.keywords
+
+class searx.answerers.AnswerStorage[source]
+
+    A storage for managing the answerers of SearXNG. With the AnswerStorage.ask” method, a caller can ask questions to all answerers and receives a list of the results.
+
+    answerer_list: set[Answerer]
+
+        The list of Answerer in this storage.
+
+    load_builtins()[source]
+
+        Loads answerer.py modules from the python packages in git://searx/answerers. The python modules are wrapped by ModuleAnswerer.
+
+    register_by_fqn(fqn: str)[source]
+
+        Register a Answerer via its fully qualified class namen(FQN).
+
+    register(answerer: Answerer)[source]
+
+        Register a Answerer.
+
+    ask(query: str) → list[BaseAnswer][source]
+
+        An answerer is identified via keywords, if there is a keyword at the first position in the query for which there is one or more answerers, then these are called, whereby the entire query is passed as argument to the answerer function.
+
+class searx.answerers._core.ModuleAnswerer(mod)[source]
+
+    Bases: Answerer
+
+    A wrapper class for legacy answerers where the names (keywords, answer, info) are implemented on the module level (not in a class).
+
+    Note
+
+    For internal use only!
+
+    answer(query: str) → list[BaseAnswer][source]
+
+        Function that returns a list of answers to the question/query.
+
+    info() → AnswererInfo[source]
+
+        Information about the answerer, see AnswererInfo.
+
++++
+
+Random
+
+class searx.answerers.random.SXNGAnswerer[source]
+
+    Random value generator
+
+    keywords: list[str] = ['random']
+
+        Keywords to which the answerer has answers.
+
+    info()[source]
+
+        Information about the answerer, see AnswererInfo.
+
+    answer(query: str) → list[BaseAnswer][source]
+
+        Function that returns a list of answers to the question/query.
+
++++
+
+Statistics
+
+class searx.answerers.statistics.SXNGAnswerer[source]
+
+    Statistics functions
+
+    keywords: list[str] = ['min', 'max', 'avg', 'sum', 'prod', 'range']
+
+        Keywords to which the answerer has answers.
+
+    info()[source]
+
+        Information about the answerer, see AnswererInfo.
+
+    answer(query: str) → list[BaseAnswer][source]
+
+        Function that returns a list of answers to the question/query.
+
++++
+
+Translation
+
+translated
+
+    Custom message extractor (i18n)
+
+    Weblate
+
+    SearXNG translations branch
+
+    SearXNG Weblate repository
+
+    Weblate Client: wlc
+
+    Babel Command-Line: pybabel
+
+    weblate workflow
+
+Translation takes place on translate.codeberg.org.
+
+Translations which has been added by translators on the translate.codeberg.org UI are committed to Weblate’s counterpart of the SearXNG origin repository which is located at https://translate.codeberg.org/git/searxng/searxng.
+
+There is no need to clone this repository, SearXNG’s PR workflow to be in sync with Weblate take care of the synchronization with the origin. To avoid merging commits from the counterpart directly on the master branch of SearXNG origin, a pull request (PR) is created by this workflow.
+
+Weblate monitors the translations branch, not the master branch. This branch is an orphan branch, decoupled from the master branch (we already know orphan branches from the gh-pages). The translations branch contains only the
+
+    translation/messages.pot and the
+
+    translation/*/messages.po files, nothing else.
+
+../_images/translation.svg
+
+Fig. 3 SearXNG’s PR workflow to be in sync with Weblate
+
+Sync from origin to weblate: using make weblate.push.translations
+
+    For each commit on the master branch of SearXNG origin the GitHub job babel / Update translations branch checks for updated translations.
+Sync from weblate to origin: using make weblate.translations.commit
+
+    Every Friday, the GitHub workflow babel / create PR for additions from weblate creates a PR with the updated translation files:
+
+        translation/messages.pot,
+
+        translation/*/messages.po and
+
+        translation/*/messages.mo
+
+wlc
+
+All weblate integration is done by GitHub workflows, but if you want to use wlc, copy this content into wlc configuration in your HOME ~/.config/weblate
+
+[keys]
+https://translate.codeberg.org/api/ = APIKEY
+
+Replace APIKEY by your API key.
+
++++
+
+Makefile & ./manage
+
+All relevant build and development tasks are implemented in the ./manage script and for CI or IDE integration a small git://Makefile wrapper is available. If you are not familiar with Makefiles, we recommend to read gnu-make introduction.
+
+build environment
+
+Before looking deeper at the targets, first read about Python environment (make install).
+
+To install developer requirements follow Buildhosts.
+
+The usage is simple, just type make {target-name} to build a target. Calling the help target gives a first overview (make help):
+
+INFO:  sourced NVM environment from /home/runner/.nvm
+nvm.: use nvm (without dot) to execute nvm commands directly
+  install   : install NVM locally at /home/runner/work/searxng/searxng/.nvm
+  clean     : remove NVM installation
+  status    : prompt some status information about nvm & node
+  nodejs    : install latest Node.js
+  cmd ...   : run command ... in NVM environment
+  bash      : start bash interpreter with NVM environment sourced
+webapp.:
+  run       : run developer instance
+docs.:
+  html      : build HTML documentation
+  live      : autobuild HTML documentation while editing
+  gh-pages  : deploy on gh-pages branch
+  prebuild  : build reST include files (./build/docs/includes)
+  clean     : clean documentation build
+gecko.driver:
+  download & install geckodriver if not already installed (required for
+  robot_tests)
+valkey:
+  install   : create user () and install systemd service ()
+py.:
+  build     : Build python packages at ./dist
+  clean     : delete virtualenv and intermediate py files
+pyenv.:
+  install   : developer install of SearXNG into virtualenv
+  uninstall : uninstall developer installation
+  cmd ...   : run command ... in virtualenv
+  OK        : test if virtualenv is OK
+format.:
+  python    : format Python code source using black
+  shell     : format Shell scripts using shfmt
+go:           GOROOT=/home/runner/work/searxng/searxng/.govm/go1.24.5
+  install   : compiles and installs packages
+node.:
+  env       : download & install SearXNG's npm dependencies locally
+  env.dev   : download & install developer and CI tools
+  clean     : drop locally npm installations
+weblate.:
+  push.translations: push translation changes from SearXNG to Weblate's counterpart
+  to.translations: Update 'translations' branch with last additions from Weblate.
+container.:
+  build     : build container image
+data.:
+  all           : update searx/sxng_locales.py and searx/data/*
+  traits        : update searx/data/engine_traits.json & searx/sxng_locales.py
+  useragents    : update searx/data/useragents.json with the most recent versions of Firefox
+  locales       : update searx/data/locales.json from babel
+  currencies    : update searx/data/currencies.json from wikidata
+test.:
+  yamllint  : lint YAML files (YAMLLINT_FILES)
+  pylint    : lint ./searx, ./searxng_extra and ./tests
+  pyright   : check Python types
+  black     : check Python code format
+  shfmt     : check Shell script code format
+  unit      : run unit tests
+  coverage  : run unit tests with coverage
+  robot     : run robot test
+  rst       : test .rst files incl. README.rst
+  clean     : clean intermediate test stuff
+themes.:
+  all       : test & build all themes
+  simple    : test & build simple theme
+  lint      : lint JS & CSS (LESS) files
+  fix       : fix JS & CSS (LESS) files
+  test      : test all themes
+static.build.:  [build] /static
+  commit    : build & commit /static folder
+  drop      : drop last commit if it was previously done by static.build.commit
+  restore   : git restore of the /static folder (after themes.all)
+vite.:  .. to be done ..
+  simple.:
+    build: build static files of the simple theme
+    fix:   run prettiers on simple theme
+    lint:  run linters on simple theme
+    dev:   start development server
+dev.:
+  env: enter developer environment (or exec a command in)
+environment ...
+  SEARXNG_VALKEY_URL :
+----
+run            - run developer instance
+install        - developer install of SearxNG into virtualenv
+uninstall      - uninstall developer installation
+clean          - clean up working tree
+test           - run shell & CI tests
+test.shell     - test shell scripts
+ci.test        - run CI tests
+
+Python environment (make install)
+
+activate environment
+
+source ./local/py3/bin/activate
+
+We do no longer need to build up the virtualenv manually. Jump into your git working tree and release a make install to get a virtualenv with a developer install of SearXNG (git://setup.py).
+
+$ cd ~/searxng-clone
+$ make install
+PYENV     [virtualenv] installing ./requirements*.txt into local/py3
+...
+PYENV     [install] pip install --use-pep517 --no-build-isolation -e 'searx[test]'
+...
+Successfully installed searxng-2023.7.19+a446dea1b
+
+If you release make install multiple times the installation will only rebuild if the sha256 sum of the requirement files fails. With other words: the check fails if you edit the requirements listed in git://requirements-dev.txt and git://requirements.txt).
+
+$ make install
+PYENV     OK
+PYENV     [virtualenv] requirements.sha256 failed
+          [virtualenv] - 6cea6eb6def9e14a18bf32f8a3e...  ./requirements-dev.txt
+          [virtualenv] - 471efef6c73558e391c3adb35f4...  ./requirements.txt
+...
+PYENV     [virtualenv] installing ./requirements*.txt into local/py3
+...
+PYENV     [install] pip install --use-pep517 --no-build-isolation -e 'searx[test]'
+...
+Successfully installed searxng-2023.7.19+a446dea1b
+
+drop environment
+
+To get rid of the existing environment before re-build use clean target first.
+
+If you think, something goes wrong with your ./local environment or you change the git://setup.py file, you have to call make clean.
+Node.js environment (make node.env)
+
+Node.js version 24.3.0 or higher is required to build the themes. If the requirement is not met, the build chain uses nvm (Node Version Manager) to install Node.js locally: there is no need to install nvm or npm on your system.
+
+To install NVM and Node.js in once you can use make nvm.nodejs.
+NVM make nvm.install nvm.status
+
+Use make nvm.status to get the current status of your Node.js and nvm setup.
+
+$ LANG=C make nvm.install
+INFO:  install (update) NVM at ./searxng/.nvm
+INFO:  clone: https://github.com/nvm-sh/nvm.git
+  || Cloning into './searxng/.nvm'...
+INFO:  checkout v0.39.4
+  || HEAD is now at 8fbf8ab v0.39.4
+
+make nvm.nodejs
+
+Install latest Node.js locally (uses nvm):
+
+$ make nvm.nodejs
+INFO:  install (update) NVM at /share/searxng/.nvm
+INFO:  clone: https://github.com/nvm-sh/nvm.git
+...
+Downloading and installing node v16.13.0...
+...
+INFO:  Node.js is installed at searxng/.nvm/versions/node/v16.13.0/bin/node
+INFO:  Node.js is version v16.13.0
+INFO:  npm is installed at searxng/.nvm/versions/node/v16.13.0/bin/npm
+INFO:  npm is version 8.1.0
+INFO:  NVM is installed at searxng/.nvm
+
+make run
+
+To get up a running a developer instance simply call make run. This enables debug option in git://searx/settings.yml, starts a ./searx/webapp.py instance and opens the URL in your favorite WEB browser (xdg-open):
+
+$ make run
+
+Changes to theme’s HTML templates (jinja2) are instant. Changes to the CSS & JS sources of the theme need to be rebuild. You can do that by running:
+
+$ make themes.all
+
+make format
+
+    Format Python source code using Black code style. See $BLACK_OPTIONS and $BLACK_TARGETS in git://Makefile.
+
+    Format Shell scripts using shfmt. The formatter shfmt reads the rules from the EditorConfig files.
+
+make clean
+
+Drops all intermediate files, all builds, but keep sources untouched. Before calling make clean stop all processes using the Python environment (make install) or Node.js environment (make node.env).
+
+$ make clean
+CLEAN     pyenv
+PYENV     [virtualenv] drop local/py3
+CLEAN     docs -- build/docs dist/docs
+CLEAN     themes -- locally installed npm dependencies
+...
+CLEAN     test stuff
+CLEAN     common files
+
+make docs
+
+Target docs builds the documentation:
+
+$ make docs
+HTML ./docs --> file://
+DOCS      build build/docs/includes
+...
+The HTML pages are in dist/docs.
+
+make docs.clean docs.live
+
+We describe the usage of the doc.* targets in the How to contribute / Documentation section. If you want to edit the documentation read our Live build section. If you are working in your own brand, adjust your brand:.
+make docs.gh-pages
+
+To deploy on github.io first adjust your brand:. For any further read deploy on github.io.
+make test
+
+Runs a series of tests: make test.pylint, test.pep8, test.unit and test.robot. You can run tests selective, e.g.:
+
+$ make test.pep8 test.unit test.shell
+TEST      test.pep8 OK
+...
+TEST      test.unit OK
+...
+TEST      test.shell OK
+
+make test.shell
+
+Lint shell scripts / if you have changed some bash scripting run this test before commit.
+make test.pylint
+
+Pylint is known as one of the best source-code, bug and quality checker for the Python programming language. The pylint profile used in the SearXNG project is found in project’s root folder git://.pylintrc.
+make themes.*
+
+further read
+
+    Development Quickstart
+
+The git://Makefile targets make theme.* cover common tasks to build the theme(s). The ./manage themes.* command line can be used to convenient run common theme build tasks.
+
+INFO:  sourced NVM environment from /home/runner/.nvm
+themes.:
+  all       : test & build all themes
+  simple    : test & build simple theme
+  lint      : lint JS & CSS (LESS) files
+  fix       : fix JS & CSS (LESS) files
+  test      : test all themes
+
+To get live builds while modifying CSS & JS use (make run):
+
+$ LIVE_THEME=simple make run
+
+make static.build.*
+
+further read
+
+    Development Quickstart
+
+The git://Makefile targets static.build.* cover common tasks to build (a commit of) the static files. The ./manage static.build..* command line can be used to convenient run common build tasks of the static files.
+
+INFO:  sourced NVM environment from /home/runner/.nvm
+static.build.:  [build] /static
+  commit    : build & commit /static folder
+  drop      : drop last commit if it was previously done by static.build.commit
+  restore   : git restore of the /static folder (after themes.all)
+
+./manage go.help
+
+The ./manage go.* command line can be used to convenient run common go (wiki) tasks.
+
+INFO:  sourced NVM environment from /home/runner/.nvm
+go:           GOROOT=/home/runner/work/searxng/searxng/.govm/go1.24.5
+  install   : compiles and installs packages
+
++++
+
+reST primer
+
+KISS and readability
+
+Instead of defining more and more roles, we at SearXNG encourage our contributors to follow principles like KISS and readability.
+
+We at SearXNG are using reStructuredText (aka reST) markup for all kind of documentation. With the builders from the Sphinx project a HTML output is generated and deployed at docs.searxng.org. For build prerequisites read Build docs.
+
+The source files of SearXNG’s documentation are located at git://docs. Sphinx assumes source files to be encoded in UTF-8 by default. Run make docs.live to build HTML while editing.
+
+Further reading
+
+    Sphinx-Primer
+
+    Sphinx markup constructs
+
+    reST, docutils, docutils FAQ
+
+    Sphinx, sphinx-doc FAQ
+
+    sphinx config, doctree
+
+    sphinx cross references
+
+    linuxdoc
+
+    intersphinx
+
+    sphinx-jinja
+
+    Sphinx’s autodoc
+
+    Sphinx’s Python domain, Sphinx’s C domain
+
+    SVG, ImageMagick
+
+    DOT, Graphviz’s dot, Graphviz
+
+Sphinx and reST have their place in the python ecosystem. Over that reST is used in popular projects, e.g the Linux kernel documentation [kernel doc].
+
+Content matters
+
+The readability of the reST sources has its value, therefore we recommend to make sparse usage of reST markup / .. content matters!
+
+reST is a plaintext markup language, its markup is mostly intuitive and you will not need to learn much to produce well formed articles with. I use the word mostly: like everything in live, reST has its advantages and disadvantages, some markups feel a bit grumpy (especially if you are used to other plaintext markups).
+Soft skills
+
+Before going any deeper into the markup let’s face on some soft skills a trained author brings with, to reach a well feedback from readers:
+
+    Documentation is dedicated to an audience and answers questions from the audience point of view.
+
+    Don’t detail things which are general knowledge from the audience point of view.
+
+    Limit the subject, use cross links for any further reading.
+
+To be more concrete what a point of view means. In the (git://docs) folder we have three sections (and the blog folder), each dedicate to a different group of audience.
+
+User’s POV: git://docs/user
+
+    A typical user knows about search engines and might have heard about meta crawlers and privacy.
+Admin’s POV: git://docs/admin
+
+    A typical Admin knows about setting up services on a linux system, but he does not know all the pros and cons of a SearXNG setup.
+Developer’s POV: git://docs/dev
+
+    Depending on the readability of code, a typical developer is able to read and understand source code. Describe what a item aims to do (e.g. a function). If the chronological order matters, describe it. Name the out-of-limits conditions and all the side effects a external developer will not know.
+
+Basic inline markup
+
+Inline markup
+
+    Roles
+
+    Smart refs
+
+Basic inline markup is done with asterisks and backquotes. If asterisks or backquotes appear in running text and could be confused with inline markup delimiters, they have to be escaped with a backslash (\*pointer).
+Table 9 basic inline markup
+
+description
+
+
+rendered
+
+
+markup
+
+one asterisk for emphasis
+
+
+italics
+
+
+*italics*
+
+two asterisks for strong emphasis
+
+
+boldface
+
+
+**boldface**
+
+backquotes for code samples and literals
+
+
+foo()
+
+
+``foo()``
+
+quote asterisks or backquotes
+
+
+*foo is a pointer
+
+
+\*foo is a pointer
+Basic article structure
+
+The basic structure of an article makes use of heading adornments to markup chapter, sections and subsections.
+reST template
+
+reST template for an simple article:
+
+.. _doc refname:
+
+==============
+Document title
+==============
+
+Lorem ipsum dolor sit amet, consectetur adipisici elit ..  Further read
+:ref:`chapter refname`.
+
+.. _chapter refname:
+
+Chapter
+=======
+
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+aliquid ex ea commodi consequat ...
+
+.. _section refname:
+
+Section
+-------
+
+lorem ..
+
+.. _subsection refname:
+
+Subsection
+~~~~~~~~~~
+
+lorem ..
+
+Headings
+
+    title - with overline for document title:
+
+    ==============
+    Document title
+    ==============
+
+    chapter - with anchor named anchor name:
+
+    .. _anchor name:
+
+    Chapter
+    =======
+
+    section
+
+    Section
+    -------
+
+    subsection
+
+    Subsection
+    ~~~~~~~~~~
+
+Anchors & Links
+Anchors
+
+To refer a point in the documentation a anchor is needed. The reST template shows an example where a chapter titled “Chapters” gets an anchor named chapter title. Another example from this document, where the anchor named reST anchor:
+
+.. _reST anchor:
+
+Anchors
+-------
+
+To refer a point in the documentation a anchor is needed ...
+
+To refer anchors use the ref role markup:
+
+Visit chapter :ref:`reST anchor`.  Or set hyperlink text manually :ref:`foo
+bar <reST anchor>`.
+
+:ref: role
+
+Visit chapter Anchors. Or set hyperlink text manually foo bar.
+Link ordinary URL
+
+If you need to reference external URLs use named hyperlinks to maintain readability of reST sources. Here is a example taken from this article:
+
+.. _Sphinx Field Lists:
+   https://www.sphinx-doc.org/en/master/usage/restructuredtext/field-lists.html
+
+With the *named* hyperlink `Sphinx Field Lists`_, the raw text is much more
+readable.
+
+And this shows the alternative (less readable) hyperlink markup `Sphinx Field
+Lists
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/field-lists.html>`__.
+
+Named hyperlink
+
+With the named hyperlink Sphinx Field Lists, the raw text is much more readable.
+
+And this shows the alternative (less readable) hyperlink markup Sphinx Field Lists.
+Smart refs
+
+With the power of sphinx.ext.extlinks and intersphinx referencing external content becomes smart.
+Table 10 smart refs with sphinx.ext.extlinks and intersphinx
+
+refer …
+
+
+rendered example
+
+
+markup
+
+rfc
+
+
+RFC 822
+
+
+:rfc:`822`
+
+pep
+
+
+PEP 8
+
+
+:pep:`8`
+
+sphinx.ext.extlinks
+
+project’s wiki article
+
+
+Offline-engines
+
+
+:wiki:`Offline-engines`
+
+to docs public URL
+
+
+docs: dev/reST.html
+
+
+:docs:`dev/reST.html`
+
+files & folders origin
+
+
+git://docs/dev/reST.rst
+
+
+:origin:`docs/dev/reST.rst`
+
+pull request
+
+
+PR 4
+
+
+:pull:`4`
+
+patch
+
+
+#af2cae6
+
+
+:patch:`af2cae6`
+
+PyPi package
+
+
+httpx
+
+
+:pypi:`httpx`
+
+manual page man
+
+
+bash
+
+
+:man:`bash`
+
+intersphinx
+
+external anchor
+
+
+Boolean operations
+
+
+:ref:`python:and`
+
+external doc anchor
+
+
+Template Designer Documentation
+
+
+:doc:`jinja:templates`
+
+python code object
+
+
+datetime.datetime
+
+
+:py:obj:`datetime.datetime`
+
+flask code object
+
+
+flask.Flask
+
+
+:py:obj:`flask.Flask`
+
+Intersphinx is configured in git://docs/conf.py:
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "flask": ("https://flask.palletsprojects.com/", None),
+    "jinja": ("https://jinja.palletsprojects.com/", None),
+    "linuxdoc" : ("https://return42.github.io/linuxdoc/", None),
+    "sphinx" : ("https://www.sphinx-doc.org/en/master/", None),
+}
+
+To list all anchors of the inventory (e.g. python) use:
+
+$ python -m sphinx.ext.intersphinx https://docs.python.org/3/objects.inv
+...
+$ python -m sphinx.ext.intersphinx https://docs.searxng.org/objects.inv
+...
+
+Literal blocks
+
+The simplest form of literal-blocks is a indented block introduced by two colons (::). For highlighting use highlight or code-block directive. To include literals from external files use literalinclude or kernel-include directive (latter one expands environment variables in the path name).
+::
+
+::
+
+  Literal block
+
+Lorem ipsum dolor::
+
+  Literal block
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
+eirmod tempor invidunt ut labore ::
+
+  Literal block
+
+Literal block
+
+Literal block
+
+Lorem ipsum dolor:
+
+Literal block
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore
+
+Literal block
+
+code-block
+
+Syntax highlighting
+
+is handled by pygments.
+
+The code-block directive is a variant of the code directive with additional options. To learn more about code literals visit Showing code examples.
+
+The URL ``/stats`` handle is shown in :ref:`stats-handle`
+
+.. code-block:: Python
+   :caption: python code block
+   :name: stats-handle
+
+   @app.route('/stats', methods=['GET'])
+   def stats():
+       """Render engine statistics page."""
+       stats = get_engines_stats()
+       return render(
+           'stats.html'
+           , stats = stats )
+
+
+Code block
+
+The URL /stats handle is shown in python code block
+Listing 1 python code block
+
+@app.route('/stats', methods=['GET'])
+def stats():
+    """Render engine statistics page."""
+    stats = get_engines_stats()
+    return render(
+        'stats.html'
+        , stats = stats )
+
+Unicode substitution
+
+The unicode directive converts Unicode character codes (numerical values) to characters. This directive can only be used within a substitution definition.
+
+.. |copy| unicode:: 0xA9 .. copyright sign
+.. |(TM)| unicode:: U+2122
+
+Trademark |(TM)| and copyright |copy| glyphs.
+
+Unicode
+
+Trademark ™ and copyright © glyphs.
+Roles
+
+Further reading
+
+    Sphinx Roles
+
+    MOVED: Domains
+
+A custom interpreted text role (ref) is an inline piece of explicit markup. It signifies that that the enclosed text should be interpreted in a specific way.
+
+The general markup is one of:
+
+:rolename:`ref-name`
+:rolename:`ref text <ref-name>`
+
+Table 11 smart refs with sphinx.ext.extlinks and intersphinx
+
+role
+
+
+rendered example
+
+
+markup
+
+guilabel
+
+
+Cancel
+
+
+:guilabel:`&Cancel`
+
+kbd
+
+
+C-x C-f
+
+
+:kbd:`C-x C-f`
+
+menuselection
+
+
+Open ‣ File
+
+
+:menuselection:`Open --> File`
+
+download
+
+
+this file
+
+
+:download:`this file <reST.rst>`
+
+math
+
+
+a^2 + b^2 = c^2
+
+
+:math:`a^2 + b^2 = c^2`
+
+ref
+
+
+Simple SVG image.
+
+
+:ref:`svg image example`
+
+command
+
+
+ls -la
+
+
+:command:`ls -la`
+
+emphasis
+
+
+italic
+
+
+:emphasis:`italic`
+
+strong
+
+
+bold
+
+
+:strong:`bold`
+
+literal
+
+
+foo()
+
+
+:literal:`foo()`
+
+subscript
+
+
+H2O
+
+
+H\ :sub:`2`\ O
+
+superscript
+
+
+E = mc2
+
+
+E = mc\ :sup:`2`
+
+title-reference
+
+
+Time
+
+
+:title:`Time`
+Figures & Images
+
+Image processing
+
+With the directives from linuxdoc the build process is flexible. To get best results in the generated output format, install ImageMagick and Graphviz.
+
+SearXNG’s sphinx setup includes: Scalable figure and image handling. Scalable here means; scalable in sense of the build process. Normally in absence of a converter tool, the build process will break. From the authors POV it’s annoying to care about the build process when handling with images, especially since he has no access to the build process. With Scalable figure and image handling the build process continues and scales output quality in dependence of installed image processors.
+
+If you want to add an image, you should use the kernel-figure (inheritance of figure) and kernel-image (inheritance of image) directives. E.g. to insert a figure with a scalable image format use SVG (Simple SVG image.):
+
+.. _svg image example:
+
+.. kernel-figure:: svg_image.svg
+   :alt: SVG image example
+
+   Simple SVG image
+
+ To refer the figure, a caption block is needed: :ref:`svg image example`.
+
+SVG image example
+
+Fig. 4 Simple SVG image.
+
+To refer the figure, a caption block is needed: Simple SVG image..
+DOT files (aka Graphviz)
+
+With kernel-figure & kernel-image reST support for DOT formatted files is given.
+
+    Graphviz’s dot
+
+    DOT
+
+    Graphviz
+
+A simple example is shown in DOT’s hello world example:
+
+.. _dot file example:
+
+.. kernel-figure:: hello.dot
+   :alt: hello world
+
+   DOT's hello world example
+
+hello.dot
+hello world
+
+Fig. 5 DOT’s hello world example
+kernel-render DOT
+
+Embed render markups (or languages) like Graphviz’s DOT is provided by the kernel-render directive. A simple example of embedded DOT is shown in figure Embedded DOT (Graphviz) code:
+
+.. _dot render example:
+
+.. kernel-render:: DOT
+   :alt: digraph
+   :caption: Embedded  DOT (Graphviz) code
+
+   digraph foo {
+     "bar" -> "baz";
+   }
+
+Attribute ``caption`` is needed, if you want to refer the figure: :ref:`dot
+render example`.
+
+Please note build tools. If Graphviz is installed, you will see an vector image. If not, the raw markup is inserted as literal-block.
+
+kernel-render DOT
+digraph
+
+Fig. 6 Embedded DOT (Graphviz) code
+
+Attribute caption is needed, if you want to refer the figure: Embedded DOT (Graphviz) code.
+kernel-render SVG
+
+A simple example of embedded SVG is shown in figure Embedded SVG markup:
+
+.. _svg render example:
+
+.. kernel-render:: SVG
+   :caption: Embedded **SVG** markup
+   :alt: so-nw-arrow
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+         baseProfile="full" width="70px" height="40px"
+         viewBox="0 0 700 400"
+         >
+      <line x1="180" y1="370"
+            x2="500" y2="50"
+            stroke="black" stroke-width="15px"
+            />
+      <polygon points="585 0 525 25 585 50"
+               transform="rotate(135 525 25)"
+               />
+    </svg>
+
+kernel-render SVG
+so-nw-arrow
+
+Fig. 7 Embedded SVG markup
+List markups
+Bullet list
+
+List markup (ref) is simple:
+
+- This is a bulleted list.
+
+  1. Nested lists are possible, but be aware that they must be separated from
+     the parent list items by blank line
+  2. Second item of nested list
+
+- It has two items, the second
+  item uses two lines.
+
+#. This is a numbered list.
+#. It has two items too.
+
+bullet list
+
+    This is a bulleted list.
+
+        Nested lists are possible, but be aware that they must be separated from the parent list items by blank line
+
+        Second item of nested list
+
+    It has two items, the second item uses two lines.
+
+    This is a numbered list.
+
+    It has two items too.
+
+Horizontal list
+
+The .. hlist:: transforms a bullet list into a more compact list.
+
+.. hlist::
+
+   - first list item
+   - second list item
+   - third list item
+   ...
+
+hlist
+
+    first list item
+
+    second list item
+
+    third list item
+
+    next list item
+
+
+
+    next list item xxxx
+
+    next list item yyyy
+
+    next list item zzzz
+
+Definition list
+
+Note ..
+
+    the term cannot have more than one line of text
+
+    there is no blank line between term and definition block // this distinguishes definition lists (ref) from block quotes (ref).
+
+Each definition list (ref) item contains a term, optional classifiers and a definition. A term is a simple one-line word or phrase. Optional classifiers may follow the term on the same line, each after an inline ‘ : ‘ (space, colon, space). A definition is a block indented relative to the term, and may contain multiple paragraphs and other body elements. There may be no blank line between a term line and a definition block (this distinguishes definition lists from block quotes). Blank lines are required before the first and after the last definition list item, but are optional in-between.
+
+Definition lists are created as follows:
+
+term 1 (up to a line of text)
+    Definition 1.
+
+See the typo : this line is not a term!
+
+  And this is not term's definition.  **There is a blank line** in between
+  the line above and this paragraph.  That's why this paragraph is taken as
+  **block quote** (:duref:`ref <block-quotes>`) and not as term's definition!
+
+term 2
+    Definition 2, paragraph 1.
+
+    Definition 2, paragraph 2.
+
+term 3 : classifier
+    Definition 3.
+
+term 4 : classifier one : classifier two
+    Definition 4.
+
+definition list
+
+term 1 (up to a line of text)
+
+    Definition 1.
+
+See the typo : this line is not a term!
+
+    And this is not term’s definition. There is a blank line in between the line above and this paragraph. That’s why this paragraph is taken as block quote (ref) and not as term’s definition!
+
+term 2
+
+    Definition 2, paragraph 1.
+
+    Definition 2, paragraph 2.
+term 3classifier
+
+    Definition 3.
+
+term 4 : classifier one : classifier two
+Quoted paragraphs
+
+Quoted paragraphs (ref) are created by just indenting them more than the surrounding paragraphs. Line blocks (ref) are a way of preserving line breaks:
+
+normal paragraph ...
+lorem ipsum.
+
+   Quoted paragraph ...
+   lorem ipsum.
+
+| These lines are
+| broken exactly like in
+| the source file.
+
+Quoted paragraph and line block
+
+normal paragraph … lorem ipsum.
+
+    Quoted paragraph … lorem ipsum.
+
+These lines are
+broken exactly like in
+the source file.
+Field Lists
+
+bibliographic fields
+
+First lines fields are bibliographic fields, see Sphinx Field Lists.
+
+Field lists are used as part of an extension syntax, such as options for directives, or database-like records meant for further processing. Field lists are mappings from field names to field bodies. They marked up like this:
+
+:fieldname: Field content
+:foo:
+
++++
+

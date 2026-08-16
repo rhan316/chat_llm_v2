@@ -1,5 +1,6 @@
 package org.dar316.spring_ai.service.chat;
 
+import org.dar316.spring_ai.dto.chat.ChatRequest;
 import org.dar316.spring_ai.service.RerankedRagService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
@@ -18,61 +19,54 @@ public class ChatService {
     private final ChatHistoryService chatHistoryService;
     private final RerankedRagService rerankedRagService;
     private final String cheapChatModel;
+    private final String defaultTechnology;
+    private final String defaultTechnologyVersion;
 
     public ChatService(
             ChatClient.Builder chatClientBuilder,
             ChatHistoryService chatHistoryService,
-            RerankedRagService rerankedRagService, @Value("${ai.summary.model}") String cheapChatModel
+            RerankedRagService rerankedRagService,
+            @Value("${ai.summary.model}") String cheapChatModel,
+            @Value("${rag.chat.default-technology}") String defaultTechnology,
+            @Value("${rag.chat.default-technology-version}") String defaultTechnologyVersion
             ) {
         this.chatClient = chatClientBuilder.build();
         this.chatHistoryService = chatHistoryService;
         this.rerankedRagService = rerankedRagService;
         this.cheapChatModel = cheapChatModel;
+        this.defaultTechnology = defaultTechnology;
+        this.defaultTechnologyVersion = defaultTechnologyVersion;
     }
 
-    public String chat(String conversationId, String userQuery) {
-        // 1. Retrieve only semantically relevant past messages (e.g., top 5)
+    public String chat(ChatRequest request) {
+        String conversationId = request.conversationId();
+        String userQuery = request.query();
+
+        // 1. Retrieve only semantically relevant past messages
         List<Document> recentHistory = chatHistoryService.getRelevantHistory(
                 conversationId,
                 userQuery,
                 4
         );
 
-        // 2. Rewrite the query if it contains pronouns or references to past messages
+        // 2. Rewrite follow-up questions into standalone questions
         String standaloneQuery = rewriteQuery(recentHistory, userQuery);
 
-        /*
-        3. Perform RAG using the REWRITTEN query
-            This will hit Qdrant, or trigger the Wikipedia/StackOverflow fallback if needed
-         */
+        // 3. RAG over the corpus selected by the request (or the configured default)
+        Corpus corpus = resolveCorpus(request);
+
         List<Document> ragContext = rerankedRagService.findAndRerankDocuments(
                 standaloneQuery,
-                "general", // or pass the specific technology
-                "1.0",
+                corpus.technology(),
+                corpus.technologyVersion(),
                 10,
                 5
         );
 
-        // 4. Format the context for the final prompt
         String contextText = ragContext.stream()
                 .map(Document::getText)
                 .collect(Collectors.joining("\n\n---\n\n"));
 
-        // 5. Call the LLM to generate the final answer
-
-
-        // 2. Format the retrieved history into a context string
-        String historyContext = recentHistory.stream()
-                .map(doc -> {
-                    String role = (String) doc.getMetadata().get("role");
-                    String text = doc.getText();
-
-                    return role + ": " + text;
-                })
-                .collect(Collectors.joining("\n\n"));
-
-        // 3. Build the prompt. If no relevant history, leave it blank.
-        // 5. Call the LLM to generate the final answer
         String systemPrompt = """
                 You are a helpful AI assistant for software engineers.
                 Use the following retrieved context to answer the user's question.
@@ -84,12 +78,11 @@ public class ChatService {
 
         String response = chatClient.prompt()
                 .system(systemPrompt)
-                .user(standaloneQuery) // use the rewritten query here too
+                .user(standaloneQuery)
                 .options(OpenAiChatOptions.builder().model(cheapChatModel))
                 .call()
                 .content();
 
-        // 5. Save the new interaction to Qdrant for future semantic retrieval
         if (response != null && !response.isBlank()) {
             chatHistoryService.saveMessage(conversationId, "user", userQuery);
             chatHistoryService.saveMessage(conversationId, "assistant", response);
@@ -98,7 +91,10 @@ public class ChatService {
         return response;
     }
 
-    public Flux<String> streamChat(String conversationId, String userQuery) {
+    public Flux<String> streamChat(ChatRequest request) {
+        String conversationId = request.conversationId();
+        String userQuery = request.query();
+
         List<Document> recentHistory = chatHistoryService.getRelevantHistory(
                 conversationId,
                 userQuery,
@@ -107,10 +103,12 @@ public class ChatService {
 
         String standaloneQuery = rewriteQuery(recentHistory, userQuery);
 
+        Corpus corpus = resolveCorpus(request);
+
         List<Document> ragContextDocs = rerankedRagService.findAndRerankDocuments(
                 standaloneQuery,
-                "general",
-                "1.0",
+                corpus.technology(),
+                corpus.technologyVersion(),
                 10,
                 5
         );
@@ -123,7 +121,7 @@ public class ChatService {
                 .map(doc -> {
                     var roleObj = doc.getMetadata().get("role");
                     String role = roleObj != null ? roleObj.toString() : "";
-                    
+
                     return role + ": " + doc.getText();
                 })
                 .collect(Collectors.joining("\n\n"));
@@ -132,10 +130,10 @@ public class ChatService {
             You are a helpful AI assistant for software engineers.
             Use the following retrieved context to answer the user's question.
             If the context is not relevant, ignore it and answer using your general knowledge.
-            
+
             Retrieved Context:
             %s
-            
+
             Recent Chat History:
             %s
         """.formatted(
@@ -211,5 +209,18 @@ public class ChatService {
         } catch (Exception e) {
             return userQuery; // Fail-safe
         }
+    }
+
+    private Corpus resolveCorpus(ChatRequest request) {
+        String technology = isBlank(request.technology())
+                ? defaultTechnology : request.technology().strip();
+        String technologyVersion = isBlank(request.technologyVersion())
+                ? defaultTechnologyVersion : request.technologyVersion().strip();
+
+        return new Corpus(technology, technologyVersion);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

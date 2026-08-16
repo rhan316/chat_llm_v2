@@ -1,4 +1,5 @@
-curl -F "file=@/home/dar316/Pulpit/AI/Spring_AI/docs/spring_ai.txt" \
+curl -F "file=@/home/ ./mvnw clean package -DskipTests
+                       podman build -t localhost/spring-ai-rag:local .dar316/Pulpit/AI/Spring_AI/docs/spring_ai.txt" \
             -F "technology=spring_ai" -F "technologyVersion=2.0.0" \
             http://localhost:8081/api/doc/index
 

@@ -1,6 +1,8 @@
 package org.dar316.spring_ai.service;
 
 
+import io.qdrant.client.QdrantClient;
+import org.dar316.spring_ai.dto.huggingface.HuggingFaceModel;
 import org.dar316.spring_ai.dto.rag.wiki.WikiSummaryResponse;
 import org.dar316.spring_ai.dto.rag.stackoverflow.StackOverflowAnswersResponse;
 import org.dar316.spring_ai.dto.rag.stackoverflow.StackOverflowSearchResponse;
@@ -11,10 +13,13 @@ import org.dar316.spring_ai.util.HttpRequestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.springframework.ai.vectorstore.qdrant.QdrantVectorStore;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -31,9 +36,12 @@ import java.util.regex.Pattern;
 public class RerankedRagService {
 
     private final static Logger log = LoggerFactory.getLogger(RerankedRagService.class);
+    private static final Comparator<Document> BY_SCORE_DESC = Comparator.comparingDouble(
+            (Document doc) -> doc.getScore() != null ? doc.getScore() : 0).reversed();
 
     private final AiQuerySummarizer querySummarizer;
-    private final VectorStore vectorStore;
+    private final QdrantClient qdrantClient;
+    private final EmbeddingModel embeddingModel;
     private final RestClient client;
     private final String rerankModel;
     private final String apiKey;
@@ -50,12 +58,13 @@ public class RerankedRagService {
     private final GitHubRepositorySyncLock gitHubRepositorySyncLock;
 
     public RerankedRagService(
-            VectorStore vectorStore,
+            QdrantClient qdrantClient,
+            EmbeddingModel embeddingModel,
             RestClient.Builder restClientBuilder,
             AiQuerySummarizer querySummarizer,
             GitHubRepositorySyncLock gitHubRepositorySyncLock,
 
-            @Value("${CHAT_CODING_RAG_MIN_RERANK_SCORE:0.50}")
+            @Value("${rag.chat.min-rerank-score:${CHAT_CODING_RAG_MIN_RERANK_SCORE:0.50}}")
             double fallbackMinRerankScore,
 
             @Value("${mentor.rerank.openrouter.base-url}")
@@ -83,22 +92,23 @@ public class RerankedRagService {
 
         this.querySummarizer = querySummarizer;
         this.gitHubRepositorySyncLock = Objects.requireNonNull(gitHubRepositorySyncLock,  "gitHubRepositorySyncLock");
-        this.vectorStore = vectorStore;
+        this.qdrantClient = Objects.requireNonNull(qdrantClient, "qdrantClient");
+        this.embeddingModel = Objects.requireNonNull(embeddingModel, "embeddingModel");
         this.apiKey = apiKey;
         this.rerankModel = rerankModel;
         this.fallbackMinRerankScore = fallbackMinRerankScore;
         this.stackOverflowApiKey = stackOverflowApiKey;
-        this.client = RestClient.builder()
+        this.client = restClientBuilder.clone()
                 .baseUrl(baseUrl)
                 .build();
-        this.wikiClient = RestClient.builder()
+        this.wikiClient = restClientBuilder.clone()
                 .baseUrl(wikiBaseUrl)
                 .requestFactory(HttpRequestUtils.wikiTimeout(15))
                 .defaultHeader(HttpHeaders.USER_AGENT,
                         "Spring_AI_Chat_Rag/1.0 bluemike351@gmail.com"
                         )
                 .build();
-        this.stackOverflowClient = RestClient.builder()
+        this.stackOverflowClient = restClientBuilder.clone()
                 .baseUrl(stackOverflowBaseUrl)
                 .requestFactory(HttpRequestUtils.wikiTimeout(15))
                 .requestInterceptor(new GzipDecompressingInterceptor())
@@ -187,6 +197,26 @@ public class RerankedRagService {
         );
     }
 
+    private VectorStore resolveVectorStore(String technology, String technologyVersion) {
+        String collectionName = (technology + "_" + technologyVersion)
+                .replaceAll("[^a-zA-Z0-9_\\-]", "_")
+                .toLowerCase();
+
+        QdrantVectorStore dynamicVectorStore = QdrantVectorStore.builder(qdrantClient, embeddingModel)
+                .collectionName(collectionName)
+                .initializeSchema(false)   // kolekcja powinna już istnieć z etapu indeksowania
+                .build();
+
+        try {
+            dynamicVectorStore.afterPropertiesSet();
+        } catch (Exception e) {
+            log.error("Nie udało się zainicjalizować kolekcji do wyszukiwania: {}", collectionName, e);
+            throw new IllegalStateException("Vector store initialization failed for collection: " + collectionName, e);
+        }
+
+        return dynamicVectorStore;
+    }
+
     private List<Document> findAndRerankDocumentsLocked(
             String query,
             String technology,
@@ -195,6 +225,10 @@ public class RerankedRagService {
             int topKReranked,
             RepositoryScope repositoryScope
     ) {
+        VectorStore scopedVectorStore = resolveVectorStore(
+                technology, technologyVersion
+        );
+
         SearchRequest searchRequest = buildSearchRequest(
                 query,
                 technology,
@@ -204,7 +238,7 @@ public class RerankedRagService {
         );
 
         List<Document> candidates =
-                vectorStore.similaritySearch(searchRequest);
+                scopedVectorStore.similaritySearch(searchRequest);
 
         if (candidates.isEmpty()) {
             /*
@@ -221,8 +255,7 @@ public class RerankedRagService {
                 return List.of();
             }
 
-            List<Document> fallbackCandidates =
-                    fetchFallbackCandidates(query);
+            List<Document> fallbackCandidates = fetchFallbackCandidates(query);
 
             if (fallbackCandidates.isEmpty()) {
                 log.info(
@@ -237,7 +270,7 @@ public class RerankedRagService {
                     tryRerankCandidates(
                             query,
                             fallbackCandidates,
-                            fallbackCandidates.size()
+                            topKReranked
                     );
 
             if (rerankedFallback.isEmpty()) {
@@ -250,17 +283,15 @@ public class RerankedRagService {
             }
 
             return rerankedFallback.stream()
-                    .sorted(
-                            Comparator.comparingDouble(
-                                            (Document document) -> document.getScore() != null
-                                            ? document.getScore()
-                                            : 0.0
-                            ).reversed()
-                    )
+                    .sorted(BY_SCORE_DESC)
                     .limit(topKReranked)
                     .toList();
         }
 
+        /*
+            First pass: score the Qdrant candidates. The best score decides
+            whether external fallback sources are needed at all.
+         */
         int requestedTopN = Math.min(
                 topKReranked,
                 candidates.size()
@@ -282,45 +313,38 @@ public class RerankedRagService {
                 .orElse(0.0);
 
         /*
-         * Repository-scoped searches are intentionally limited to the repository.
-         * Generic fallback sources would weaken source isolation.
+            Repository-scoped searches are intentionally limited to the repository.
+            Generic fallback sources would weaken source isolation.
          */
-        if (!repositoryScope.isScoped()
-                && bestScore < fallbackMinRerankScore) {
-            List<Document> fallbackCandidates =
-                    fetchFallbackCandidates(query);
-
-            if (!fallbackCandidates.isEmpty()) {
-                List<Document> rerankedFallback =
-                        tryRerankCandidates(
-                                query,
-                                fallbackCandidates,
-                                fallbackCandidates.size()
-                        );
-
-                if (!rerankedFallback.isEmpty()) {
-                    List<Document> merged = new ArrayList<>(
-                            rerankedDocuments
-                    );
-
-                    merged.addAll(rerankedFallback);
-
-                    merged.sort(
-                            Comparator.comparingDouble(
-                                    (Document document) -> document.getScore() != null
-                                            ? document.getScore()
-                                            : 0.0
-                            ).reversed()
-                    );
-
-                    return merged.stream()
-                            .limit(topKReranked)
-                            .toList();
-                }
-            }
+        if (repositoryScope.isScoped() || bestScore >= fallbackMinRerankScore) {
+            return List.copyOf(rerankedDocuments);
         }
 
-        return List.copyOf(rerankedDocuments);
+        List<Document> fallbackCandidates = fetchFallbackCandidates(query);
+
+        if  (fallbackCandidates.isEmpty()) {
+            return List.copyOf(rerankedDocuments);
+        }
+
+        List<Document> combined = new ArrayList<>(candidates.size() + fallbackCandidates.size());
+
+        combined.addAll(candidates);
+        combined.addAll(fallbackCandidates);
+
+        List<Document> rerankedCombined = tryRerankCandidates(
+                query,
+                combined,
+                topKReranked
+        );
+
+        if (rerankedCombined.isEmpty()) {
+            log.warn("Combined rerank failed; returning Qdrant-only ranking for query: {}", query);
+        }
+
+        return rerankedCombined.stream()
+                .sorted(BY_SCORE_DESC)
+                .limit(topKReranked)
+                .toList();
     }
 
     private SearchRequest buildSearchRequest(
@@ -468,15 +492,15 @@ public class RerankedRagService {
         List<Document> fallback = new ArrayList<>();
 
         String wikiQuery = querySummarizer.summarizeQueryForWiki(query);
-        Document wikiDoc = fetchWikiSummary(wikiQuery);
-        if (wikiDoc != null) {
-            fallback.add(wikiDoc);
+        Document wikiDocs = fetchWikiSummary(wikiQuery);
+        if (wikiDocs != null) {
+            fallback.add(wikiDocs);
         }
 
         String stackOverflowQuery = querySummarizer.summarizeQueryForStackOverflow(query);
-        Document stackOverflowDoc = fetchStackOverflowAnswer(stackOverflowQuery);
-        if (stackOverflowDoc != null) {
-            fallback.add(stackOverflowDoc);
+        Document stackOverflowDocs = fetchStackOverflowAnswer(stackOverflowQuery);
+        if (stackOverflowDocs != null) {
+            fallback.add(stackOverflowDocs);
         }
 
         return fallback;
@@ -538,6 +562,16 @@ public class RerankedRagService {
             throw new IllegalStateException(
                     "Openrouter returned an empty rerank response."
             );
+        }
+
+        if (log.isDebugEnabled()) {
+            response.results().forEach(result -> {
+                log.debug(
+                        "rerank result: index={} relevance_score={}",
+                        result.index(),
+                        result.relevanceScore()
+                );
+            });
         }
 
         List<Document> rerankedDocuments = new ArrayList<>(response.results().size());

@@ -20,7 +20,7 @@ public class ChatController {
     private final ChatService chatService;
 
     public ChatController(ChatService chatService) {
-        this.chatService = Objects.requireNonNull(chatService,  "chatService must not be null");
+        this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
     }
 
     @PostMapping(
@@ -28,7 +28,7 @@ public class ChatController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ChatResponse chat(@Valid @RequestBody ChatRequest chatRequest) {
-        String answer = chatService.chat(chatRequest.conversationId(), chatRequest.query());
+        String answer = chatService.chat(chatRequest);
 
         return new ChatResponse(chatRequest.conversationId(), answer);
     }
@@ -38,6 +38,6 @@ public class ChatController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public Flux<String> streamChat(@Valid @RequestBody ChatRequest chatRequest) {
-        return chatService.streamChat(chatRequest.conversationId(), chatRequest.query());
+        return chatService.streamChat(chatRequest);
     }
 }

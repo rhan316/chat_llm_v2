@@ -1,5 +1,6 @@
 package org.dar316.spring_ai.service.chat;
 
+import org.dar316.spring_ai.dto.chat.ChatRequest;
 import org.dar316.spring_ai.service.RerankedRagService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,9 @@ public class ChatServiceTest {
                 chatClientBuilder,
                 chatHistoryService,
                 rerankedRagService,
-                "test-cheap-model"
+                "test-cheap-model",
+                "spring_ai",
+                "2.0.0"
         );
     }
 
@@ -92,7 +95,9 @@ public class ChatServiceTest {
                 .thenReturn(fakeRagContext);
 
         // --- ACT ---
-        String result = chatService.chat(convId, followQuery);
+        String result = chatService.chat(
+                new ChatRequest(convId, followQuery, null, null)
+        );
 
         // --- ASSERT ---
 
@@ -104,7 +109,7 @@ public class ChatServiceTest {
         ArgumentCaptor<String> ragQueryCaptor = ArgumentCaptor.forClass(String.class);
         verify(rerankedRagService).findAndRerankDocuments(
                 ragQueryCaptor.capture(),
-                anyString(), anyString(), anyInt(), anyInt()
+                eq("spring_ai"), eq("2.0.0"), anyInt(), anyInt()
         );
 
         assertEquals(expectedRewrittenQuery, ragQueryCaptor.getValue(),
@@ -136,5 +141,29 @@ public class ChatServiceTest {
                 .saveMessage(eq(convId), eq("user"), eq(followQuery));
         verify(chatHistoryService, times(1))
                 .saveMessage(eq(convId), eq("assistant"), eq(finalAnswer));
+    }
+
+    @Test
+    void whenRequestSpecifiesCorpus_thenItOverridesDefaults() {
+        var request = new ChatRequest("conv-456", "What is Tool Calling?", "spring-boot", "4.0");
+
+        when(chatHistoryService.getRelevantHistory(anyString(), anyString(), anyInt()))
+                .thenReturn(List.of());
+
+        when(callResponseSpec.content()).thenReturn("answer");
+
+        when(rerankedRagService.findAndRerankDocuments(
+                anyString(), anyString(), anyString(), anyInt(), anyInt()
+        )).thenReturn(List.of(new Document("ctx")));
+
+        chatService.chat(request);
+
+        verify(rerankedRagService).findAndRerankDocuments(
+                anyString(),
+                eq("spring-boot"),
+                eq("4.0"),
+                anyInt(),
+                anyInt()
+        );
     }
 }

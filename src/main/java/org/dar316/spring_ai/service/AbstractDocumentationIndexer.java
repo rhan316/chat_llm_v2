@@ -1,12 +1,14 @@
 package org.dar316.spring_ai.service;
 
-import org.jspecify.annotations.NullMarked;
+import io.qdrant.client.QdrantClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.springframework.ai.vectorstore.qdrant.QdrantVectorStore;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,11 +31,15 @@ public abstract class AbstractDocumentationIndexer {
     private static final Set<String> SUPPORTED_EXTENSIONS =
             Set.of("txt", "md", "markdown");
 
+    protected final QdrantClient qdrantClient;
+    protected final EmbeddingModel  embeddingModel;
     protected final VectorStore vectorStore;
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    protected AbstractDocumentationIndexer(VectorStore vectorStore) {
+    protected AbstractDocumentationIndexer(VectorStore vectorStore, QdrantClient qdrantClient, EmbeddingModel  embeddingModel) {
         this.vectorStore = Objects.requireNonNull(vectorStore, "vectorStore must not be null");
+        this.qdrantClient = Objects.requireNonNull(qdrantClient, "qdrantClient must not be null");
+        this.embeddingModel = Objects.requireNonNull(embeddingModel, "embeddingModel must not be null");
     }
 
     public int index(
@@ -80,6 +86,21 @@ public abstract class AbstractDocumentationIndexer {
         String documentVersion = UUID.randomUUID().toString();
         String indexedAt = Instant.now().toString();
 
+        String collectionName = (normalizedTechnology + "_" + normalizedTechnologyVersion)
+                .replaceAll("[^a-zA-Z0-9_\\-]", "_")
+                .toLowerCase();
+        QdrantVectorStore dynamicVectorStore = QdrantVectorStore
+                .builder(qdrantClient, embeddingModel)
+                .collectionName(collectionName)
+                .initializeSchema(true)
+                .build();
+
+        try {
+            dynamicVectorStore.afterPropertiesSet();
+        } catch (Exception e) {
+            log.error("Nie udało się zainicjalizować kolekcji: {}", collectionName, e);
+            throw new RuntimeException("Vector store initialization failed", e);
+        }
         /*
          * Abstract step. The subclass decides how Markdown or TXT
          * content is converted into Spring AI Documents.
@@ -109,7 +130,7 @@ public abstract class AbstractDocumentationIndexer {
             throw new IllegalStateException("No non-empty RAG sections were found in source: " + safeSource);
         }
 
-        TokenTextSplitter splitter = TokenTextSplitter.builder()
+        var splitter = TokenTextSplitter.builder()
                 .withChunkSize(600)
                 .withMinChunkSizeChars(250)
                 .withMinChunkLengthToEmbed(50)
@@ -147,6 +168,7 @@ public abstract class AbstractDocumentationIndexer {
          * document has completed successfully.
          */
         store(
+                dynamicVectorStore,
                 enrichedChunks,
                 safeSource,
                 normalizedTechnology,
@@ -155,10 +177,11 @@ public abstract class AbstractDocumentationIndexer {
         );
 
         log.debug(
-                "Indexed {} chunks for source '{}' and technology '{}'",
+                "Indexed {} chunks for source '{}' and technology '{}' into collection '{}'",
                 enrichedChunks.size(),
                 safeSource,
-                technology
+                technology,
+                collectionName
         );
 
         return enrichedChunks.size();
@@ -175,6 +198,7 @@ public abstract class AbstractDocumentationIndexer {
     );
 
     protected void store(
+            QdrantVectorStore dynamicVectorStore,
             List<Document> enrichedChunks,
             String source,
             String technology,
@@ -196,12 +220,12 @@ public abstract class AbstractDocumentationIndexer {
         String normalizedTechnologyVersion = requireNonBlank(technologyVersion, "technologyVersion");
         String normalizedDocumentVersion = requireNonBlank(documentVersion, "documentVersion");
 
-        vectorStore.add(enrichedChunks);
+        dynamicVectorStore.add(enrichedChunks);
 
         try {
             var feb = new FilterExpressionBuilder();
 
-            vectorStore.delete(
+            dynamicVectorStore.delete(
                     feb.and(
                             feb.and(
                                     feb.eq("source", safeSource),

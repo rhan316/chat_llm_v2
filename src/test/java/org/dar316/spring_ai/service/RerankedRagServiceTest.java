@@ -145,7 +145,7 @@ public class RerankedRagServiceTest {
      * based on the number of documents being reranked (identified by the top_n field).
      */
     private void stubOpenRouterRerank(double qdrantScore, double wikiScore, double soScore) {
-        // 1. First call: Reranking Qdrant candidates (1 document, top_n = 1)
+        // 1. First call: scoring Qdrant candidates only (1 document, top_n = 1)
         String qdrantResponse = """
             {
                 "id": "test-id",
@@ -162,22 +162,24 @@ public class RerankedRagServiceTest {
                 .withRequestBody(matchingJsonPath("$.top_n", equalTo("1")))
                 .willReturn(okJson(qdrantResponse)));
 
-        // 2. Second call: Reranking fallback candidates (2 documents, top_n = 2)
-        String fallbackResponse = """
+        // 2. Second call: reranking the COMBINED pool
+        //    (1 Qdrant doc + 2 fallback docs, top_n = 3)
+        String combinedResponse = """
             {
                 "id": "test-id",
                 "model": "test-model",
                 "provider": "test-provider",
                 "results": [
                 {"index": 0, "relevance_score": %.2f, "document": {"text": "irrelevant"}},
-                {"index": 1, "relevance_score": %.2f, "document": {"text": "irrelevant"}}
+                {"index": 1, "relevance_score": %.2f, "document": {"text": "irrelevant"}},
+                {"index": 2, "relevance_score": %.2f, "document": {"text": "irrelevant"}}
                 ],
                 "usage": {"search_units": 1, "total_tokens": 10}
             }
-        """.formatted(wikiScore, soScore);
+        """.formatted(qdrantScore, wikiScore, soScore);
 
         wireMock.stubFor(post("/rerank")
-                .withRequestBody(matchingJsonPath("$.top_n", equalTo("2")))
-                .willReturn(okJson(fallbackResponse)));
+                .withRequestBody(matchingJsonPath("$.top_n", equalTo("3")))
+                .willReturn(okJson(combinedResponse)));
     }
 }

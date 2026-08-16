@@ -1,6 +1,8 @@
 package org.dar316.spring_ai.service;
 
+import io.qdrant.client.QdrantClient;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
 import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
@@ -17,8 +19,8 @@ import java.util.Objects;
 public class DocumentationIndexer
         extends AbstractDocumentationIndexer {
 
-    public DocumentationIndexer(VectorStore vectorStore) {
-        super(vectorStore);
+    public DocumentationIndexer(VectorStore vectorStore, QdrantClient qdrantClient, EmbeddingModel embeddingModel) {
+        super(vectorStore, qdrantClient, embeddingModel);
     }
 
     @Override

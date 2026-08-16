@@ -25,6 +25,20 @@ public class AiQuerySummarizer {
         this.summaryModel = summaryModel;
     }
 
+    public String summarizeQueryForHuggingFace(String rawQuery) {
+        if (rawQuery == null || rawQuery.isBlank()) {
+            log.warn("rawQuery is null or empty");
+            return rawQuery;
+        }
+
+        String prompt = "Extract the main machine learning model name, architecture, or task from the following text. " +
+                "Return ONLY a short, 1-4 word English phrase suitable for a HuggingFace model search. " +
+                "No explanations, no sentences. Example: 'BERT', 'Text-to-Image', 'Llama 3', 'Sentence Embeddings'.\n\n" +
+                "TEXT:\n" + rawQuery;
+
+        return summarize(rawQuery, prompt, "HuggingFace");
+    }
+
     public String summarizeQueryForWiki(String rawQuery) {
         if (rawQuery == null || rawQuery.isBlank()) {
             log.warn("rawQuery is null or empty");

@@ -6,7 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -51,6 +54,18 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception caught by global handler", ex);
         ErrorResponse body = new ErrorResponse("An unexpected internal error occurred", "Internal server error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<Map<String, String>> handleMissingServletRequestPart(
+            MissingServletRequestPartException ex
+    ) {
+        return ResponseEntity.badRequest()
+                .body(Map.of(
+                        "message", "Required multipart part '%s' is missing."
+                                .formatted(ex.getRequestPartName()),
+                        "error", "Bad request"
+                ));
     }
 
     /**

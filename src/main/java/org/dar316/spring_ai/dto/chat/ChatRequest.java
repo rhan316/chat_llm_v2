@@ -11,6 +11,12 @@ public record ChatRequest(
 
         @NotBlank(message = "query cannot be blank")
         @Size(max = 4_000, message = "query cannot exceed 4_000 characters")
-        String query
+        String query,
+
+        @Size(max = 100, message = "technology cannot exceed 100 characters")
+        String technology,
+
+        @Size(max = 100, message = "technologyVersion cannot exceed 100 characters")
+        String technologyVersion
 ) {
 }

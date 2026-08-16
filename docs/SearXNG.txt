@@ -1,0 +1,10266 @@
+Search syntax
+
+SearXNG comes with a search syntax by which you can modify the categories, engines, languages, and more. See the preferences for the list of engines, categories, and languages.
+! Select engine and category
+
+To set category and/or engine names, use a ! prefix. To give a few examples:
+
+    Search Wikipedia for paris:
+
+        !wp paris
+
+        !wikipedia paris
+
+    Search in category map for paris:
+
+        !map paris
+
+    Image search
+
+        !images Wau Holland
+
+Abbreviations of the engines and languages are also accepted. Engine/category modifiers are chainable and inclusive. For example, !map !ddg !wp paris searches in the map category and searches DuckDuckGo and Wikipedia for paris.
+: Select language
+
+To select a language filter use a : prefix. To give an example:
+
+    Search Wikipedia with a custom language:
+
+        :fr !wp Wau Holland
+
+!!<bang> External bangs
+
+SearXNG supports the external bangs from DuckDuckGo. To directly jump to a external search page use the !! prefix. To give an example:
+
+    Search Wikipedia with a custom language:
+
+        !!wfr Wau Holland
+
+Please note that your search will be performed directly in the external search engine. SearXNG cannot protect your privacy with this.
+!! automatic redirect
+
+When including !! within your search query (separated by spaces), you will automatically be redirected to the first result. This behavior is comparable to the “Feeling Lucky” feature from DuckDuckGo. To give an example:
+
+    Search for a query and get redirected to the first result
+
+        !! Wau Holland
+
+Please keep in mind that the result you are being redirected to can’t be verified for trustworthiness and SearXNG cannot protect your personal privacy when using this feature. Use it at your own risk.
+Special Queries
+
+In the preferences page you find keywords for special queries. To give a few examples:
+
+    Generate a random UUID
+
+        random uuid
+
+    Find the average
+
+        avg 123 548 2.04 24.2
+
+    Show the user agent of your browser (needs to be activated)
+
+        user-agent
+
+    Convert strings to different hash digests (needs to be activated)
+
+        md5 lorem ipsum
+
+        sha512 lorem ipsum
+
++++
+
+Configured Engines
+
+Further reading ..
+
+    categories_as_tabs:
+
+    Engine Overview
+
+    engines:
+
+    General Engine Configuration
+
+SearXNG supports 270 search engines of which 83 are enabled by default.
+
+Engines can be assigned to multiple categories. The UI displays the tabs that are configured in categories_as_tabs. In addition to these UI categories (also called tabs), engines can be queried by their name or the categories they belong to, by using a !bing syntax.
+tab !general
+group !blogs
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+searchmysite
+
+
+!sms
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wiby
+
+
+!wib
+
+
+json_engine
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+group !books
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+openlibrary
+
+
+!ol
+
+
+openlibrary
+
+
+y
+
+
+10
+
+
+1.0
+
+
+y
+
+group !currency
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+currency
+
+
+!cc
+
+
+currency_convert
+
+
+3.0
+
+
+100
+
+
+not applicable (online_currency)
+group !translate
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+dictzone
+
+
+!dc
+
+
+dictzone
+
+
+3.0
+
+
+100
+
+
+not applicable (online_dictionary)
+
+lingva
+
+
+!lv
+
+
+lingva
+
+
+6.0
+
+
+1.0
+
+
+not applicable (online_dictionary)
+
+mozhi
+
+
+!mz
+
+
+mozhi
+
+
+y
+
+
+4.0
+
+
+1.0
+
+
+not applicable (online_dictionary)
+
+mymemory translated
+
+
+!tl
+
+
+translated
+
+
+5.0
+
+
+100
+
+
+not applicable (online_dictionary)
+group !web
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+bing
+
+
+!bi
+
+
+bing
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+brave
+
+
+!br
+
+
+brave
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+duckduckgo
+
+
+!ddg
+
+
+duckduckgo
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+google cse
+
+
+!goc
+
+
+google_cse
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+mojeek
+
+
+!mjk
+
+
+mojeek
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+qwant
+
+
+!qw
+
+
+qwant
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+startpage
+
+
+!sp
+
+
+startpage
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+yahoo
+
+
+!yh
+
+
+yahoo
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+seznam (CZ)
+
+
+!szn
+
+
+seznam
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+naver (KO)
+
+
+!nvr
+
+
+naver
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+group !wikimedia
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+wikibooks
+
+
+!wb
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+0.5
+
+
+y
+
+
+wikiquote
+
+
+!wq
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+0.5
+
+
+y
+
+
+wikisource
+
+
+!ws
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+0.5
+
+
+y
+
+
+wikispecies
+
+
+!wsp
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wikiversity
+
+
+!wv
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+0.5
+
+
+y
+
+
+wikivoyage
+
+
+!wy
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+0.5
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+ayo
+
+
+!ayo
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+boardreader
+
+
+!boa
+
+
+boardreader
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+crowdview
+
+
+!cv
+
+
+json_engine
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+ddg definitions
+
+
+!ddd
+
+
+duckduckgo_definitions
+
+
+y
+
+
+3.0
+
+
+2
+
+
+duckduckgo web
+
+
+!ddgw
+
+
+duckduckgo_web
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+encyclosearch
+
+
+!es
+
+
+json_engine
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+fastbot
+
+
+!fa
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+fireball
+
+
+!fire
+
+
+fireball
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+fynd
+
+
+!fynd
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+gabanza
+
+
+!gab
+
+
+xpath
+
+
+y
+
+
+4
+
+
+1.0
+
+
+gmx
+
+
+!gmx
+
+
+gmx
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+infospace
+
+
+!ifs
+
+
+s1search
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+mwmbl
+
+
+!mwm
+
+
+mwmbl
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+privacywall
+
+
+!pw
+
+
+privacywall
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+resulthunter
+
+
+!reh
+
+
+resulthunter
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+searchtoday
+
+
+!std
+
+
+s1search
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+tineye
+
+
+!tin
+
+
+tineye
+
+
+y
+
+
+9.0
+
+
+1.0
+
+
+not applicable (online_url_search)
+
+tusksearch
+
+
+!tu
+
+
+tusksearch
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+vuhuv
+
+
+!vu
+
+
+vuhuv
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wikidata
+
+
+!wd
+
+
+wikidata
+
+
+3.0
+
+
+2
+
+
+y
+
+
+wikipedia
+
+
+!wp
+
+
+wikipedia
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wolframalpha
+
+
+!wa
+
+
+wolframalpha_noapi
+
+
+y
+
+
+6.0
+
+
+1.0
+
+
+yacy
+
+
+!ya
+
+
+yacy
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+yandex
+
+
+!yd
+
+
+yandex
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+yep
+
+
+!yep
+
+
+yep
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+zapmeta
+
+
+!zpm
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+searchch (CH)
+
+
+!sch
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+bpb (DE)
+
+
+!bpb
+
+
+bpb
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+reloado (DE)
+
+
+!rel
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+tagesschau (DE)
+
+
+!ts
+
+
+tagesschau
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wikimini (FR)
+
+
+!wkmn
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+abcnyheter (NO)
+
+
+!abc
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+360search (ZH)
+
+
+!360so
+
+
+360search
+
+
+y
+
+
+20.0
+
+
+1.0
+
+
+y
+
+
+y
+
+baidu (ZH)
+
+
+!bd
+
+
+baidu
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+quark (ZH)
+
+
+!qk
+
+
+quark
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+sogou (ZH)
+
+
+!sogou
+
+
+sogou
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+tab !images
+group !icons
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+devicons
+
+
+!di
+
+
+devicons
+
+
+3.0
+
+
+1.0
+
+
+flaticon
+
+
+!fli
+
+
+flaticon
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+lucide
+
+
+!luc
+
+
+lucide
+
+
+3.0
+
+
+1.0
+
+
+material icons
+
+
+!mi
+
+
+material_icons
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+selfhst icons
+
+
+!si
+
+
+selfhst
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+uxwing
+
+
+!ux
+
+
+uxwing
+
+
+y
+
+
+3.0
+
+
+1.0
+
+group !web
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+bing images
+
+
+!bii
+
+
+bing_images
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+brave.images
+
+
+!brimg
+
+
+brave
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+google cse images
+
+
+!goci
+
+
+google_cse
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+mojeek images
+
+
+!mjkimg
+
+
+mojeek
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+qwant images
+
+
+!qwi
+
+
+qwant
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+startpage images
+
+
+!spi
+
+
+startpage
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+1x
+
+
+!1x
+
+
+www1x
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+500px
+
+
+!500
+
+
+500px
+
+
+y
+
+
+5
+
+
+1.0
+
+
+y
+
+
+adobe stock
+
+
+!asi
+
+
+adobe_stock
+
+
+y
+
+
+6
+
+
+1.0
+
+
+y
+
+
+artic
+
+
+!arc
+
+
+artic
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+artstation
+
+
+!as
+
+
+artstation
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+cara
+
+
+!ca
+
+
+cara
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+deviantart
+
+
+!da
+
+
+deviantart
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+duckduckgo images
+
+
+!ddi
+
+
+duckduckgo_extra
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+findfiles images
+
+
+!fifi
+
+
+findfiles
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+findthatmeme
+
+
+!ftm
+
+
+findthatmeme
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+flickr
+
+
+!fl
+
+
+flickr_noapi
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+frinkiac
+
+
+!frk
+
+
+frinkiac
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+giphy
+
+
+!gif
+
+
+giphy
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+imgur
+
+
+!img
+
+
+imgur
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+ipernity
+
+
+!ip
+
+
+ipernity
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+library of congress
+
+
+!loc
+
+
+loc
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+magnific
+
+
+!mag
+
+
+magnific
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+openverse
+
+
+!opv
+
+
+openverse
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+pexels
+
+
+!pe
+
+
+pexels
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+picjumbo
+
+
+!pj
+
+
+picjumbo
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+pinterest
+
+
+!pin
+
+
+pinterest
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+pixabay images
+
+
+!pixi
+
+
+pixabay
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+privacywall images
+
+
+!pwi
+
+
+privacywall
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+public domain image archive
+
+
+!pdia
+
+
+public_domain_image_archive
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+resulthunter images
+
+
+!rehi
+
+
+resulthunter
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+shopify stock
+
+
+!shs
+
+
+shopify_stock
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+sogou images
+
+
+!sogoui
+
+
+sogou_images
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+stocksnap
+
+
+!sto
+
+
+stocksnap
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+tusksearch images
+
+
+!tui
+
+
+tusksearch
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+unsplash
+
+
+!us
+
+
+unsplash
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+vuhuv images
+
+
+!vui
+
+
+vuhuv
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wikicommons.images
+
+
+!wci
+
+
+wikicommons
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+yacy images
+
+
+!yai
+
+
+yacy
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+yandex images
+
+
+!ydi
+
+
+yandex
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+naver images (KO)
+
+
+!nvri
+
+
+naver
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+baidu images (ZH)
+
+
+!bdi
+
+
+baidu
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+quark images (ZH)
+
+
+!qki
+
+
+quark
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+tab !videos
+group !web
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+bing videos
+
+
+!biv
+
+
+bing_videos
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+brave.videos
+
+
+!brvid
+
+
+brave
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+qwant videos
+
+
+!qwv
+
+
+qwant
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+360search videos
+
+
+!360sov
+
+
+360search_videos
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+adobe stock video
+
+
+!asv
+
+
+adobe_stock
+
+
+y
+
+
+6
+
+
+1.0
+
+
+y
+
+
+bilibili
+
+
+!bil
+
+
+bilibili
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+bitchute
+
+
+!bit
+
+
+bitchute
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+dailymotion
+
+
+!dm
+
+
+dailymotion
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+duckduckgo videos
+
+
+!ddv
+
+
+duckduckgo_extra
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+findfiles videos
+
+
+!fifv
+
+
+findfiles
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+fireball videos
+
+
+!firev
+
+
+fireball
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+google play movies
+
+
+!gpm
+
+
+google_play
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+media.ccc.de
+
+
+!c3tv
+
+
+ccc_media
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+odysee
+
+
+!od
+
+
+odysee
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+peertube
+
+
+!ptb
+
+
+peertube
+
+
+y
+
+
+6.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+pixabay videos
+
+
+!pixv
+
+
+pixabay
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+privacywall videos
+
+
+!pwv
+
+
+privacywall
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+rumble
+
+
+!ru
+
+
+rumble
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+sepiasearch
+
+
+!sep
+
+
+sepiasearch
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+
+tusksearch videos
+
+
+!tuv
+
+
+tusksearch
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+vimeo
+
+
+!vm
+
+
+vimeo
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+vuhuv videos
+
+
+!vuv
+
+
+vuhuv
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wikicommons.videos
+
+
+!wcv
+
+
+wikicommons
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+youtube
+
+
+!yt
+
+
+youtube_noapi
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+mediathekviewweb (DE)
+
+
+!mvw
+
+
+mediathekviewweb
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+ina (FR)
+
+
+!in
+
+
+ina
+
+
+y
+
+
+6.0
+
+
+1.0
+
+
+y
+
+
+niconico (JA)
+
+
+!nico
+
+
+niconico
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+naver videos (KO)
+
+
+!nvrv
+
+
+naver
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+acfun (ZH)
+
+
+!acf
+
+
+acfun
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+iqiyi (ZH)
+
+
+!iq
+
+
+iqiyi
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+sogou videos (ZH)
+
+
+!sogouv
+
+
+sogou_videos
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+tab !news
+group !web
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+mojeek news
+
+
+!mjknews
+
+
+mojeek
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+startpage news
+
+
+!spn
+
+
+startpage
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+y
+group !wikimedia
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+wikinews
+
+
+!wn
+
+
+mediawiki
+
+
+3.0
+
+
+1.0
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+bing news
+
+
+!bin
+
+
+bing_news
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+brave.news
+
+
+!brnews
+
+
+brave
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+duckduckgo news
+
+
+!ddn
+
+
+duckduckgo_extra
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+fireball news
+
+
+!firen
+
+
+fireball
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+google news
+
+
+!gon
+
+
+google_news
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+qwant news
+
+
+!qwn
+
+
+qwant
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+
+reuters
+
+
+!reu
+
+
+reuters
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+tusksearch news
+
+
+!tun
+
+
+tusksearch
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+tagesschau (DE)
+
+
+!ts
+
+
+tagesschau
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+ansa (IT)
+
+
+!ans
+
+
+ansa
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+il post (IT)
+
+
+!pst
+
+
+il_post
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+naver news (KO)
+
+
+!nvrn
+
+
+naver
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+sogou wechat (ZH)
+
+
+!sogouw
+
+
+sogou_wechat
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+tab !map
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+apple maps
+
+
+!apm
+
+
+apple_maps
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+openstreetmap
+
+
+!osm
+
+
+openstreetmap
+
+
+3.0
+
+
+1.0
+
+
+photon
+
+
+!ph
+
+
+photon
+
+
+3.0
+
+
+1.0
+
+tab !music
+group !lyrics
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+genius
+
+
+!gen
+
+
+genius
+
+
+3.0
+
+
+1.0
+
+
+y
+
+group !radio
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+radio browser
+
+
+!rb
+
+
+radio_browser
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+adobe stock audio
+
+
+!asa
+
+
+adobe_stock
+
+
+y
+
+
+6
+
+
+1.0
+
+
+y
+
+
+bandcamp
+
+
+!bc
+
+
+bandcamp
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+deezer
+
+
+!dz
+
+
+deezer
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+findfiles music
+
+
+!fifm
+
+
+findfiles
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+mixcloud
+
+
+!mc
+
+
+mixcloud
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+soundcloud
+
+
+!sc
+
+
+soundcloud
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+wikicommons.audio
+
+
+!wca
+
+
+wikicommons
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+yandex music
+
+
+!ydm
+
+
+yandex_music
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+youtube
+
+
+!yt
+
+
+youtube_noapi
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+tab !it
+group !packages
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+alpine linux packages
+
+
+!alp
+
+
+alpinelinux
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+cachy os packages
+
+
+!cos
+
+
+cachy_os
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+crates.io
+
+
+!crates
+
+
+crates
+
+
+y
+
+
+6.0
+
+
+1.0
+
+
+y
+
+
+docker hub
+
+
+!dh
+
+
+docker_hub
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+hex
+
+
+!hex
+
+
+hex
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+hoogle
+
+
+!ho
+
+
+xpath
+
+
+3.0
+
+
+1.0
+
+
+lib.rs
+
+
+!lrs
+
+
+lib_rs
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+metacpan
+
+
+!cpan
+
+
+metacpan
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+npm
+
+
+!npm
+
+
+npm
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+packagist
+
+
+!pack
+
+
+json_engine
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+pkg.go.dev
+
+
+!pgo
+
+
+pkg_go_dev
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+pub.dev
+
+
+!pd
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+pypi
+
+
+!pypi
+
+
+pypi
+
+
+3.0
+
+
+1.0
+
+
+rubygems
+
+
+!rbg
+
+
+xpath
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+voidlinux
+
+
+!void
+
+
+voidlinux
+
+
+y
+
+
+3.0
+
+
+1.0
+
+group !q&a
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+askubuntu
+
+
+!ubuntu
+
+
+stackexchange
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+caddy.community
+
+
+!caddy
+
+
+discourse
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+discuss.python
+
+
+!dpy
+
+
+discourse
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+pi-hole.community
+
+
+!pi
+
+
+discourse
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+stackoverflow
+
+
+!st
+
+
+stackexchange
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+superuser
+
+
+!su
+
+
+stackexchange
+
+
+3.0
+
+
+1.0
+
+
+y
+
+group !repos
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+bitbucket
+
+
+!bb
+
+
+xpath
+
+
+y
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+codeberg
+
+
+!cb
+
+
+gitea
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+gitea.com
+
+
+!gitea
+
+
+gitea
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+github
+
+
+!gh
+
+
+github
+
+
+3.0
+
+
+1.0
+
+
+gitlab
+
+
+!gl
+
+
+gitlab
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+huggingface
+
+
+!hf
+
+
+huggingface
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+huggingface datasets
+
+
+!hfd
+
+
+huggingface
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+huggingface spaces
+
+
+!hfs
+
+
+huggingface
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+ollama
+
+
+!ollama
+
+
+ollama
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+sourcehut
+
+
+!srht
+
+
+sourcehut
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+group !software_wikis
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+arch linux wiki
+
+
+!al
+
+
+archlinux
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+free software directory
+
+
+!fsd
+
+
+mediawiki
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+gentoo
+
+
+!ge
+
+
+mediawiki
+
+
+10
+
+
+1.0
+
+
+y
+
+
+nixos wiki
+
+
+!nixw
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+anaconda
+
+
+!conda
+
+
+xpath
+
+
+y
+
+
+6.0
+
+
+1.0
+
+
+y
+
+
+habrahabr
+
+
+!habr
+
+
+xpath
+
+
+y
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+hackernews
+
+
+!hn
+
+
+hackernews
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+lobste.rs
+
+
+!lo
+
+
+xpath
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+mankier
+
+
+!man
+
+
+json_engine
+
+
+3.0
+
+
+1.0
+
+
+mdn
+
+
+!mdn
+
+
+json_engine
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+microsoft learn
+
+
+!msl
+
+
+microsoft_learn
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+national vulnerability database
+
+
+!nvd
+
+
+nvd
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+baidu kaifa (ZH)
+
+
+!bdk
+
+
+baidu
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+tab !science
+group !scientific_publications
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+arxiv
+
+
+!arx
+
+
+arxiv
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+crossref
+
+
+!cr
+
+
+crossref
+
+
+y
+
+
+30
+
+
+1.0
+
+
+y
+
+
+google scholar
+
+
+!gos
+
+
+google_scholar
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+openalex
+
+
+!oa
+
+
+openalex
+
+
+y
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+pubmed
+
+
+!pub
+
+
+pubmed
+
+
+3.0
+
+
+1.0
+
+
+semantic scholar
+
+
+!se
+
+
+semantic_scholar
+
+
+3.0
+
+
+1.0
+
+
+y
+
+group !wikimedia
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+wikispecies
+
+
+!wsp
+
+
+mediawiki
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+openairedatasets
+
+
+!oad
+
+
+json_engine
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+openairepublications
+
+
+!oap
+
+
+json_engine
+
+
+5.0
+
+
+1.0
+
+
+y
+
+
+pdbe
+
+
+!pdb
+
+
+pdbe
+
+
+3.0
+
+
+1.0
+
+tab !files
+group !apps
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+apk mirror
+
+
+!apkm
+
+
+apkmirror
+
+
+y
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+apple app store
+
+
+!aps
+
+
+apple_app_store
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+fdroid
+
+
+!fd
+
+
+fdroid
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+google play apps
+
+
+!gpa
+
+
+google_play
+
+
+y
+
+
+3.0
+
+
+1.0
+
+group !books
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+annas archive
+
+
+!aa
+
+
+annas_archive
+
+
+y
+
+
+5
+
+
+1.0
+
+
+y
+
+
+y
+
+without further subgrouping
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+1337x
+
+
+!1337x
+
+
+1337x
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+bt4g
+
+
+!bt4g
+
+
+bt4g
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+btdigg
+
+
+!bt
+
+
+btdigg
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+findfiles
+
+
+!fif
+
+
+findfiles
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+kickass
+
+
+!kc
+
+
+kickass
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+library genesis
+
+
+!lg
+
+
+xpath
+
+
+y
+
+
+7.0
+
+
+1.0
+
+
+nyaa
+
+
+!nt
+
+
+nyaa
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+openrepos
+
+
+!or
+
+
+xpath
+
+
+y
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+piratebay
+
+
+!tpb
+
+
+piratebay
+
+
+3.0
+
+
+1.0
+
+
+solidtorrents
+
+
+!solid
+
+
+solidtorrents
+
+
+4.0
+
+
+1.0
+
+
+y
+
+
+tokyotoshokan
+
+
+!tt
+
+
+tokyotoshokan
+
+
+y
+
+
+6.0
+
+
+1.0
+
+
+y
+
+
+wikicommons.files
+
+
+!wcf
+
+
+wikicommons
+
+
+3.0
+
+
+1.0
+
+
+y
+
+tab !social_media
+
+Engines configured by default (in settings.yml)
+
+
+Supported features
+
+Name
+
+
+!bang
+
+
+Module
+
+
+Disabled
+
+
+Timeout
+
+
+Weight
+
+
+Paging
+
+
+Locale
+
+
+Safe search
+
+
+Time range
+
+9gag
+
+
+!9g
+
+
+9gag
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+boardreader
+
+
+!boa
+
+
+boardreader
+
+
+y
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+y
+
+
+y
+
+lemmy comments
+
+
+!lecom
+
+
+lemmy
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+lemmy communities
+
+
+!leco
+
+
+lemmy
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+lemmy posts
+
+
+!lepo
+
+
+lemmy
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+lemmy users
+
+
+!leus
+
+
+lemmy
+
+
+3.0
+
+
+1.0
+
+
+y
+
+
+mastodon hashtags
+
+
+!mah
+
+
+mastodon
+
+
+3.0
+
+
+1.0
+
+
+mastodon users
+
+
+!mau
+
+
+mastodon
+
+
+3.0
+
+
+1.0
+
+
+tootfinder
+
+
+!toot
+
+
+tootfinder
+
+
+3.0
+
+
+1.0
+
++++
+
+Development Quickstart
+
+further read
+
+    Makefile & ./manage
+
+    Buildhosts
+
+SearXNG loves developers; Developers do not need to worry about tool chains, the usual developer tasks can be comfortably executed via make.
+
+Don’t hesitate, just clone SearXNG’s sources and start hacking right now ..
+
+git clone https://github.com/searxng/searxng.git searxng
+
+For the developer environment, mise en place is recommended:
+
+$ curl https://mise.run | sh
+
+The tools required for a developer environment are provided via mise.toml, trust the project:
+
+$ mise trust
+
+Here is how a minimal workflow looks like:
+
+    start hacking
+
+    run your code: make run
+
+    format & test your code: make format and make test
+
+If you think at some point something fails, go back to start. Otherwise, choose a meaningful commit message and we are happy to receive your pull request. To not end in wild west we have some directives, please pay attention to our “How to contribute” guideline.
+
+If you want to debug with the good old Python Debugger pdb: Alternatively to make run (2.) which starts a Granian server you can jump into the developer environment and start a python based HTTP server by:
+
+$ ./manage dev.env
+...
+(dev.env)$ SEARXNG_DEBUG=1 searxng-run
+
+Since this is a pure Python solution, you can set breakpoints in your code with pdb.set_trace() and the debugger will wait for you in the terminal prompt.
+
+Any other script or command line provided by SearXNG can also be used in the same environment, here are a few examples:
+
+# tools related to favicons
+(dev.env)$ python -m searx.favicons
+
+# tools related to DATA stored in searx/data
+(dev.env)$ python -m searx.data --help
+
+# tools related to engines
+(dev.env)$ python -m searx.enginelib --help
+
+# to test one of the update scripts
+(dev.env)$ searxng_extra/update/update_engine_traits.py --help
+
+# to test the update of the wikidata units
+(dev.env)$ searxng_extra/update/update_wikidata_units.py
+
+further read
+
+    NVM make nvm.install nvm.status
+
+    make themes.*
+
+If you implement themes, you will need to setup a Node.js environment. Before you call make run (2.), you need to compile the modified styles and JavaScript: make node.clean themes.all. If Biome or Stylelint reports issues, try make themes.fix.
+
+Alternatively you can also compile selective the theme you have modified, e.g. the simple theme.
+
+make themes.simple
+
+Tip
+
+To get live builds while modifying CSS & JS use: LIVE_THEME=simple make run
+
+further read
+
+    make static.build.*
+
+If you finished your tests you can start to commit your changes. To separate the modified source code from the build products first run:
+
+make static.build.restore
+
+This will restore the old build products and only your changes of the code remain in the working tree which can now be added & committed. When all sources are committed, you can commit the build products simply by:
+
+make static.build.commit
+
+Committing the build products should be the last step, just before you send us your PR. There is also a make target to rewind this last build commit:
+
+make static.build.drop
+
++++
+
+Extended Types
+
+This module implements the type extensions applied by SearXNG.
+
+    flask.request is replaced by sxng_request
+
+    flask.Request is replaced by SXNG_Request
+
+    httpx.response is replaced by SXNG_Response
+
+searx.extended_types.sxng_request: SXNG_Request
+
+    A replacement for flask.request with type cast SXNG_Request.
+
+class searx.extended_types.SXNG_Request(environ: WSGIEnvironment, populate_request: bool = True, shallow: bool = False)[source]
+
+    SearXNG extends the class flask.Request with properties from this class definition, see type cast sxng_request.
+
+    user_plugins: list[str]
+
+        list of searx.plugins.Plugin.id (the id of the plugins)
+
+    preferences: searx.preferences.Preferences
+
+        The preferences of the request.
+
+    errors: list[str]
+
+        A list of errors (translated text) added by searx.webapp in case of errors.
+
+    start_time: float
+
+        Start time of the request, timeit.default_timer added by searx.webapp to calculate the total time of the request.
+
+    render_time: float
+
+        Duration of the rendering, calculated and added by searx.webapp.
+
+    timings: list[searx.results.Timing]
+
+        A list of searx.results.Timing of the engines, calculatid in and hold by searx.results.ResultContainer.timings.
+
+    remote_addr: str
+
+        The address of the client sending the request.
+
+class searx.extended_types.SXNG_Response(status_code: int, *, headers: Headers | Mapping[str, str] | Mapping[bytes, bytes] | Sequence[Tuple[str, str]] | Sequence[Tuple[bytes, bytes]] | None = None, content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None, text: str | None = None, html: str | None = None, json: Any = None, stream: SyncByteStream | AsyncByteStream | None = None, request: Request | None = None, extensions: Mapping[str, Any] | None = None, history: list[Response] | None = None, default_encoding: str | Callable[[bytes], str] = 'utf-8')[source]
+
+    SearXNG extends the class httpx.Response with properties from this class (type cast of httpx.Response).
+
+    response = httpx.get("https://example.org")
+    response = typing.cast(SXNG_Response, response)
+    if response.ok:
+       ...
+    query_was = search_params["query"]
+
++++
+
+Engine Implementations
+
+Framework Components
+
+    Engine Library
+        EngineCache
+        Engine
+        EngineAbout
+        ENGINES_CACHE
+        Engine traits
+    SearXNG’s engines loader
+        ENGINE_DEFAULT_ARGS
+        engines
+        engine_shortcuts
+        load_engine()
+        is_missing_required_attributes()
+        using_tor_proxy()
+        load_engines()
+    Engine Overview
+        General Engine Configuration
+        Making a Request
+        Making a Response
+
+ResultList and engines
+
+class searx.result_types.ResultList[source]
+
+    Base class of all result lists (abstract).
+
+class searx.result_types.EngineResults[source]
+
+    Result list that should be used by engine developers. For convenience, engine developers don’t need to import types / see ResultList.types.
+
+    from searx.result_types import EngineResults
+    ...
+    def response(resp) -> EngineResults:
+        res = EngineResults()
+        ...
+        res.add( res.types.Answer(answer="lorem ipsum ..", url="https://example.org") )
+        ...
+        return res
+
+Engine Types
+
+The engine_type of an engine determines which search processor is used by the engine.
+
+In this section a list of the engines that are documented is given, a complete list of the engines can be found in the source under: git://searx/engines.
+Online Engines
+
+info
+
+    processors.online
+
+    Demo Online Engine
+    XPath Engine
+    MediaWiki Engine
+    JSON Engine
+
+    500px
+    Adobe Stock
+    Alpine Linux Packages
+    Anna’s Archive
+    Arch Linux
+    arXiv
+    Astrophysics Data System (ADS)
+    Azure Resources
+    Bing Engines
+    Bpb
+    Brave Engines
+    BT4G
+    Cara Images
+    ChinaSo
+    CORE
+    Crossref
+    Dailymotion
+    Discourse Forums
+    DuckDuckGo Engines
+    Exa API Engine
+    Geizhals
+    Gitea
+    Github Code
+    GitLab
+    Google Engines
+    Hugging Face
+    Jina Engine
+    Kagi Engines
+    Lemmy
+    Library of Congress
+    Marginalia Search
+    Mastodon
+    Moviepilot
+    Matrix Rooms Search (MRS)
+    Mwmbl Engine
+    Odysee
+    OpenAlex
+    Open Library
+    Peertube Engines
+    Piped
+    PubMed
+    Qwant
+    RadioBrowser
+    Recoll Engine
+    Repology
+    Reuters
+    Semantic Scholar
+    Soundcloud
+    Sourcehut
+    Springer Nature
+    Startpage Engines
+    Tagesschau API
+    Torznab WebAPI
+    Tube Archivist
+    Void Linux binary packages
+    Wallhaven
+    Wikimedia
+    Yacy
+    Yahoo Engine
+    Yandex Search API
+    Z-Library
+
+Offline Engines
+
+info
+
+    processors.offline
+
+    Offline Concept
+    Demo Offline Engine
+    Command Line Engines
+    NoSQL databases
+    Local Search APIs
+    SQL Engines
+
+Online URL Search
+
+info
+
+    processors.online_url_search
+
+    Tineye
+
+Online Currency
+
+info
+
+    processors.online_currency
+
+no engine of this type is documented yet / coming soon
+Online Dictionary
+
+info
+
+    processors.online_dictionary
+
+no engine of this type is documented yet / coming soon
+
++++
+
+Engine Library
+
+Implementations of the framework for the SearXNG engines.
+
+    searx.enginelib.EngineCache
+
+    searx.enginelib.Engine
+
+    searx.enginelib.EngineAbout
+
+    searx.enginelib.traits
+
+There is a command line for developer purposes and for deeper analysis. Here is an example in which the command line is called in the development environment:
+
+$ ./manage dev.env
+(dev.env)$ python -m searx.enginelib --help
+
+Hint
+
+The long term goal is to modularize all implementations of the engine framework here in this Python package. ToDo:
+
+    move implementations of the SearXNG’s engines loader to a new module in the searx.enginelib namespace.
+
+class searx.enginelib.EngineCache(engine_name: str, expire: int | None = None)[source]
+
+    Persistent (SQLite) key/value cache that deletes its values again after expire seconds (default/max: MAXHOLD_TIME). This class is a wrapper around ENGINES_CACHE (ExpireCacheSQLite).
+
+    In the git://searx/engines/demo_offline.py engine you can find an exemplary implementation of such a cache other examples are implemented in:
+
+        git://searx/engines/radio_browser.py
+
+        git://searx/engines/soundcloud.py
+
+        git://searx/engines/startpage.py
+
+    For introspection of the DB, jump into developer environment and run command to show cache state:
+
+    $ ./manage dev.env
+    (dev.env)$ python -m searx.enginelib cache state
+
+    cache tables and key/values
+    ===========================
+    [demo_offline        ] 2025-04-22 11:32:50 count        --> (int) 4
+    [startpage           ] 2025-04-22 12:32:30 SC_CODE      --> (str) fSOBnhEMlDfE20
+    [duckduckgo          ] 2025-04-22 12:32:31 4dff493e.... --> (str) 4-128634958369380006627592672385352473325
+    [duckduckgo          ] 2025-04-22 12:40:06 3e2583e2.... --> (str) 4-263126175288871260472289814259666848451
+    [radio_browser       ] 2025-04-23 11:33:08 servers      --> (list) ['https://de2.api.radio-browser.info',  ...]
+    [soundcloud          ] 2025-04-29 11:40:06 guest_client_id --> (str) EjkRJG0BLNEZquRiPZYdNtJdyGtTuHdp
+    [wolframalpha        ] 2025-04-22 12:40:06 code         --> (str) 5aa79f86205ad26188e0e26e28fb7ae7
+    number of tables: 6
+    number of key/value pairs: 7
+
+    In the “cache tables and key/values” section, the table name (engine name) is at first position on the second there is the calculated expire date and on the third and fourth position the key/value is shown.
+
+    About duckduckgo: The vqd coode of ddg depends on the query term and therefore the key is a hash value of the query term (to not to store the raw query term).
+
+    In the “properties of ENGINES_CACHE” section all properties of the SQLiteAppl / ExpireCache and their last modification date are shown:
+
+    properties of ENGINES_CACHE
+    ===========================
+    [last modified: 2025-04-22 11:32:27] DB_SCHEMA           : 1
+    [last modified: 2025-04-22 11:32:27] LAST_MAINTENANCE    :
+    [last modified: 2025-04-22 11:32:27] crypt_hash          : ca612e3566fdfd7cf7efe...
+    [last modified: 2025-04-22 11:32:30] CACHE-TABLE--demo_offline: demo_offline
+    [last modified: 2025-04-22 11:32:30] CACHE-TABLE--startpage: startpage
+    [last modified: 2025-04-22 11:32:31] CACHE-TABLE--duckduckgo: duckduckgo
+    [last modified: 2025-04-22 11:33:08] CACHE-TABLE--radio_browser: radio_browser
+    [last modified: 2025-04-22 11:40:06] CACHE-TABLE--soundcloud: soundcloud
+    [last modified: 2025-04-22 11:40:06] CACHE-TABLE--wolframalpha: wolframalpha
+
+    These properties provide information about the state of the ExpireCache and control the behavior. For example, the maintenance intervals are controlled by the last modification date of the LAST_MAINTENANCE property and the hash value of the password can be used to detect whether the password has been changed (in this case the DB entries can no longer be decrypted and the entire cache must be discarded).
+
+class searx.enginelib.Engine[source]
+
+    Class of engine instances build from YAML settings.
+
+    Further documentation see General Engine Configuration.
+
+    The defaults are taken from searx.engines.ENGINE_DEFAULT_ARGS.
+
+    Hint
+
+    This class is currently never initialized and only used for type hinting.
+
+    engine_type: ProcessorType = 'online'
+
+        Type of the engine (Search processors)
+
+    paging: bool = False
+
+        Engine supports multiple pages.
+
+    max_page: int = 0
+
+        If the engine supports paging, then this is the value for the last page that is still supported. 0 means unlimited numbers of pages.
+
+    time_range_support: bool = False
+
+        Engine supports search time range.
+
+    safesearch: bool = False
+
+        Engine supports SafeSearch
+
+    language_support: bool = False
+
+        Engine supports languages (locales) search.
+
+    fetch_traits: Callable[[EngineTraits, bool], None]
+
+        Function to to fetch engine’s traits from origin.
+
+    traits: traits.EngineTraits
+
+        Traits of the engine.
+
+    name: str
+
+        Name that will be used across SearXNG to define this engine. In settings, on the result page ..
+
+    engine: str
+
+        Name of the python file used to handle requests and responses to and from this search engine (file name from git://searx/engines without .py).
+
+    categories: list[str] = ['general']
+
+        Specifies to which categories the engine should be added.
+
+    language: str = ''
+
+        If the engine supports only one language, this language is specified here (en, de, "no" or ..); otherwise, the value remains empty. For the YAML configuration: think of the YAML-Norway problem
+
+        - name: google norway
+          engine: google
+          language: "no"
+
+        Depending on language_support, this value has similar but also slightly different meanings.
+
+            When language_support is true, the map of traits.EngineTraits.languages is reduced to the selected language
+
+            When language_support is false, then the implementation of the engine only supports this one language
+
+    region: str = ''
+
+        For an engine, when there is region: ... in the YAML settings the engine does support only this one region:
+
+        .. code:: yaml
+
+                name: google belgium engine: google region: fr-BE
+
+    enable_http: bool
+
+        Enable HTTP (by default only HTTPS is enabled).
+
+    shortcut: str
+
+        Code used to execute bang requests (!foo)
+
+    timeout: float
+
+        Specific timeout for search-engine.
+
+    display_error_messages: bool
+
+        Display error messages on the web UI.
+
+    disabled: bool = False
+
+        To disable by default the engine, but not deleting it. It will allow the user to manually activate it in the settings.
+
+    inactive: bool = False
+
+        Remove the engine from the settings (disabled & removed).
+
+    about: EngineAbout = EngineAbout(website='', wikidata_id='', official_api_documentation='', use_official_api=False, require_api_key=False, results='', description='', language='')
+
+        Additional fields describing the engine.
+
+    using_tor_proxy: bool = False
+
+        Using tor proxy (true) or not (false) for this engine.
+
+    send_accept_language_header: bool = True
+
+        When this option is activated (default), the language (locale) that is selected by the user is used to build and send a Accept-Language header in the request to the origin search engine.
+
+    tokens: list[str] = []
+
+        A list of secret tokens to make this engine private, more details see Private Engines (tokens).
+
+    weight: float = 1.0
+
+        Weighting of the results of this engine (weight).
+
+    proxies: dict[str, dict[str, str]]
+
+        Set proxies for a specific engine (YAML):
+
+        proxies :
+          http:  socks5://proxy:port
+          https: socks5://proxy:port
+
+    setup(engine_settings: dict[str, Any]) → bool | None[source]
+
+        Dynamic setup of the engine settings.
+
+        With this method, the engine’s setup is carried out. For example, to check or dynamically adapt the values handed over in the parameter engine_settings.
+
+        Whether the initialization was successful can be indicated by the return value True or even False.
+
+            If no return value (None ) is given from this method , this is equivalent to True.
+
+            If an exception is thrown as part of the initialization, this is equivalent to False.
+
+        The method is optional and is called synchronously as part of the initialization of the service and is therefore only suitable for simple (local) exams/changes at the engine setting.
+
+        The Engine.init method must be used for longer tasks in which values of a remote must be determined, for example.
+
+    init(engine_settings: dict[str, Any]) → bool | None[source]
+
+        Initialization of the engine.
+
+        The method is optional and called asynchronous (in a thread). The method is comparable to Engine.setup, it is suitable, for caching data that first needs to be requested from a remote.
+
+        The method is optional and runs asynchronously (in a thread), it is comparable to Engine.setup. For instance, it is suitable for caching data that first needs to be requested from a remote source.
+
+        The evaluation of the return value is analogous to Engine.setup.
+
+    abstractmethod search(query: str, params: OfflineParamTypes) → EngineResults[source]
+
+        Search method of the offline engines
+
+    abstractmethod request(query: str, params: OnlineParamTypes) → None[source]
+
+        Method to build the parameters for the request of an online engine.
+
+    abstractmethod response(resp: SXNG_Response) → EngineResults[source]
+
+        Method to parse the response of an online engine.
+
+class searx.enginelib.EngineAbout(*, website: str = '', wikidata_id: str = '', official_api_documentation: str = '', use_official_api: bool = False, require_api_key: bool = False, results: str = '', description: str = '', language: str = '')[source]
+
+    Additional fields describing the engine.
+
+    about:
+       website: https://example.com
+       wikidata_id: Q306656
+       official_api_documentation: https://example.com/api-doc
+       use_official_api: true
+       require_api_key: true
+       results: HTML
+
+    website: str
+
+        Official web-site of the origin.
+
+    wikidata_id: str
+
+        Wikidata ID
+
+    official_api_documentation: str
+
+        URL of the official API (regardless of whether it is used)
+
+    use_official_api: bool
+
+        SearXNG engine makes use of the official API or not
+
+    require_api_key: bool
+
+        API requires a key or not.
+
+    results: str
+
+        Data format of the source (online-engines: of the response).
+
+    description: str
+
+        Brief description of the engine and where it gets its data from.
+
+        This value should only be set as long as no description of the data source is available via a EngineAbout.wikidata_id.
+
+    language: str
+
+        Deprecated! Migrate your setting from engine.about.language to engine.language
+
+searx.enginelib.ENGINES_CACHE: ExpireCacheSQLite = <searx.cache.ExpireCacheSQLite object>
+
+    Global searx.cache.ExpireCacheSQLite instance where the cached values from all engines are stored. The MAXHOLD_TIME is 7 days and the MAINTENANCE_PERIOD is set to two hours.
+
+Engine traits
+
+Engine’s traits are fetched from the origin engines and stored in a JSON file in the data folder. Most often traits are languages and region codes and their mapping from SearXNG’s representation to the representation in the origin search engine. For new traits new properties can be added to the class EngineTraits.
+
+To load traits from the persistence EngineTraitsMap.from_data can be used.
+
+class searx.enginelib.traits.EngineTraitsEncoder(*, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, sort_keys=False, indent=None, separators=None, default=None)[source]
+
+    Encodes EngineTraits to a serializable object, see json.JSONEncoder.
+
+    default(o: Any) → Any[source]
+
+        Return dictionary of a EngineTraits object.
+
+class searx.enginelib.traits.EngineTraits(regions: dict[str, str]=<factory>, languages: dict[str, str]=<factory>, all_locale: str | None = None, data_type: Literal['traits_v1'] = 'traits_v1', custom: dict[str, ~typing.Any]=<factory>)[source]
+
+    The class is intended to be instantiated for each engine.
+
+    regions: dict[str, str]
+
+        Maps SearXNG’s internal representation of a region to the one of the engine.
+
+        SearXNG’s internal representation can be parsed by babel and the value is send to the engine:
+
+        regions ={
+            'fr-BE' : <engine's region name>,
+        }
+
+        for key, egnine_region regions.items():
+           searxng_region = babel.Locale.parse(key, sep='-')
+           ...
+
+    languages: dict[str, str]
+
+        Maps SearXNG’s internal representation of a language to the one of the engine.
+
+        SearXNG’s internal representation can be parsed by babel and the value is send to the engine:
+
+        languages = {
+            'ca' : <engine's language name>,
+        }
+
+        for key, egnine_lang in languages.items():
+           searxng_lang = babel.Locale.parse(key)
+           ...
+
+    all_locale: str | None = None
+
+        To which locale value SearXNG’s all language is mapped (shown a “Default language”).
+
+    data_type: Literal['traits_v1'] = 'traits_v1'
+
+        Data type, default is ‘traits_v1’.
+
+    custom: dict[str, Any]
+
+        A place to store engine’s custom traits, not related to the SearXNG core.
+
+    get_language(searxng_locale: str, default: str | None = None) → str | None[source]
+
+        Return engine’s language string that best fits to SearXNG’s locale.
+
+        Parameters:
+
+                searxng_locale – SearXNG’s internal representation of locale selected by the user.
+
+                default – engine’s default language
+
+        The best fits rules are implemented in searx.locales.get_engine_locale. Except for the special value all which is determined from EngineTraits.all_locale.
+
+    get_region(searxng_locale: str, default: str | None = None) → str | None[source]
+
+        Return engine’s region string that best fits to SearXNG’s locale.
+
+        Parameters:
+
+                searxng_locale – SearXNG’s internal representation of locale selected by the user.
+
+                default – engine’s default region
+
+        The best fits rules are implemented in searx.locales.get_engine_locale. Except for the special value all which is determined from EngineTraits.all_locale.
+
+    copy()[source]
+
+        Create a copy of the dataclass object.
+
+    classmethod fetch_traits(engine: Engine | types.ModuleType) → EngineTraits | None[source]
+
+        Call a function fetch_traits(engine_traits) from engines namespace to fetch and set properties from the origin engine in the object engine_traits. If function does not exists, None is returned.
+
+    set_traits(engine: Engine | types.ModuleType) → None[source]
+
+        Set traits from self object in a Engine namespace.
+
+        Parameters:
+
+            engine – engine instance build by searx.engines.load_engine()
+
+class searx.enginelib.traits.EngineTraitsMap[source]
+
+    A python dictionary to map EngineTraits by engine name.
+
+    ENGINE_TRAITS_FILE: Path = PosixPath('/home/runner/work/searxng/searxng/searx/data/engine_traits.json')
+
+        File with persistence of the EngineTraitsMap.
+
+    save_data()[source]
+
+        Store EngineTraitsMap in in file self.ENGINE_TRAITS_FILE
+
+    classmethod from_data() → EngineTraitsMap[source]
+
+        Instantiate EngineTraitsMap object from ENGINE_TRAITS
+
+    set_traits(engine: Engine | types.ModuleType)[source]
+
+        Set traits in a Engine namespace.
+
+        Parameters:
+
+            engine – engine instance build by searx.engines.load_engine()
+
++++
+
+SearXNG’s engines loader
+
+Load and initialize the engines, see load_engines() and register engine_shortcuts.
+
+usage:
+
+load_engines( settings['engines'] )
+
+searx.engines.ENGINE_DEFAULT_ARGS: dict[str, Any] = {'about': EngineAbout(website='', wikidata_id='', official_api_documentation='', use_official_api=False, require_api_key=False, results='', description='', language=''), 'categories': ['general'], 'disabled': False, 'display_error_messages': True, 'enable_http': False, 'engine_type': 'online', 'inactive': False, 'language': '', 'language_support': False, 'max_page': 0, 'paging': False, 'region': '', 'safesearch': False, 'send_accept_language_header': True, 'shortcut': '-', 'time_range_support': False, 'timeout': 3.0, 'tokens': [], 'using_tor_proxy': False, 'weight': 1.0}
+
+    Default values that are set in an engine of type module, please compare with the class searx.enginelib.Engine.
+
+searx.engines.engines: dict[str, Engine | ModuleType] = {'1337x': <module '1337x' from '/home/runner/work/searxng/searxng/searx/engines/1337x.py'>, '1x': <module 'www1x' from '/home/runner/work/searxng/searxng/searx/engines/www1x.py'>, '360search': <module '360search' from '/home/runner/work/searxng/searxng/searx/engines/360search.py'>, '360search videos': <module '360search_videos' from '/home/runner/work/searxng/searxng/searx/engines/360search_videos.py'>, '500px': <module '500px' from '/home/runner/work/searxng/searxng/searx/engines/500px.py'>, '9gag': <module '9gag' from '/home/runner/work/searxng/searxng/searx/engines/9gag.py'>, 'abcnyheter': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'acfun': <module 'acfun' from '/home/runner/work/searxng/searxng/searx/engines/acfun.py'>, 'adobe stock': <module 'adobe_stock' from '/home/runner/work/searxng/searxng/searx/engines/adobe_stock.py'>, 'adobe stock audio': <module 'adobe_stock' from '/home/runner/work/searxng/searxng/searx/engines/adobe_stock.py'>, 'adobe stock video': <module 'adobe_stock' from '/home/runner/work/searxng/searxng/searx/engines/adobe_stock.py'>, 'alpine linux packages': <module 'alpinelinux' from '/home/runner/work/searxng/searxng/searx/engines/alpinelinux.py'>, 'anaconda': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'annas archive': <module 'annas_archive' from '/home/runner/work/searxng/searxng/searx/engines/annas_archive.py'>, 'ansa': <module 'ansa' from '/home/runner/work/searxng/searxng/searx/engines/ansa.py'>, 'apk mirror': <module 'apkmirror' from '/home/runner/work/searxng/searxng/searx/engines/apkmirror.py'>, 'apple app store': <module 'apple_app_store' from '/home/runner/work/searxng/searxng/searx/engines/apple_app_store.py'>, 'apple maps': <module 'apple_maps' from '/home/runner/work/searxng/searxng/searx/engines/apple_maps.py'>, 'arch linux wiki': <module 'archlinux' from '/home/runner/work/searxng/searxng/searx/engines/archlinux.py'>, 'artic': <module 'artic' from '/home/runner/work/searxng/searxng/searx/engines/artic.py'>, 'artstation': <module 'artstation' from '/home/runner/work/searxng/searxng/searx/engines/artstation.py'>, 'arxiv': <module 'arxiv' from '/home/runner/work/searxng/searxng/searx/engines/arxiv.py'>, 'askubuntu': <module 'stackexchange' from '/home/runner/work/searxng/searxng/searx/engines/stackexchange.py'>, 'ayo': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'baidu': <module 'baidu' from '/home/runner/work/searxng/searxng/searx/engines/baidu.py'>, 'baidu images': <module 'baidu' from '/home/runner/work/searxng/searxng/searx/engines/baidu.py'>, 'baidu kaifa': <module 'baidu' from '/home/runner/work/searxng/searxng/searx/engines/baidu.py'>, 'bandcamp': <module 'bandcamp' from '/home/runner/work/searxng/searxng/searx/engines/bandcamp.py'>, 'bilibili': <module 'bilibili' from '/home/runner/work/searxng/searxng/searx/engines/bilibili.py'>, 'bing': <module 'bing' from '/home/runner/work/searxng/searxng/searx/engines/bing.py'>, 'bing images': <module 'bing_images' from '/home/runner/work/searxng/searxng/searx/engines/bing_images.py'>, 'bing news': <module 'bing_news' from '/home/runner/work/searxng/searxng/searx/engines/bing_news.py'>, 'bing videos': <module 'bing_videos' from '/home/runner/work/searxng/searxng/searx/engines/bing_videos.py'>, 'bitbucket': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'bitchute': <module 'bitchute' from '/home/runner/work/searxng/searxng/searx/engines/bitchute.py'>, 'boardreader': <module 'boardreader' from '/home/runner/work/searxng/searxng/searx/engines/boardreader.py'>, 'bpb': <module 'bpb' from '/home/runner/work/searxng/searxng/searx/engines/bpb.py'>, 'brave': <module 'brave' from '/home/runner/work/searxng/searxng/searx/engines/brave.py'>, 'brave.images': <module 'brave' from '/home/runner/work/searxng/searxng/searx/engines/brave.py'>, 'brave.news': <module 'brave' from '/home/runner/work/searxng/searxng/searx/engines/brave.py'>, 'brave.videos': <module 'brave' from '/home/runner/work/searxng/searxng/searx/engines/brave.py'>, 'bt4g': <module 'bt4g' from '/home/runner/work/searxng/searxng/searx/engines/bt4g.py'>, 'btdigg': <module 'btdigg' from '/home/runner/work/searxng/searxng/searx/engines/btdigg.py'>, 'cachy os packages': <module 'cachy_os' from '/home/runner/work/searxng/searxng/searx/engines/cachy_os.py'>, 'caddy.community': <module 'discourse' from '/home/runner/work/searxng/searxng/searx/engines/discourse.py'>, 'cara': <module 'cara' from '/home/runner/work/searxng/searxng/searx/engines/cara.py'>, 'chefkoch': <module 'chefkoch' from '/home/runner/work/searxng/searxng/searx/engines/chefkoch.py'>, 'codeberg': <module 'gitea' from '/home/runner/work/searxng/searxng/searx/engines/gitea.py'>, 'crates.io': <module 'crates' from '/home/runner/work/searxng/searxng/searx/engines/crates.py'>, 'crossref': <module 'crossref' from '/home/runner/work/searxng/searxng/searx/engines/crossref.py'>, 'crowdview': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'currency': <module 'currency_convert' from '/home/runner/work/searxng/searxng/searx/engines/currency_convert.py'>, 'dailymotion': <module 'dailymotion' from '/home/runner/work/searxng/searxng/searx/engines/dailymotion.py'>, 'ddg definitions': <module 'duckduckgo_definitions' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo_definitions.py'>, 'deezer': <module 'deezer' from '/home/runner/work/searxng/searxng/searx/engines/deezer.py'>, 'destatis': <module 'destatis' from '/home/runner/work/searxng/searxng/searx/engines/destatis.py'>, 'deviantart': <module 'deviantart' from '/home/runner/work/searxng/searxng/searx/engines/deviantart.py'>, 'devicons': <module 'devicons' from '/home/runner/work/searxng/searxng/searx/engines/devicons.py'>, 'dictzone': <module 'dictzone' from '/home/runner/work/searxng/searxng/searx/engines/dictzone.py'>, 'discuss.python': <module 'discourse' from '/home/runner/work/searxng/searxng/searx/engines/discourse.py'>, 'docker hub': <module 'docker_hub' from '/home/runner/work/searxng/searxng/searx/engines/docker_hub.py'>, 'duckduckgo': <module 'duckduckgo' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo.py'>, 'duckduckgo images': <module 'duckduckgo_extra' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo_extra.py'>, 'duckduckgo news': <module 'duckduckgo_extra' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo_extra.py'>, 'duckduckgo videos': <module 'duckduckgo_extra' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo_extra.py'>, 'duckduckgo weather': <module 'duckduckgo_weather' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo_weather.py'>, 'duckduckgo web': <module 'duckduckgo_web' from '/home/runner/work/searxng/searxng/searx/engines/duckduckgo_web.py'>, 'duden': <module 'duden' from '/home/runner/work/searxng/searxng/searx/engines/duden.py'>, 'emojipedia': <module 'emojipedia' from '/home/runner/work/searxng/searxng/searx/engines/emojipedia.py'>, 'encyclosearch': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'erowid': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'etymonline': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'fastbot': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'fdroid': <module 'fdroid' from '/home/runner/work/searxng/searxng/searx/engines/fdroid.py'>, 'findfiles': <module 'findfiles' from '/home/runner/work/searxng/searxng/searx/engines/findfiles.py'>, 'findfiles images': <module 'findfiles' from '/home/runner/work/searxng/searxng/searx/engines/findfiles.py'>, 'findfiles music': <module 'findfiles' from '/home/runner/work/searxng/searxng/searx/engines/findfiles.py'>, 'findfiles videos': <module 'findfiles' from '/home/runner/work/searxng/searxng/searx/engines/findfiles.py'>, 'findthatmeme': <module 'findthatmeme' from '/home/runner/work/searxng/searxng/searx/engines/findthatmeme.py'>, 'fireball': <module 'fireball' from '/home/runner/work/searxng/searxng/searx/engines/fireball.py'>, 'fireball news': <module 'fireball' from '/home/runner/work/searxng/searxng/searx/engines/fireball.py'>, 'fireball videos': <module 'fireball' from '/home/runner/work/searxng/searxng/searx/engines/fireball.py'>, 'flaticon': <module 'flaticon' from '/home/runner/work/searxng/searxng/searx/engines/flaticon.py'>, 'flickr': <module 'flickr_noapi' from '/home/runner/work/searxng/searxng/searx/engines/flickr_noapi.py'>, 'free software directory': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'frinkiac': <module 'frinkiac' from '/home/runner/work/searxng/searxng/searx/engines/frinkiac.py'>, 'fynd': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'fyyd': <module 'fyyd' from '/home/runner/work/searxng/searxng/searx/engines/fyyd.py'>, 'gabanza': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'geizhals': <module 'geizhals' from '/home/runner/work/searxng/searxng/searx/engines/geizhals.py'>, 'genius': <module 'genius' from '/home/runner/work/searxng/searxng/searx/engines/genius.py'>, 'gentoo': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'giphy': <module 'giphy' from '/home/runner/work/searxng/searxng/searx/engines/giphy.py'>, 'gitea.com': <module 'gitea' from '/home/runner/work/searxng/searxng/searx/engines/gitea.py'>, 'github': <module 'github' from '/home/runner/work/searxng/searxng/searx/engines/github.py'>, 'gitlab': <module 'gitlab' from '/home/runner/work/searxng/searxng/searx/engines/gitlab.py'>, 'gmx': <module 'gmx' from '/home/runner/work/searxng/searxng/searx/engines/gmx.py'>, 'goodreads': <module 'goodreads' from '/home/runner/work/searxng/searxng/searx/engines/goodreads.py'>, 'google cse': <module 'google_cse' from '/home/runner/work/searxng/searxng/searx/engines/google_cse.py'>, 'google cse images': <module 'google_cse' from '/home/runner/work/searxng/searxng/searx/engines/google_cse.py'>, 'google news': <module 'google_news' from '/home/runner/work/searxng/searxng/searx/engines/google_news.py'>, 'google play apps': <module 'google_play' from '/home/runner/work/searxng/searxng/searx/engines/google_play.py'>, 'google play movies': <module 'google_play' from '/home/runner/work/searxng/searxng/searx/engines/google_play.py'>, 'google scholar': <module 'google_scholar' from '/home/runner/work/searxng/searxng/searx/engines/google_scholar.py'>, 'habrahabr': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'hackernews': <module 'hackernews' from '/home/runner/work/searxng/searxng/searx/engines/hackernews.py'>, 'hex': <module 'hex' from '/home/runner/work/searxng/searxng/searx/engines/hex.py'>, 'hoogle': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'huggingface': <module 'huggingface' from '/home/runner/work/searxng/searxng/searx/engines/huggingface.py'>, 'huggingface datasets': <module 'huggingface' from '/home/runner/work/searxng/searxng/searx/engines/huggingface.py'>, 'huggingface spaces': <module 'huggingface' from '/home/runner/work/searxng/searxng/searx/engines/huggingface.py'>, 'il post': <module 'il_post' from '/home/runner/work/searxng/searxng/searx/engines/il_post.py'>, 'imdb': <module 'imdb' from '/home/runner/work/searxng/searxng/searx/engines/imdb.py'>, 'imgur': <module 'imgur' from '/home/runner/work/searxng/searxng/searx/engines/imgur.py'>, 'ina': <module 'ina' from '/home/runner/work/searxng/searxng/searx/engines/ina.py'>, 'infospace': <module 's1search' from '/home/runner/work/searxng/searxng/searx/engines/s1search.py'>, 'ipernity': <module 'ipernity' from '/home/runner/work/searxng/searxng/searx/engines/ipernity.py'>, 'iqiyi': <module 'iqiyi' from '/home/runner/work/searxng/searxng/searx/engines/iqiyi.py'>, 'jisho': <module 'jisho' from '/home/runner/work/searxng/searxng/searx/engines/jisho.py'>, 'kickass': <module 'kickass' from '/home/runner/work/searxng/searxng/searx/engines/kickass.py'>, 'lemmy comments': <module 'lemmy' from '/home/runner/work/searxng/searxng/searx/engines/lemmy.py'>, 'lemmy communities': <module 'lemmy' from '/home/runner/work/searxng/searxng/searx/engines/lemmy.py'>, 'lemmy posts': <module 'lemmy' from '/home/runner/work/searxng/searxng/searx/engines/lemmy.py'>, 'lemmy users': <module 'lemmy' from '/home/runner/work/searxng/searxng/searx/engines/lemmy.py'>, 'lib.rs': <module 'lib_rs' from '/home/runner/work/searxng/searxng/searx/engines/lib_rs.py'>, 'library genesis': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'library of congress': <module 'loc' from '/home/runner/work/searxng/searxng/searx/engines/loc.py'>, 'lingva': <module 'lingva' from '/home/runner/work/searxng/searxng/searx/engines/lingva.py'>, 'lobste.rs': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'lucide': <module 'lucide' from '/home/runner/work/searxng/searxng/searx/engines/lucide.py'>, 'magnific': <module 'magnific' from '/home/runner/work/searxng/searxng/searx/engines/magnific.py'>, 'mankier': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'mastodon hashtags': <module 'mastodon' from '/home/runner/work/searxng/searxng/searx/engines/mastodon.py'>, 'mastodon users': <module 'mastodon' from '/home/runner/work/searxng/searxng/searx/engines/mastodon.py'>, 'material icons': <module 'material_icons' from '/home/runner/work/searxng/searxng/searx/engines/material_icons.py'>, 'mdn': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'media.ccc.de': <module 'ccc_media' from '/home/runner/work/searxng/searxng/searx/engines/ccc_media.py'>, 'mediathekviewweb': <module 'mediathekviewweb' from '/home/runner/work/searxng/searxng/searx/engines/mediathekviewweb.py'>, 'metacpan': <module 'metacpan' from '/home/runner/work/searxng/searxng/searx/engines/metacpan.py'>, 'microsoft learn': <module 'microsoft_learn' from '/home/runner/work/searxng/searxng/searx/engines/microsoft_learn.py'>, 'minecraft wiki': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'mixcloud': <module 'mixcloud' from '/home/runner/work/searxng/searxng/searx/engines/mixcloud.py'>, 'mojeek': <module 'mojeek' from '/home/runner/work/searxng/searxng/searx/engines/mojeek.py'>, 'mojeek images': <module 'mojeek' from '/home/runner/work/searxng/searxng/searx/engines/mojeek.py'>, 'mojeek news': <module 'mojeek' from '/home/runner/work/searxng/searxng/searx/engines/mojeek.py'>, 'moviepilot': <module 'moviepilot' from '/home/runner/work/searxng/searxng/searx/engines/moviepilot.py'>, 'mozhi': <module 'mozhi' from '/home/runner/work/searxng/searxng/searx/engines/mozhi.py'>, 'mwmbl': <module 'mwmbl' from '/home/runner/work/searxng/searxng/searx/engines/mwmbl.py'>, 'mymemory translated': <module 'translated' from '/home/runner/work/searxng/searxng/searx/engines/translated.py'>, 'national vulnerability database': <module 'nvd' from '/home/runner/work/searxng/searxng/searx/engines/nvd.py'>, 'naver': <module 'naver' from '/home/runner/work/searxng/searxng/searx/engines/naver.py'>, 'naver images': <module 'naver' from '/home/runner/work/searxng/searxng/searx/engines/naver.py'>, 'naver news': <module 'naver' from '/home/runner/work/searxng/searxng/searx/engines/naver.py'>, 'naver videos': <module 'naver' from '/home/runner/work/searxng/searxng/searx/engines/naver.py'>, 'niconico': <module 'niconico' from '/home/runner/work/searxng/searxng/searx/engines/niconico.py'>, 'nixos wiki': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'npm': <module 'npm' from '/home/runner/work/searxng/searxng/searx/engines/npm.py'>, 'nyaa': <module 'nyaa' from '/home/runner/work/searxng/searxng/searx/engines/nyaa.py'>, 'odysee': <module 'odysee' from '/home/runner/work/searxng/searxng/searx/engines/odysee.py'>, 'ollama': <module 'ollama' from '/home/runner/work/searxng/searxng/searx/engines/ollama.py'>, 'openairedatasets': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'openairepublications': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'openalex': <module 'openalex' from '/home/runner/work/searxng/searxng/searx/engines/openalex.py'>, 'openlibrary': <module 'openlibrary' from '/home/runner/work/searxng/searxng/searx/engines/openlibrary.py'>, 'openmeteo': <module 'open_meteo' from '/home/runner/work/searxng/searxng/searx/engines/open_meteo.py'>, 'openrepos': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'openstreetmap': <module 'openstreetmap' from '/home/runner/work/searxng/searxng/searx/engines/openstreetmap.py'>, 'openverse': <module 'openverse' from '/home/runner/work/searxng/searxng/searx/engines/openverse.py'>, 'packagist': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'pdbe': <module 'pdbe' from '/home/runner/work/searxng/searxng/searx/engines/pdbe.py'>, 'peertube': <module 'peertube' from '/home/runner/work/searxng/searxng/searx/engines/peertube.py'>, 'pexels': <module 'pexels' from '/home/runner/work/searxng/searxng/searx/engines/pexels.py'>, 'photon': <module 'photon' from '/home/runner/work/searxng/searxng/searx/engines/photon.py'>, 'pi-hole.community': <module 'discourse' from '/home/runner/work/searxng/searxng/searx/engines/discourse.py'>, 'picjumbo': <module 'picjumbo' from '/home/runner/work/searxng/searxng/searx/engines/picjumbo.py'>, 'pinterest': <module 'pinterest' from '/home/runner/work/searxng/searxng/searx/engines/pinterest.py'>, 'piratebay': <module 'piratebay' from '/home/runner/work/searxng/searxng/searx/engines/piratebay.py'>, 'pixabay images': <module 'pixabay' from '/home/runner/work/searxng/searxng/searx/engines/pixabay.py'>, 'pixabay videos': <module 'pixabay' from '/home/runner/work/searxng/searxng/searx/engines/pixabay.py'>, 'pkg.go.dev': <module 'pkg_go_dev' from '/home/runner/work/searxng/searxng/searx/engines/pkg_go_dev.py'>, 'podchaser': <module 'podchaser' from '/home/runner/work/searxng/searxng/searx/engines/podchaser.py'>, 'privacywall': <module 'privacywall' from '/home/runner/work/searxng/searxng/searx/engines/privacywall.py'>, 'privacywall images': <module 'privacywall' from '/home/runner/work/searxng/searxng/searx/engines/privacywall.py'>, 'privacywall videos': <module 'privacywall' from '/home/runner/work/searxng/searxng/searx/engines/privacywall.py'>, 'pub.dev': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'public domain image archive': <module 'public_domain_image_archive' from '/home/runner/work/searxng/searxng/searx/engines/public_domain_image_archive.py'>, 'pubmed': <module 'pubmed' from '/home/runner/work/searxng/searxng/searx/engines/pubmed.py'>, 'pypi': <module 'pypi' from '/home/runner/work/searxng/searxng/searx/engines/pypi.py'>, 'quark': <module 'quark' from '/home/runner/work/searxng/searxng/searx/engines/quark.py'>, 'quark images': <module 'quark' from '/home/runner/work/searxng/searxng/searx/engines/quark.py'>, 'qwant': <module 'qwant' from '/home/runner/work/searxng/searxng/searx/engines/qwant.py'>, 'qwant images': <module 'qwant' from '/home/runner/work/searxng/searxng/searx/engines/qwant.py'>, 'qwant news': <module 'qwant' from '/home/runner/work/searxng/searxng/searx/engines/qwant.py'>, 'qwant videos': <module 'qwant' from '/home/runner/work/searxng/searxng/searx/engines/qwant.py'>, 'radio browser': <module 'radio_browser' from '/home/runner/work/searxng/searxng/searx/engines/radio_browser.py'>, 'reloado': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'resulthunter': <module 'resulthunter' from '/home/runner/work/searxng/searxng/searx/engines/resulthunter.py'>, 'resulthunter images': <module 'resulthunter' from '/home/runner/work/searxng/searxng/searx/engines/resulthunter.py'>, 'reuters': <module 'reuters' from '/home/runner/work/searxng/searxng/searx/engines/reuters.py'>, 'rottentomatoes': <module 'rottentomatoes' from '/home/runner/work/searxng/searxng/searx/engines/rottentomatoes.py'>, 'rubygems': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'rumble': <module 'rumble' from '/home/runner/work/searxng/searxng/searx/engines/rumble.py'>, 'searchch': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'searchmysite': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'searchtoday': <module 's1search' from '/home/runner/work/searxng/searxng/searx/engines/s1search.py'>, 'selfhst icons': <module 'selfhst' from '/home/runner/work/searxng/searxng/searx/engines/selfhst.py'>, 'semantic scholar': <module 'semantic_scholar' from '/home/runner/work/searxng/searxng/searx/engines/semantic_scholar.py'>, 'senscritique': <module 'senscritique' from '/home/runner/work/searxng/searxng/searx/engines/senscritique.py'>, 'sepiasearch': <module 'sepiasearch' from '/home/runner/work/searxng/searxng/searx/engines/sepiasearch.py'>, 'seznam': <module 'seznam' from '/home/runner/work/searxng/searxng/searx/engines/seznam.py'>, 'shopify stock': <module 'shopify_stock' from '/home/runner/work/searxng/searxng/searx/engines/shopify_stock.py'>, 'sogou': <module 'sogou' from '/home/runner/work/searxng/searxng/searx/engines/sogou.py'>, 'sogou images': <module 'sogou_images' from '/home/runner/work/searxng/searxng/searx/engines/sogou_images.py'>, 'sogou videos': <module 'sogou_videos' from '/home/runner/work/searxng/searxng/searx/engines/sogou_videos.py'>, 'sogou wechat': <module 'sogou_wechat' from '/home/runner/work/searxng/searxng/searx/engines/sogou_wechat.py'>, 'solidtorrents': <module 'solidtorrents' from '/home/runner/work/searxng/searxng/searx/engines/solidtorrents.py'>, 'soundcloud': <module 'soundcloud' from '/home/runner/work/searxng/searxng/searx/engines/soundcloud.py'>, 'sourcehut': <module 'sourcehut' from '/home/runner/work/searxng/searxng/searx/engines/sourcehut.py'>, 'stackoverflow': <module 'stackexchange' from '/home/runner/work/searxng/searxng/searx/engines/stackexchange.py'>, 'startpage': <module 'startpage' from '/home/runner/work/searxng/searxng/searx/engines/startpage.py'>, 'startpage images': <module 'startpage' from '/home/runner/work/searxng/searxng/searx/engines/startpage.py'>, 'startpage news': <module 'startpage' from '/home/runner/work/searxng/searxng/searx/engines/startpage.py'>, 'steam': <module 'steam' from '/home/runner/work/searxng/searxng/searx/engines/steam.py'>, 'stocksnap': <module 'stocksnap' from '/home/runner/work/searxng/searxng/searx/engines/stocksnap.py'>, 'superuser': <module 'stackexchange' from '/home/runner/work/searxng/searxng/searx/engines/stackexchange.py'>, 'tagesschau': <module 'tagesschau' from '/home/runner/work/searxng/searxng/searx/engines/tagesschau.py'>, 'tineye': <module 'tineye' from '/home/runner/work/searxng/searxng/searx/engines/tineye.py'>, 'tmdb': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'tokyotoshokan': <module 'tokyotoshokan' from '/home/runner/work/searxng/searxng/searx/engines/tokyotoshokan.py'>, 'tootfinder': <module 'tootfinder' from '/home/runner/work/searxng/searxng/searx/engines/tootfinder.py'>, 'tusksearch': <module 'tusksearch' from '/home/runner/work/searxng/searxng/searx/engines/tusksearch.py'>, 'tusksearch images': <module 'tusksearch' from '/home/runner/work/searxng/searxng/searx/engines/tusksearch.py'>, 'tusksearch news': <module 'tusksearch' from '/home/runner/work/searxng/searxng/searx/engines/tusksearch.py'>, 'tusksearch videos': <module 'tusksearch' from '/home/runner/work/searxng/searxng/searx/engines/tusksearch.py'>, 'unsplash': <module 'unsplash' from '/home/runner/work/searxng/searxng/searx/engines/unsplash.py'>, 'uxwing': <module 'uxwing' from '/home/runner/work/searxng/searxng/searx/engines/uxwing.py'>, 'vimeo': <module 'vimeo' from '/home/runner/work/searxng/searxng/searx/engines/vimeo.py'>, 'voidlinux': <module 'voidlinux' from '/home/runner/work/searxng/searxng/searx/engines/voidlinux.py'>, 'vuhuv': <module 'vuhuv' from '/home/runner/work/searxng/searxng/searx/engines/vuhuv.py'>, 'vuhuv images': <module 'vuhuv' from '/home/runner/work/searxng/searxng/searx/engines/vuhuv.py'>, 'vuhuv videos': <module 'vuhuv' from '/home/runner/work/searxng/searxng/searx/engines/vuhuv.py'>, 'wiby': <module 'json_engine' from '/home/runner/work/searxng/searxng/searx/engines/json_engine.py'>, 'wikibooks': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wikicommons.audio': <module 'wikicommons' from '/home/runner/work/searxng/searxng/searx/engines/wikicommons.py'>, 'wikicommons.files': <module 'wikicommons' from '/home/runner/work/searxng/searxng/searx/engines/wikicommons.py'>, 'wikicommons.images': <module 'wikicommons' from '/home/runner/work/searxng/searxng/searx/engines/wikicommons.py'>, 'wikicommons.videos': <module 'wikicommons' from '/home/runner/work/searxng/searxng/searx/engines/wikicommons.py'>, 'wikidata': <module 'wikidata' from '/home/runner/work/searxng/searxng/searx/engines/wikidata.py'>, 'wikimini': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'wikinews': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wikipedia': <module 'wikipedia' from '/home/runner/work/searxng/searxng/searx/engines/wikipedia.py'>, 'wikiquote': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wikisource': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wikispecies': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wikiversity': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wikivoyage': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wiktionary': <module 'mediawiki' from '/home/runner/work/searxng/searxng/searx/engines/mediawiki.py'>, 'wolframalpha': <module 'wolframalpha_noapi' from '/home/runner/work/searxng/searxng/searx/engines/wolframalpha_noapi.py'>, 'wordnik': <module 'wordnik' from '/home/runner/work/searxng/searxng/searx/engines/wordnik.py'>, 'woxikon.de synonyme': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>, 'wttr.in': <module 'wttr' from '/home/runner/work/searxng/searxng/searx/engines/wttr.py'>, 'yacy': <module 'yacy' from '/home/runner/work/searxng/searxng/searx/engines/yacy.py'>, 'yacy images': <module 'yacy' from '/home/runner/work/searxng/searxng/searx/engines/yacy.py'>, 'yahoo': <module 'yahoo' from '/home/runner/work/searxng/searxng/searx/engines/yahoo.py'>, 'yandex': <module 'yandex' from '/home/runner/work/searxng/searxng/searx/engines/yandex.py'>, 'yandex images': <module 'yandex' from '/home/runner/work/searxng/searxng/searx/engines/yandex.py'>, 'yandex music': <module 'yandex_music' from '/home/runner/work/searxng/searxng/searx/engines/yandex_music.py'>, 'yep': <module 'yep' from '/home/runner/work/searxng/searxng/searx/engines/yep.py'>, 'youtube': <module 'youtube_noapi' from '/home/runner/work/searxng/searxng/searx/engines/youtube_noapi.py'>, 'zapmeta': <module 'xpath' from '/home/runner/work/searxng/searxng/searx/engines/xpath.py'>}
+
+    Global registered engine instances.
+
+searx.engines.engine_shortcuts
+
+    Simple map of registered shortcuts to name of the engine (or None).
+
+    engine_shortcuts[engine.shortcut] = engine.name
+
+searx.engines.load_engine(engine_data: dict[str, Any]) → Engine | ModuleType | None[source]
+
+    Load engine from engine_data.
+
+    Parameters:
+
+        engine_data (dict) – Attributes from YAML settings:engines/<engine>
+    Returns:
+
+        initialized namespace of the <engine>.
+
+        create a namespace and load module of the <engine>
+
+        update namespace with the defaults from ENGINE_DEFAULT_ARGS
+
+        update namespace with values from engine_data
+
+    If engine is active, return namespace of the engine, otherwise return None.
+
+    This function also returns None if initialization of the namespace fails for one of the following reasons:
+
+        engine name contains underscore
+
+        engine name is not lowercase
+
+        required attribute is not set is_missing_required_attributes()
+
+searx.engines.is_missing_required_attributes(engine: Engine | ModuleType)[source]
+
+    An attribute is required when its name doesn’t start with _ (underline). Required attributes must not be None.
+
+searx.engines.using_tor_proxy(engine: Engine | ModuleType)[source]
+
+    Return True if the engine configuration declares to use Tor.
+
+searx.engines.load_engines(engine_list: list[dict[str, Any]])[source]
+
+    usage: engine_list = settings['engines']
+
++++
+
+Engine Overview
+
+Further reading ..
+
+    Configured Engines
+
+    engines:
+
+SearXNG is a metasearch-engine, so it uses different search engines to provide better results.
+
+Because there is no general search API which could be used for every search engine, an adapter has to be built between SearXNG and the external search engines. Adapters are stored under the folder git://searx/engines.
+General Engine Configuration
+
+It is required to tell SearXNG the type of results the engine provides. The arguments can be set in the engine file or in the settings file (normally settings.yml). The arguments in the settings file override the ones in the engine file.
+
+It does not matter if an option is stored in the engine file or in the settings. However, the standard way is the following:
+Engine File
+Table 2 Common options in the engine module
+
+argument
+
+
+type
+
+
+information
+
+categories
+
+
+list
+
+
+categories, in which the engine is working
+
+paging
+
+
+boolean
+
+
+support multiple pages
+
+time_range_support
+
+
+boolean
+
+
+support search time range
+
+engine_type
+
+
+str
+
+
+    online [ref] by default, other possibles values are:
+
+    offline [ref]
+
+    online_dictionary [ref]
+
+    online_currency [ref]
+
+    online_url_search [ref]
+
+Engine settings.yml
+
+For a more detailed description, see engines: in the settings.yml.
+Table 3 Common options in the engine setup (settings.yml)
+
+argument
+
+
+type
+
+
+information
+
+name
+
+
+string
+
+
+name of search-engine
+
+engine
+
+
+string
+
+
+name of searxng-engine (file name without .py)
+
+enable_http
+
+
+bool
+
+
+enable HTTP (by default only HTTPS is enabled).
+
+shortcut
+
+
+string
+
+
+shortcut of search-engine
+
+timeout
+
+
+string
+
+
+specific timeout for search-engine
+
+display_error_messages
+
+
+boolean
+
+
+display error messages on the web UI
+
+proxies
+
+
+dict
+
+
+set proxies for a specific engine (e.g. proxies : {http: socks5://proxy:port, https: socks5://proxy:port})
+Overrides
+
+A few of the options have default values in the namespace of the engine’s python module, but are often overwritten by the settings. If None is assigned to an option in the engine file, it has to be redefined in the settings, otherwise SearXNG will not start with that engine (global names with a leading underline can be None).
+
+Here is an very simple example of the global names in the namespace of engine’s module:
+
+# engine dependent config
+categories = ['general']
+paging = True
+_non_overwritten_global = 'foo'
+
+Table 4 The naming of overrides is arbitrary / recommended overrides are:
+
+argument
+
+
+type
+
+
+information
+
+base_url
+
+
+string
+
+
+base-url, can be overwritten to use same engine on other URL
+
+page_size
+
+
+int
+
+
+maximum number of results per request
+
+language
+
+
+string
+
+
+ISO code of language and country like en_US
+
+api_key
+
+
+string
+
+
+api-key if required by engine
+Making a Request
+
+To perform a search an URL have to be specified. In addition to specifying an URL, arguments can be passed to the query.
+Passed Arguments (request)
+
+These arguments can be used to construct the search query. Furthermore, parameters with default value can be redefined for special purposes.
+Table 5 If the engine_type is online
+
+argument
+
+
+type
+
+
+default-value, information
+
+url
+
+
+str
+
+
+''
+
+method
+
+
+str
+
+
+'GET'
+
+headers
+
+
+dict
+
+
+{}
+
+data
+
+
+dict
+
+
+{}
+
+cookies
+
+
+dict
+
+
+{}
+
+verify
+
+
+bool
+
+
+True
+
+headers.User-Agent
+
+
+str
+
+
+a random User-Agent
+
+category
+
+
+str
+
+
+current category, like 'general'
+
+safesearch
+
+
+int
+
+
+0, between 0 and 2 (normal, moderate, strict)
+
+time_range
+
+
+Optional[str]
+
+
+None, can be day, week, month, year
+
+pageno
+
+
+int
+
+
+current pagenumber
+
+searxng_locale
+
+
+str
+
+
+SearXNG’s locale selected by user. Specific language code like 'en', 'en-US', or 'all' if unspecified.
+Table 6 If the engine_type is online_dictionary, in addition to the online arguments:
+
+argument
+
+
+type
+
+
+default-value, information
+
+from_lang
+
+
+str
+
+
+specific language code like 'en_US'
+
+to_lang
+
+
+str
+
+
+specific language code like 'en_US'
+
+query
+
+
+str
+
+
+the text query without the languages
+Table 7 If the engine_type is online_currency, in addition to the online arguments:
+
+argument
+
+
+type
+
+
+default-value, information
+
+amount
+
+
+float
+
+
+the amount to convert
+
+from
+
+
+str
+
+
+ISO 4217 code
+
+to
+
+
+str
+
+
+ISO 4217 code
+
+from_name
+
+
+str
+
+
+currency name
+
+to_name
+
+
+str
+
+
+currency name
+Table 8 If the engine_type is online_url_search, in addition to the online arguments:
+
+argument
+
+
+type
+
+
+default-value, information
+
+search_url
+
+
+dict
+
+
+URLs from the search query:
+
+{
+  'http': str,
+  'ftp': str,
+  'data:image': str
+}
+
+Specify Request
+
+The function def request(query, params): always returns the params variable, the following parameters can be used to specify a search request:
+
+argument
+
+
+type
+
+
+information
+
+url
+
+
+str
+
+
+requested url
+
+method
+
+
+str
+
+
+HTTP request method
+
+headers
+
+
+dict
+
+
+HTTP header information
+
+data
+
+
+dict
+
+
+HTTP data information
+
+cookies
+
+
+dict
+
+
+HTTP cookies
+
+verify
+
+
+bool
+
+
+Performing SSL-Validity check
+
+allow_redirects
+
+
+bool
+
+
+Follow redirects
+
+max_redirects
+
+
+int
+
+
+maximum redirects, hard limit
+
+soft_max_redirects
+
+
+int
+
+
+maximum redirects, soft limit. Record an error but don’t stop the engine
+
+raise_for_httperror
+
+
+bool
+
+
+True by default: raise an exception if the HTTP code of response is >= 300
+Making a Response
+
+In the response function of the engine, the HTTP response (resp) is parsed and a list of results is returned.
+
+A engine can append result-items of different media-types and different result-types to the result list. The list of the result items is render to HTML by templates. For more details read section:
+
+    Simple Theme Templates
+
+    Result Types
+
++++
+
+Demo Online Engine
+
+Within this module we implement a demo online engine. Do not look to close to the implementation, its just a simple example which queries The Art Institute of Chicago
+Configuration
+
+To get in use of this demo engine add the following entry to your engines list in settings.yml:
+
+- name: my online engine
+  engine: demo_online
+  shortcut: demo
+  disabled: false
+
+Implementations
+
+searx.engines.demo_online.setup(engine_settings: OnlineParams) → bool[source]
+
+    Dynamic setup of the engine settings.
+
+    For more details see searx.enginelib.Engine.setup.
+
+searx.engines.demo_online.init(engine_settings: dict[str, Any]) → bool[source]
+
+    Initialization of the engine.
+
+    For more details see searx.enginelib.Engine.init.
+
+searx.engines.demo_online.request(query: str, params: OnlineParams) → None[source]
+
+    Build up the params for the online request. In this example we build a URL to fetch images from artic.edu.
+
+searx.engines.demo_online.response(resp: SXNG_Response) → EngineResults[source]
+
+    Parse out the result items from the response. In this example we parse the response from api.artic.edu and filter out all images.
+
++++
+
+XPath Engine
+
+The XPath engine is a generic engine with which it is possible to configure engines in the settings.
+Configuration
+
+Request:
+
+    search_url
+
+    lang_all
+
+    soft_max_redirects
+
+    method
+
+    request_body
+
+    cookies
+
+    headers
+
+Paging:
+
+    paging
+
+    page_size
+
+    first_page_num
+
+    send_page_num_on_first_page
+
+Time Range:
+
+    time_range_support
+
+    time_range_url
+
+    time_range_map
+
+Safe-Search:
+
+    safesearch
+
+    safe_search_map
+
+Response:
+
+    no_result_for_http_status
+
+XPath selector:
+
+    results_xpath
+
+    url_xpath
+
+    title_xpath
+
+    content_xpath
+
+    thumbnail_xpath
+
+    suggestion_xpath
+
+Example
+
+Here is a simple example of a XPath engine configured in the engines: section, further read Engine Overview.
+
+- name : bitbucket
+  engine : xpath
+  paging : True
+  search_url : https://bitbucket.org/repo/all/{pageno}?name={query}
+  url_xpath : //article[@class="repo-summary"]//a[@class="repo-link"]/@href
+  title_xpath : //article[@class="repo-summary"]//a[@class="repo-link"]
+  content_xpath : //article[@class="repo-summary"]/p
+
+Implementations
+
+searx.engines.xpath.search_url = None
+
+    Search URL of the engine. Example:
+
+    https://example.org/?search={query}&page={pageno}{time_range}{safe_search}
+
+    Replacements are:
+
+    {query}:
+
+        Search terms from user.
+    {pageno}:
+
+        Page number if engine supports paging paging
+    {lang}:
+
+        ISO 639-1 language code (en, de, fr ..)
+    {time_range}:
+
+        URL parameter if engine supports time range. The value for the parameter is taken from time_range_map.
+    {safe_search}:
+
+        Safe-search URL parameter if engine supports safe-search. The {safe_search} replacement is taken from the safes_search_map. Filter results:
+
+        0: none, 1: moderate, 2:strict
+
+        If not supported, the URL parameter is an empty string.
+
+searx.engines.xpath.lang_all = 'en'
+
+    Replacement {lang} in search_url if language all is selected.
+
+searx.engines.xpath.no_result_for_http_status = []
+
+    Return empty result for these HTTP status codes instead of throwing an error.
+
+    no_result_for_http_status: []
+
+searx.engines.xpath.soft_max_redirects = 0
+
+    Maximum redirects, soft limit. Record an error but don’t stop the engine
+
+searx.engines.xpath.results_xpath = ''
+
+    XPath selector for the list of result items
+
+searx.engines.xpath.url_xpath = None
+
+    XPath selector of result’s url.
+
+searx.engines.xpath.content_xpath = None
+
+    XPath selector of result’s content.
+
+searx.engines.xpath.title_xpath = None
+
+    XPath selector of result’s title.
+
+searx.engines.xpath.thumbnail_xpath = False
+
+    XPath selector of result’s thumbnail.
+
+searx.engines.xpath.suggestion_xpath = ''
+
+    XPath selector of result’s suggestion.
+
+searx.engines.xpath.cookies = {}
+
+    Some engines might offer different result based on cookies. Possible use-case: To set safesearch cookie.
+
+searx.engines.xpath.headers = {}
+
+    Some engines might offer different result based headers. Possible use-case: To set header to moderate.
+
+searx.engines.xpath.method = 'GET'
+
+    Some engines might require to do POST requests for search.
+
+searx.engines.xpath.request_body = ''
+
+    The body of the request. This can only be used if different method is set, e.g. POST. For formatting see the documentation of search_url:
+
+    search={query}&page={pageno}{time_range}{safe_search}
+
+searx.engines.xpath.paging = False
+
+    Engine supports paging [True or False].
+
+searx.engines.xpath.page_size = 1
+
+    Number of results on each page. Only needed if the site requires not a page number, but an offset.
+
+searx.engines.xpath.first_page_num = 1
+
+    Number of the first page (usually 0 or 1).
+
+searx.engines.xpath.send_page_num_on_first_page = True
+
+    Whether to include the page number in the request for the first page. This can help if an engine blocks request that send a page number for the first page.
+
+searx.engines.xpath.time_range_support = False
+
+    Engine supports search time range.
+
+searx.engines.xpath.time_range_url = '&hours={time_range_val}'
+
+    Time range URL parameter in the in search_url. If no time range is requested by the user, the URL parameter is an empty string. The {time_range_val} replacement is taken from the time_range_map.
+
+    time_range_url : '&days={time_range_val}'
+
+searx.engines.xpath.time_range_map = {'day': 24, 'month': 720, 'week': 168, 'year': 8760}
+
+    Maps time range value from user to {time_range_val} in time_range_url.
+
+    time_range_map:
+      day: 1
+      week: 7
+      month: 30
+      year: 365
+
+searx.engines.xpath.safesearch = False
+
+    Engine supports safe-search.
+
+searx.engines.xpath.safe_search_map = {0: '&filter=none', 1: '&filter=moderate', 2: '&filter=strict'}
+
+    Maps safe-search value to {safe_search} in search_url.
+
+    safesearch: true
+    safes_search_map:
+      0: '&filter=none'
+      1: '&filter=moderate'
+      2: '&filter=strict'
+
+searx.engines.xpath.request(query, params)[source]
+
+    Build request parameters (see Making a Request).
+
+searx.engines.xpath.response(resp) → EngineResults[source]
+
+    Scrap results from the response (see Result Types).
+
++++
+
+MediaWiki Engine
+
+The MediaWiki engine is a generic engine to query Wikimedia wikis by the MediaWiki Action API. For a query action all Wikimedia wikis have endpoints that follow this pattern:
+
+https://{base_url}/w/api.php?action=query&list=search&format=json
+
+Note
+
+In its actual state, this engine is implemented to parse JSON result (format=json) from a search query (list=search). If you need other action and list types ask SearXNG developers to extend the implementation according to your needs.
+Configuration
+
+Request:
+
+    base_url
+
+    search_type
+
+    srenablerewrites
+
+    srsort
+
+    srprop
+
+Implementations
+
+searx.engines.mediawiki.search_type: str = 'nearmatch'
+
+    Which type of search to perform. One of the following values: nearmatch, text or title.
+
+    See srwhat argument in list=search documentation.
+
+searx.engines.mediawiki.srenablerewrites: bool = True
+
+    Enable internal query rewriting (Type: boolean). Some search backends can rewrite the query into another which is thought to provide better results, for instance by correcting spelling errors.
+
+    See srenablerewrites argument in list=search documentation.
+
+searx.engines.mediawiki.srsort: str = 'relevance'
+
+    Set the sort order of returned results. One of the following values: create_timestamp_asc, create_timestamp_desc, incoming_links_asc, incoming_links_desc, just_match, last_edit_asc, last_edit_desc, none, random, relevance, user_random.
+
+    See srenablerewrites argument in list=search documentation.
+
+searx.engines.mediawiki.srprop: str = 'sectiontitle|snippet|timestamp|categorysnippet'
+
+    Which properties to return.
+
+    See srprop argument in list=search documentation.
+
+searx.engines.mediawiki.base_url: str = 'https://{language}.wikipedia.org/'
+
+    Base URL of the Wikimedia wiki.
+
+    {language}:
+
+        ISO 639-1 language code (en, de, fr ..) of the search language.
+
+searx.engines.mediawiki.api_path: str = 'w/api.php'
+
+    The path the PHP api is listening on.
+
+    The default path should work fine usually.
+
+searx.engines.mediawiki.timestamp_format = '%Y-%m-%dT%H:%M:%SZ'
+
+    The longhand version of MediaWiki time strings.
+
++++
+
+JSON Engine
+
+The JSON engine is a generic engine with which it is possible to configure engines in the settings.
+Configuration
+
+Request:
+
+    search_url
+
+    lang_all
+
+    soft_max_redirects
+
+    method
+
+    request_body
+
+    cookies
+
+    headers
+
+Paging:
+
+    paging
+
+    page_size
+
+    first_page_num
+
+    send_page_num_on_first_page
+
+Time Range:
+
+    time_range_support
+
+    time_range_url
+
+    time_range_map
+
+Safe-Search:
+
+    safesearch
+
+    safe_search_map
+
+Response:
+
+    title_html_to_text
+
+    content_html_to_text
+
+    no_result_for_http_status
+
+JSON query:
+
+    results_query
+
+    url_query
+
+    url_prefix
+
+    title_query
+
+    content_query
+
+    thumbnail_query
+
+    thumbnail_prefix
+
+    suggestion_query
+
+Example
+
+Here is a simple example of a JSON engine configure in the engines: section, further read Engine Overview.
+
+- name : mdn
+  engine : json_engine
+  paging : True
+  search_url : https://developer.mozilla.org/api/v1/search?q={query}&page={pageno}
+  results_query : documents
+  url_query : mdn_url
+  url_prefix : https://developer.mozilla.org
+  title_query : title
+  content_query : summary
+
+Implementations
+
+searx.engines.json_engine.search_url = None
+
+    Search URL of the engine. Example:
+
+    https://example.org/?search={query}&page={pageno}{time_range}{safe_search}
+
+    Replacements are:
+
+    {query}:
+
+        Search terms from user.
+    {pageno}:
+
+        Page number if engine supports paging paging
+    {lang}:
+
+        ISO 639-1 language code (en, de, fr ..)
+    {time_range}:
+
+        URL parameter if engine supports time range. The value for the parameter is taken from time_range_map.
+    {safe_search}:
+
+        Safe-search URL parameter if engine supports safe-search. The {safe_search} replacement is taken from the safes_search_map. Filter results:
+
+        0: none, 1: moderate, 2:strict
+
+        If not supported, the URL parameter is an empty string.
+
+searx.engines.json_engine.lang_all = 'en'
+
+    Replacement {lang} in search_url if language all is selected.
+
+searx.engines.json_engine.no_result_for_http_status = []
+
+    Return empty result for these HTTP status codes instead of throwing an error.
+
+    no_result_for_http_status: []
+
+searx.engines.json_engine.soft_max_redirects = 0
+
+    Maximum redirects, soft limit. Record an error but don’t stop the engine
+
+searx.engines.json_engine.method = 'GET'
+
+    Some engines might require to do POST requests for search.
+
+searx.engines.json_engine.request_body = ''
+
+    The body of the request. This can only be used if different method is set, e.g. POST. For formatting see the documentation of search_url.
+
+    Note: Curly brackets which aren’t encapsulating a replacement placeholder must be escaped by doubling each { and }.
+
+    request_body: >-
+      {{
+        "search": "{query}",
+        "page": {pageno},
+        "extra": {{
+          "time_range": {time_range},
+          "rating": "{safe_search}"
+        }}
+      }}
+
+searx.engines.json_engine.cookies = {}
+
+    Some engines might offer different result based on cookies. Possible use-case: To set safesearch cookie.
+
+searx.engines.json_engine.headers = {}
+
+    Some engines might offer different result based on cookies or headers. Possible use-case: To set safesearch cookie or header to moderate.
+
+searx.engines.json_engine.paging = False
+
+    Engine supports paging [True or False].
+
+searx.engines.json_engine.page_size = 1
+
+    Number of results on each page. Only needed if the site requires not a page number, but an offset.
+
+searx.engines.json_engine.first_page_num = 1
+
+    Number of the first page (usually 0 or 1).
+
+searx.engines.json_engine.send_page_num_on_first_page = True
+
+    Whether to include the page number in the request for the first page. This can help if an engine blocks request that send a page number for the first page.
+
+searx.engines.json_engine.results_query = ''
+
+    JSON query for the list of result items.
+
+    The query string is a slash / separated path of JSON key names. Array entries can be specified using the index or can be omitted entirely, in which case each entry is considered - most implementations will default to the first entry in this case.
+
+searx.engines.json_engine.url_query = None
+
+    JSON query of result’s url. For the query string documentation see results_query
+
+searx.engines.json_engine.url_prefix = ''
+
+    String to prepend to the result’s url.
+
+searx.engines.json_engine.title_query = None
+
+    JSON query of result’s title. For the query string documentation see results_query
+
+searx.engines.json_engine.content_query = None
+
+    JSON query of result’s content. For the query string documentation see results_query
+
+searx.engines.json_engine.thumbnail_query = False
+
+    JSON query of result’s thumbnail. For the query string documentation see results_query
+
+searx.engines.json_engine.thumbnail_prefix = ''
+
+    String to prepend to the result’s thumbnail.
+
+searx.engines.json_engine.suggestion_query = ''
+
+    JSON query of result’s suggestion. For the query string documentation see results_query
+
+searx.engines.json_engine.title_html_to_text = False
+
+    Extract text from a HTML title string
+
+searx.engines.json_engine.content_html_to_text = False
+
+    Extract text from a HTML content string
+
+searx.engines.json_engine.time_range_support = False
+
+    Engine supports search time range.
+
+searx.engines.json_engine.time_range_url = '&hours={time_range_val}'
+
+    Time range URL parameter in the in search_url. If no time range is requested by the user, the URL parameter is an empty string. The {time_range_val} replacement is taken from the time_range_map.
+
+    time_range_url : '&days={time_range_val}'
+
+searx.engines.json_engine.time_range_map = {'day': 24, 'month': 720, 'week': 168, 'year': 8760}
+
+    Maps time range value from user to {time_range_val} in time_range_url.
+
+    time_range_map:
+      day: 1
+      week: 7
+      month: 30
+      year: 365
+
+searx.engines.json_engine.safesearch = False
+
+    Engine supports safe-search.
+
+searx.engines.json_engine.safe_search_map = {0: '&filter=none', 1: '&filter=moderate', 2: '&filter=strict'}
+
+    Maps safe-search value to {safe_search} in search_url.
+
+    safesearch: true
+    safes_search_map:
+      0: '&filter=none'
+      1: '&filter=moderate'
+      2: '&filter=strict'
+
+searx.engines.json_engine.request(query, params)[source]
+
+    Build request parameters (see Making a Request).
+
+searx.engines.json_engine.response(resp)[source]
+
+    Scrap results from the response (see Result Types).
+
++++
+
+500px
+
+500px is a online network for photographers with millions of members worldwide. Photographers come to 500px to discover and share incredible photos, gain meaningful exposure, compete in photo contests, and license their photos through our exclusive distribution partners.
+
+searx.engines.500px.results_per_page = 30
+
+    Number of results to return in the request.
+
+    The default was taken from the WEB UI, where the GraphQL query sets the value to static: first: 30.
+
++++
+
+Adobe Stock
+
+Adobe Stock is a service that gives access to millions of royalty-free assets. Assets types include photos, vectors, illustrations, templates, 3D assets, videos, motion graphics templates and audio tracks.
+Configuration
+
+The engine has the following mandatory setting:
+
+    SearXNG’s categories
+
+    Adobe-Stock’s adobe_order
+
+    Adobe-Stock’s adobe_content_types
+
+- name: adobe stock
+  engine: adobe_stock
+  shortcut: asi
+  categories: [images]
+  adobe_order: relevance
+  adobe_content_types: ["photo", "illustration", "zip_vector", "template", "3d", "image"]
+
+- name: adobe stock video
+  engine: adobe_stock
+  network: adobe stock
+  shortcut: asi
+  categories: [videos]
+  adobe_order: relevance
+  adobe_content_types: ["video"]
+
+Implementation
+
+searx.engines.adobe_stock.adobe_order: str = ''
+
+    Sort order, can be one of:
+
+        relevance or
+
+        featured or
+
+        creation (most recent) or
+
+        nb_downloads (number of downloads)
+
+searx.engines.adobe_stock.adobe_content_types: list = []
+
+    A list of of content types. The following content types are offered:
+
+        Images: image
+
+        Videos: video
+
+        Templates: template
+
+        3D: 3d
+
+        Audio audio
+
+    Additional subcategories:
+
+        Photos: photo
+
+        Illustrations: illustration
+
+        Vectors: zip_vector (Vectors),
+
++++
+
+Alpine Linux Packages
+
+Alpine Linux binary packages. Alpine Linux is a Linux-based operation system designed to be small, simple and secure. Contrary to many other Linux distributions, it uses musl, BusyBox and OpenRC. Alpine is mostly used on servers and for Docker images.
+
+searx.engines.alpinelinux.alpine_arch = 'x86_64'
+
+    Kernel architecture: x86_64, x86, aarch64, armhf, ppc64le, s390x, armv7 or riscv64
+
+searx.engines.alpinelinux.ARCH_RE = re.compile('x86_64|x86|aarch64|armhf|ppc64le|s390x|armv7|riscv64')
+
+    Regular expression to match supported architectures in the query string.
+
++++
+
+Anna’s Archive
+
+Anna’s Archive is a free non-profit online shadow library metasearch engine providing access to a variety of book resources (also via IPFS), created by a team of anonymous archivists (AnnaArchivist).
+Configuration
+
+The engine has the following additional settings:
+
+    aa_content
+
+    aa_ext
+
+    aa_sort
+
+With this options a SearXNG maintainer is able to configure additional engines for specific searches in Anna’s Archive. For example a engine to search for newest articles and journals (PDF) / by shortcut !aaa <search-term>.
+
+- name: annas articles
+  engine: annas_archive
+  categories = ["general", "articles"]
+  shortcut: aaa
+  aa_content: "magazine"
+  aa_ext: "pdf"
+  aa_sort: "newest"
+
+Implementations
+
+searx.engines.annas_archive.base_url: list[str] | str = []
+
+    List of Anna’s archive domains or a single domain (as string).
+
+searx.engines.annas_archive.aa_content: str = ''
+
+    Anan’s search form field Content / possible values:
+
+    book_fiction, book_unknown, book_nonfiction,
+    book_comic, magazine, standards_document
+
+    To not filter use an empty string (default).
+
+searx.engines.annas_archive.aa_sort: str = ''
+
+    Sort Anna’s results, possible values:
+
+    newest, oldest, largest, smallest, newest_added, oldest_added, random
+
+    To sort by most relevant use an empty string (default).
+
+searx.engines.annas_archive.aa_ext: str = ''
+
+    Filter Anna’s results by a file ending. Common filters for example are pdf and epub.
+
+    Note
+
+    Anna’s Archive is a beta release: Filter results by file extension does not really work on Anna’s Archive.
+
+searx.engines.annas_archive.setup(_engine_settings: dict[str, Any]) → bool[source]
+
+    Check of engine’s settings.
+
+searx.engines.annas_archive.fetch_traits(engine_traits: EngineTraits) → None[source]
+
+    Fetch languages and other search arguments from Anna’s search form.
+
++++
+
+
+Arch Linux Wiki
+
+This implementation does not use a official API: Mediawiki provides API, but Arch Wiki blocks access to it.
+
+searx.engines.archlinux.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch languages from Archlinux-Wiki. The location of the Wiki address of a language is mapped in a custom field (wiki_netloc). Depending on the location, the title argument in the request is translated.
+
+    "custom": {
+      "wiki_netloc": {
+        "de": "wiki.archlinux.de",
+         # ...
+        "zh": "wiki.archlinuxcn.org"
+      }
+      "title": {
+        "de": "Spezial:Suche",
+         # ...
+        "zh": "Special:搜索"
+      },
+    },
+
+
++++
+
+arXiv
+
+arXiv is a free distribution service and an open-access archive for nearly 2.4 million scholarly articles in the fields of physics, mathematics, computer science, quantitative biology, quantitative finance, statistics, electrical engineering and systems science, and economics.
+
+The engine uses the arXiv API.
+
+searx.engines.arxiv.arxiv_search_prefix = 'all'
+
+    Search fields, for more details see, Details of Query Construction.
+
+searx.engines.arxiv.base_url = 'https://export.arxiv.org/api/query'
+
+    arXiv API URL, for more details see Query-Interface
+
++++
+
+Astrophysics Data System (ADS)
+
+The Astrophysics Data System (ADS) is a digital library portal for researchers in astronomy and physics, operated by the Smithsonian Astrophysical Observatory (SAO) under a NASA grant. The ADS is a solr instance, but not with the standard API paths.
+
+Note
+
+The ADS engine requires an API key.
+
+This engine uses the search/query API endpoint. Since the user’s search term is passed through, the search syntax of ADS can be used (at least to some extent).
+Configuration
+
+The engine has the following additional settings:
+
+    api_key
+
+    ads_sort
+
+- name: astrophysics data system
+  api_key: "..."
+  inactive: false
+
+Implementations
+
+searx.engines.astrophysics_data_system.api_key = 'unset'
+
+    Get an API token as described in https://ui.adsabs.harvard.edu/help/api
+
+searx.engines.astrophysics_data_system.ads_field_list = ['abstract', 'author', 'bibcode', 'comment', 'date', 'doi', 'isbn', 'issn', 'keyword', 'page', 'page_count', 'page_range', 'pub', 'pubdate', 'pubnote', 'read_count', 'title', 'volume', 'year']
+
+    Set of fields to return in the response from ADS.
+
+searx.engines.astrophysics_data_system.ads_rows = 10
+
+    How many records to return for the ADS request.
+
+searx.engines.astrophysics_data_system.ads_sort = 'read_count desc'
+
+    The format is ‘field’ + ‘direction’ where direction is one of ‘asc’ or ‘desc’ and field is any of the valid indexes.
+
+searx.engines.astrophysics_data_system.setup(engine_settings: dict[str, Any]) → bool[source]
+
+    Initialization of the ADS engine, checks whether the api_key is set, otherwise the engine is inactive.
+
++++
+
+Azure Resources
+
+Engine for Azure resources. This engine mimics the standard search bar in Azure Portal (for resources and resource groups).
+Configuration
+
+You must register an application in Microsoft Entra ID and assign it the ‘Reader’ role in your subscription.
+
+To use this engine, add an entry similar to the following to your engine list in settings.yml:
+
+- name: azure
+  engine: azure
+  ...
+  azure_tenant_id: "your_tenant_id"
+  azure_client_id: "your_client_id"
+  azure_client_secret: "your_client_secret"
+  azure_token_expiration_seconds: 5000
+
+searx.engines.azure.azure_token_expiration_seconds = 5000
+
+    Time for which an auth token is valid (sec.)
+
+searx.engines.azure.CACHE: EngineCache
+
+    Persistent (SQLite) key/value cache that deletes its values after expire seconds.
+
+searx.engines.azure.setup(engine_settings: dict[str, Any]) → bool[source]
+
+    Initialization of the engine.
+
+        Instantiate a cache for this engine (CACHE).
+
+        Checks whether the tenant_id, client_id and client_secret are set, otherwise the engine is inactive.
+
+searx.engines.azure.authenticate(t_id: str, c_id: str, c_secret: str) → str[source]
+
+    Authenticates to Azure using Oauth2 Client Credentials Flow and returns an access token.
+
++++
+
+Bing Engines
+Bing WEB
+
+This is the implementation of the Bing-Web engine. Some of this implementations are shared by other engines:
+
+    Bing Images
+
+    Bing News
+
+    Bing Videos
+
+Note
+
+Some functionality (paging and time-range results) are not supported since they depend on JavaScript.
+
+searx.engines.bing.base_url = 'https://www.bing.com'
+
+    Bing-Web search URL
+
+searx.engines.bing.get_locale_params(engine_region: str | None) → dict[str, str] | None[source]
+
+    API documentation states the mkt parameter is the recommended primary signal for locale:
+
+        If known, you are encouraged to always specify the market. Specifying the market helps Bing route the request and return an appropriate and optimal response.
+
+    The mkt parameter takes a full <language>-<country> code.
+
+    This function is shared with searx.engines.bing_images, searx.engines.bing_news, and searx.engines.bing_videos.
+
+searx.engines.bing.override_accept_language(params: OnlineParams, engine_region: str | None) → None[source]
+
+    Override the Accept-Language header.
+
+    The default header built by OnlineProcessor appends en;q=0.3 as a fallback language:
+
+    Accept-Language: de,de-DE;q=0.7,en;q=0.3
+
+    Bing seems to better select the results locale based on the Accept-Language value header.
+
+    This function is shared with searx.engines.bing_images, searx.engines.bing_news, and searx.engines.bing_videos.
+
+searx.engines.bing.request(query: str, params: OnlineParams)[source]
+
+    Assemble a Bing-Web request.
+
+searx.engines.bing.response(resp: SXNG_Response) → list[dict[str, Any]][source]
+
+    Get response from Bing-Web
+
+searx.engines.bing.fetch_traits(engine_traits: EngineTraits) → None[source]
+
+    Fetch regions from Bing-Web.
+
+Bing Images
+
+Bing-Images: description see searx.engines.bing.
+
+searx.engines.bing_images.base_url = 'https://www.bing.com'
+
+    Bing-Image search URL
+
+searx.engines.bing_images.request(query, params)[source]
+
+    Assemble a Bing-Image request.
+
+searx.engines.bing_images.response(resp)[source]
+
+    Get response from Bing-Image
+
+Bing Videos
+
+Bing-Videos: description see searx.engines.bing.
+
+searx.engines.bing_videos.base_url = 'https://www.bing.com'
+
+    Bing-Video search URL
+
+searx.engines.bing_videos.request(query, params)[source]
+
+    Assemble a Bing-Video request.
+
+searx.engines.bing_videos.response(resp)[source]
+
+    Get response from Bing-Video
+
+Bing News
+
+Bing-News: description see searx.engines.bing.
+
+Hint
+
+Bing News is different in some ways!
+
+searx.engines.bing_news.paging = True
+
+    If go through the pages and there are actually no new results for another page, then bing returns the results from the last page again.
+
+searx.engines.bing_news.time_map = {'day': 'interval="4"', 'month': 'interval="9"', 'week': 'interval="7"'}
+
+    A string ‘4’ means last hour. We use last hour for day here since the difference of last day and last week in the result list is just marginally. Bing does not have news range year / we use month instead.
+
+searx.engines.bing_news.base_url = 'https://www.bing.com'
+
+    Bing (News) search URL
+
+searx.engines.bing_news.request(query, params)[source]
+
+    Assemble a Bing-News request.
+
+searx.engines.bing_news.response(resp)[source]
+
+    Parse the Bing-News response.
+
+searx.engines.bing_news.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch languages and regions from Bing-News.
+
+
++++
+
+Bpb
+
+BPB refers to Bundeszentrale für poltische Bildung, which is a German governmental institution aiming to reduce misinformation by providing resources about politics and history.
+
++++
+
+Brave Engines
+
+Brave offers two different engines for SearXNG:
+
+    The standard engine (brave) uses the web interface.
+
+    The API engine (braveapi) uses the official REST API.
+
+Brave Standard Engine
+
+Brave supports the categories listed in brave_category (General, news, videos, images). The support of paging and time range is limited (see remarks).
+
+Configured brave engines:
+
+- name: brave
+  engine: brave
+  ...
+  brave_category: search
+  time_range_support: true
+  paging: true
+
+- name: brave.images
+  engine: brave
+  ...
+  brave_category: images
+
+- name: brave.videos
+  engine: brave
+  ...
+  brave_category: videos
+
+- name: brave.news
+  engine: brave
+  ...
+  brave_category: news
+
+- name: brave.goggles
+  time_range_support: true
+  paging: true
+  ...
+  brave_category: goggles
+
+Brave regions
+
+Brave uses two-digit tags for the regions like ca while SearXNG deals with locales. To get a mapping, all officiat de-facto languages of the Brave region are mapped to regions in SearXNG (see babel):
+
+"regions": {
+  ..
+  "en-CA": "ca",
+  "fr-CA": "ca",
+  ..
+ }
+
+Note
+
+The language (aka region) support of Brave’s index is limited to very basic languages. The search results for languages like Chinese or Arabic are of low quality.
+Brave Goggles
+
+Goggles allow you to choose, alter, or extend the ranking of Brave Search results (Goggles Whitepaper). Goggles are openly developed by the community of Brave Search users.
+
+Select from the list of Goggles people have published, or create your own (Goggles Quickstart).
+Brave languages
+
+Brave’s language support is limited to the UI (menus, area local notations, etc). Brave’s index only seems to support a locale, but it does not seem to support any languages in its index. The choice of available languages is very small (and its not clear to me where the difference in UI is when switching from en-us to en-ca or en-gb).
+
+In the EngineTraits object the UI languages are stored in a custom field named ui_lang:
+
+"custom": {
+  "ui_lang": {
+    "ca": "ca",
+    "de-DE": "de-de",
+    "en-CA": "en-ca",
+    "en-GB": "en-gb",
+    "en-US": "en-us",
+    "es": "es",
+    "fr-CA": "fr-ca",
+    "fr-FR": "fr-fr",
+    "ja-JP": "ja-jp",
+    "pt-BR": "pt-br",
+    "sq-AL": "sq-al"
+  }
+},
+
+Implementations
+
+searx.engines.brave.brave_category: Literal['search', 'videos', 'images', 'news', 'goggles'] = 'search'
+
+    Brave supports common web-search, videos, images, news, and goggles search.
+
+        search: Common WEB search
+
+        videos: search for videos
+
+        images: search for images
+
+        news: search for news
+
+        goggles: Common WEB search with custom rules, requires a Goggles URL.
+
+searx.engines.brave.Goggles: str = ''
+
+    This should be a URL ending in .goggle
+
+searx.engines.brave.brave_spellcheck = False
+
+    Brave supports some kind of spell checking. When activated, Brave tries to fix typos, e.g. it searches for food when the user queries for fooh. In the UI of Brave the user gets warned about this, since we can not warn the user in SearXNG, the spellchecking is disabled by default.
+
+searx.engines.brave.paging = False
+
+    Brave only supports paging in brave_category search (UI category All) and in the goggles category.
+
+searx.engines.brave.max_page = 10
+
+    Tested 9 pages maximum (&offset=8), to be save max is set to 10. Trying to do more won’t return any result and you will most likely be flagged as a bot.
+
+searx.engines.brave.time_range_support = False
+
+    Brave only supports time-range in brave_category search (UI category All) and in the goggles category.
+
+searx.engines.brave.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch languages and regions from Brave.
+
+Brave API Engine
+
+Engine to search using the Brave (WEB) Search API.
+Configuration
+
+The engine has the following mandatory setting:
+
+    api_key
+
+Optional settings are:
+
+    results_per_page
+
+- name: braveapi
+  engine: braveapi
+  api_key: 'YOUR-API-KEY'  # required
+  results_per_page: 20     # optional
+
+The API supports paging and time filters.
+
+searx.engines.braveapi.api_key: str = ''
+
+    API key for Brave Search API (required).
+
+searx.engines.braveapi.results_per_page: int = 20
+
+    Maximum number of results per page (default 20).
+
+searx.engines.braveapi.base_url = 'https://api.search.brave.com/res/v1/web/search'
+
+    Base URL for the Brave Search API.
+
+searx.engines.braveapi.time_range_map = {'day': 'past_day', 'month': 'past_month', 'week': 'past_week', 'year': 'past_year'}
+
+    Mapping of SearXNG time ranges to Brave API time ranges.
+
+searx.engines.braveapi.init(_)[source]
+
+    Initialize the engine.
+
+searx.engines.braveapi.request(query: str, params: OnlineParams) → None[source]
+
+    Create the API request.
+
+searx.engines.braveapi.response(resp: SXNG_Response) → EngineResults[source]
+
+    Process the API response and return results.
+
+The API engine requires an API key from Brave. This can be obtained from the API Dashboard.
+
++++
+
+BT4G
+
+BT4G (bt4g.com) is not a tracker and doesn’t store any content and only collects torrent metadata (such as file names and file sizes) and a magnet link (torrent identifier).
+
+This engine does not parse the HTML page because there is an API in XML (RSS). The RSS feed provides fewer data like amount of seeders/leechers and the files in the torrent file. It’s a tradeoff for a “stable” engine as the XML from RSS content will change way less than the HTML page.
+Configuration
+
+The engine has the following additional settings:
+
+    bt4g_order_by
+
+    bt4g_category
+
+With this options a SearXNG maintainer is able to configure additional engines for specific torrent searches. For example a engine to search only for Movies and sort the result list by the count of seeders.
+
+- name: bt4g.movie
+  engine: bt4g
+  shortcut: bt4gv
+  categories: video
+  bt4g_order_by: seeders
+  bt4g_category: 'movie'
+
+Implementations
+
+searx.engines.bt4g.bt4g_order_by = 'relevance'
+
+    Result list can be ordered by relevance (default), size, seeders or time.
+
+    Hint
+
+    When time_range is activate, the results always ordered by time.
+
+searx.engines.bt4g.bt4g_category = 'all'
+
+    BT$G offers categories: all (default), audio, movie, doc, app and `` other``.
+
++++
+
+Cara Images
+
+Cara is a social media and portfolio-sharing platform for artists and art enthusiasts.
+
+With the widespread use of generative AI, Cara decided to build a place that filters out gen AI images so that people searching for authentic creatives and images can do so easily.
+
++++
+
+ChinaSo
+
+ChinaSo, a search engine for the chinese language area.
+
+Attention
+
+ChinaSo engine does not return real URL, the links from these search engines violate the privacy of the users!!
+
+We try to find a solution for this problem, please follow issue #4694.
+
+As long as the problem has not been resolved, these engines are not active in a standard setup (inactive: true).
+Configuration
+
+The engine has the following additional settings:
+
+    chinaso_news_source (ChinasoNewsSourceType)
+
+In the example below, ChinaSO is configured for news search.
+
+- name: chinaso news
+  engine: chinaso
+  shortcut: chinaso
+  categories: [news]
+  chinaso_news_source: all
+
+Implementations
+
+searx.engines.chinaso.ChinasoNewsSourceType
+
+    Filtering ChinaSo-News results by source:
+
+        CENTRAL: central publication
+
+        LOCAL: local publication
+
+        BUSINESS: business publication
+
+        EPAPER: E-Paper
+
+        all: all sources
+
+    alias of Literal[‘CENTRAL’, ‘LOCAL’, ‘BUSINESS’, ‘EPAPER’, ‘all’]
+
+searx.engines.chinaso.chinaso_news_source: Literal['CENTRAL', 'LOCAL', 'BUSINESS', 'EPAPER', 'all'] = 'all'
+
+    Configure ChinaSo-News type (ChinasoNewsSourceType).
+
++++
+
+CORE
+
+CORE (COnnecting REpositories) provides a comprehensive bibliographic database of the world’s scholarly literature, collecting and indexing research from repositories and journals.
+
+Note
+
+The CORE engine requires an API key.
+Configuration
+
+The engine has the following additional settings:
+
+    api_key
+
+- name: core.ac.uk
+  api_key: "..."
+  inactive: false
+
+Implementations
+
+searx.engines.core.api_key = ''
+
+    For an API key register at https://core.ac.uk/services/api and insert the API key in the engine Configuration.
+
+searx.engines.core.setup(engine_settings: dict[str, Any]) → bool[source]
+
+    Initialization of the CORE engine, checks whether the api_key is set, otherwise the engine is inactive.
+
++++
+
+Crossref
+
+Crossref is the sustainable source of community-owned scholarly metadata and is relied upon by thousands of systems across the research ecosystem and the globe.
+
+searx.engines.crossref.search_url = 'https://api.crossref.org/works'
+
+    Returns a list of all works (journal articles, conference proceedings, books, components, etc), 20 per page (Works/get_works).
+
++++
+
+Dailymotion
+Dailymotion (Videos)
+
+searx.engines.dailymotion.safesearch_params = {0: {}, 1: {'is_created_for_kids': 'true'}, 2: {'is_created_for_kids': 'true'}}
+
+    True if this video is “Created for Kids” / intends to target an audience under the age of 16 (is_created_for_kids in Video filters API )
+
+searx.engines.dailymotion.family_filter_map = {0: 'false', 1: 'true', 2: 'true'}
+
+    By default, the family filter is turned on. Setting this parameter to false will stop filtering-out explicit content from searches and global contexts (family_filter in Global API Parameters ).
+
+searx.engines.dailymotion.result_fields = ['allow_embed', 'description', 'title', 'created_time', 'duration', 'url', 'thumbnail_360_url', 'id']
+
+    Fields selection, by default, a few fields are returned. To request more specific fields, the fields parameter is used with the list of fields SearXNG needs in the response to build a video result list.
+
+searx.engines.dailymotion.search_url = 'https://api.dailymotion.com/videos?'
+
+    URL to retrieve a list of videos.
+
+        REST GET
+
+        Global API Parameters
+
+        Video filters API
+
+searx.engines.dailymotion.iframe_src = 'https://www.dailymotion.com/embed/video/{video_id}'
+
+    URL template to embed video in SearXNG’s result list.
+
+searx.engines.dailymotion.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch locales & languages from dailymotion.
+
+    Locales fetched from api/locales. There are duplications in the locale codes returned from Dailymotion which can be ignored:
+
+    en_EN --> en_GB, en_US
+    ar_AA --> ar_EG, ar_AE, ar_SA
+
+    The language list api/languages contains over 7000 languages codes (see PR1071). We use only those language codes that are used in the locales.
+
++++
+
+Discourse Forums
+
+info
+
+    builtwith.com Discourse
+
+Discourse is an open source Internet forum system. To search in a forum this engine offers some additional settings:
+
+    base_url
+
+    api_order
+
+    search_endpoint
+
+    show_avatar
+
+    api_key
+
+    api_username
+
+Example
+
+To search in your favorite Discourse forum, add a configuration like shown here for the paddling.com forum:
+
+- name: paddling
+  engine: discourse
+  shortcut: paddle
+  base_url: 'https://forums.paddling.com/'
+  api_order: views
+  categories: ['social media', 'sports']
+  show_avatar: true
+
+If the forum is private, you need to add an API key and username for the search:
+
+- name: paddling
+  engine: discourse
+  shortcut: paddle
+  base_url: 'https://forums.paddling.com/'
+  api_order: views
+  categories: ['social media', 'sports']
+  show_avatar: true
+  api_key: '<KEY>'
+  api_username: 'system'
+
+Implementations
+
+searx.engines.discourse.base_url: str = None
+
+    URL of the Discourse forum.
+
+searx.engines.discourse.search_endpoint = '/search.json'
+
+    URL path of the search endpoint.
+
+searx.engines.discourse.api_order = 'likes'
+
+    Order method, valid values are: latest, likes, views, latest_topic
+
+searx.engines.discourse.show_avatar = False
+
+    Show avatar of the user who send the post.
+
+searx.engines.discourse.api_key = ''
+
+    API key of the Discourse forum.
+
+searx.engines.discourse.api_username = ''
+
+    API username of the Discourse forum.
+
++++
+
+DuckDuckGo Engines
+DuckDuckGo WEB
+
+DDG’s WEB search:
+
+    DuckDuckGo WEB : https://links.duckduckgo.com/d.js?q=.. (HTTP GET)
+
+    DuckDuckGo WEB no-AI: https://noai.duckduckgo.com/ (HTTP GET)
+
+    DuckDuckGo WEB html : https://html.duckduckgo.com/html (HTTP POST no-JS / form data)
+
+    DuckDuckGo WEB lite : https://lite.duckduckgo.com/lite (HTTP POST no-JS / form data)
+
+DDG’s content search / see engine duckduckgo_extra.py
+
+    DuckDuckGo Images : https://duckduckgo.com/i.js??q=...&vqd=...
+
+    DuckDuckGo Videos : https://duckduckgo.com/v.js??q=...&vqd=...
+
+    DuckDuckGo News : https://duckduckgo.com/news.js??q=...&vqd=...
+
+Hint
+
+For WEB searches and to determine the vqd value, DDG-html (no-JS) is used.
+
+Special features of the no-JS services (DDG-lite & DDG-html):
+
+    The no-JS clients receive a form that contains all the controlling parameters.
+
+    When the form data is submitted, a real WEB browser sets the HTTP Sec-Fetch headers.
+
+HTML <form>, HTTP-Headers & DDG’s bot Blocker:
+
+    The HTTP User-Agent (see below) is generated by the WEB-client and are checked by DDG’s bot blocker.
+
+To simulate the behavior of a real browser session, it might be necessary to evaluate additional headers. For example, in the response from DDG, the Referrer-Policy is always set to origin. A real browser would then include the following header in the next request:
+
+Referer: https://html.duckduckgo.com/
+
+The fields of the html-form are reverse-engineered from DDG-html and may be subject to additional bot detection mechanisms and breaking changes in the future.
+
+Query field:
+
+Intro page: https://html.duckduckgo.com/html/
+
+    q (str): Search query string
+
+    b (str): Beginning parameter - empty string for first page requests. If a second page is requested, this field is not set!
+
+Search options:
+
+    kl (str): Keyboard language/region code (e.g. ‘en-us’ default: ‘wt-wt’)
+
+    df (str): Time filter, maps to values like ‘d’ (day), ‘w’ (week), ‘m’ (month), ‘y’ (year)
+
+The key/value pairs df and kl are additional saved in the cookies, example:
+
+Cookie: kl=en-us; df=m
+
+next page form fields:
+
+    nextParams (str): Continuation parameters from previous page response, typically empty string. Opposite of b; this field is not set when requesting the first result page.
+
+    api (str): API endpoint identifier, typically ‘d.js’
+
+    o (str): Output format, typically json
+
+    v (str): Typically l for subsequent pages
+
+    dc (int): Display count - value equal to offset (s) + 1
+
+    s (int): Search offset for pagination
+
+    vqd (str): Validation query digest
+
+General assumptions regarding DDG’s bot blocker:
+
+    Except Cookie: kl=..; df=.. DDG does not use cookies in any of its services.
+
+    DDG does not accept queries with more than 499 chars
+
+    The vqd value (“Validation query digest”) is needed to pass DDG’s bot protection and is used by all request to DDG.
+
+    The vqd value is generally not needed for the first query (intro); it is only required when additional pages are accessed (or when new content needs to be loaded for the query while scrolling).
+
+    The second page (additional content) for a query cannot be requested without vqd, as this would lead to an immediate blocking, since such a use-case does not exist in the process flows provided by DDG (and is a clear indication of a bot).
+
+The following HTTP headers are being evaluated (and may possibly be responsible for issues):
+
+User-Agent:
+
+    The HTTP User-Agent is also involved in the formation of the vqd value, read DuckDuckGo Bot Detection Research & Solution. However, it is not checked whether the UA is a known header. However, it is possible that certain UA headers (such as curl) are filtered.
+Sec-Fetch-Mode:
+
+    In the past, Sec-Fetch-Mode had to be set to ‘navigate’, otherwise there were problems with the bot blocker.. I don’t know if DDG still evaluates this header today
+Accept-Language:
+
+    DDG-Lite and DDG-HTML TRY to guess user’s preferred language from the HTTP Accept-Language. Optional the user can select a region filter (but not a language).
+
+In DDG’s bot blocker, the IP will be blocked (DDG does not have a client session!)
+
+    As far as is known, it is possible to remove a un-blocked an IP by executing a DDG query in a real web browser over the blocked IP (at least that’s my assumption).
+
+    How exactly the blocking mechanism currently works is not fully known, and there were also changes to the bot blocker in the period of Q3/Q4 2025: in the past, the IP blocking was implemented as a ‘sliding window’ (unblock after about 1 hour without requests from this IP)
+
+Terms / phrases that you keep coming across:
+
+    d.js, i.js, v.js, news.js are the endpoints of the DDG’s web API through which additional content for a query can be requested (vqd required)
+
+    The *.js endpoints return a JSON response and can therefore only be executed on a JS-capable client.
+
+    The service at https://lite.duckduckgo.com/lite offers general WEB searches (no news, videos etc). DDG-lite and DDG-html can be used by clients that do not support JS, aka no-JS.
+
+    DDG-lite works a bit differently: here, d.js is not an endpoint but a field (api=d.js) in a form that is sent to DDG-lite.
+
+    The request argument origin=funnel_home_website is often seen in the DDG services when the category is changed (e.g., from web search to news, images, or to the video category)
+
+searx.engines.duckduckgo.safesearch: bool = True
+
+    DDG-lite: user can’t select but the results are filtered.
+
+searx.engines.duckduckgo.ddg_url: str = 'https://html.duckduckgo.com/html/'
+
+    The process flow for determining the vqd values was implemented for the no-JS variant (DDG-html)
+
+searx.engines.duckduckgo.get_vqd(query: str, params: OnlineParams) → str[source]
+
+    Returns the vqd value that fits to the query (and HTTP User-Agent header).
+
+    Parameters:
+
+            query – the query term
+
+            params – request parameters
+
+searx.engines.duckduckgo.get_ddg_lang(eng_traits: EngineTraits, sxng_locale: str, default: str = 'en_US') → str | None[source]
+
+    Get DuckDuckGo’s language identifier from SearXNG’s locale.
+
+    Hint
+
+    DDG-lite and the no Javascript page https://html.duckduckgo.com/html do not offer a language selection to the user.
+
+    DDG defines its languages by a region code (fetch_traits). To get region and language of a DDG service use:
+
+    It might confuse, but the l value of the cookie is what SearXNG calls the region:
+
+    # !ddi paris :es-AR --> {'ad': 'es_AR', 'ah': 'ar-es', 'l': 'ar-es'}
+    params['cookies']['ad'] = eng_lang
+    params['cookies']['ah'] = eng_region
+    params['cookies']['l'] = eng_region
+
+searx.engines.duckduckgo.quote_ddg_bangs(query: str) → str[source]
+
+    To avoid a redirect, the !bang directives in the query string are quoted.
+
+searx.engines.duckduckgo.is_ddg_captcha(dom: ElementBase | _Element)[source]
+
+    In case of CAPTCHA ddg response its own not a Robot dialog and is not redirected to a CAPTCHA page.
+
+searx.engines.duckduckgo.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch languages & regions from DuckDuckGo.
+
+    SearXNG’s all locale maps DuckDuckGo’s “All regions” (wt-wt). DuckDuckGo’s language “Browsers preferred language” (wt_WT) makes no sense in a SearXNG request since SearXNG’s all will not add a Accept-Language HTTP header. The value in engine_traits.all_locale is wt-wt (the region).
+
+    Beside regions DuckDuckGo also defines its languages by region codes. By example these are the english languages in DuckDuckGo:
+
+        en_US
+
+        en_AU
+
+        en_CA
+
+        en_GB
+
+    The function get_ddg_lang evaluates DuckDuckGo’s language from SearXNG’s locale.
+
+DuckDuckGo Extra (images, videos, news)
+
+searx.engines.duckduckgo_extra.ddg_category = ''
+
+    The category must be any of images, videos and news
+
+DuckDuckGo Instant Answer API
+
+The DDG-API is no longer documented but from reverse engineering we can see that some services (e.g. instant answers) still in use from the DDG search engine.
+
+As far we can say the instant answers API does not support languages, or at least we could not find out how language support should work. It seems that most of the features are based on English terms.
+
+searx.engines.duckduckgo_definitions.is_broken_text(text: str) → bool[source]
+
+    duckduckgo may return something like <a href="xxxx">http://somewhere Related website<a/>
+
+    The href URL is broken, the “Related website” may contains some HTML.
+
+    The best solution seems to ignore these results.
+
+searx.engines.duckduckgo_definitions.area_to_str(area: dict[str, str]) → str[source]
+
+    parse {"unit": "https://www.wikidata.org/entity/Q712226", "amount": "+20.99"}
+
++++
+
+Exa API Engine
+
+Engine to search using the official Exa Search API. Exa is a search engine for AI agents.
+Configuration
+
+The engine has the following mandatory setting:
+
+    api_key
+
+You can obtain an API key from the API Key section in the Exa dashboard.
+
+Optional settings are:
+
+    results_per_page
+
+    search_type
+
+    content_mode
+
+    content_max_characters
+
+- name: exaapi
+  engine: exaapi
+  shortcut: exa
+  api_key: "..."
+  results_per_page: 10
+  search_type: auto
+  content_mode: highlights
+  inactive: false
+
+The API supports SafeSearch and region-aware results.
+
+searx.engines.exaapi.api_key: str = ''
+
+    API key for Exa Search API (required).
+
+searx.engines.exaapi.results_per_page: int = 10
+
+    Maximum number of results per request. Value must be between 1 and 100, default is 10.
+
+searx.engines.exaapi.search_type: Literal['fast', 'auto', 'instant', 'deep', 'deep-lite', 'deep-reasoning'] = 'auto'
+
+    Search type. Default is auto, see documentation for more information.
+
+searx.engines.exaapi.content_mode: Literal['highlights', 'text'] = 'highlights'
+
+    Content to request from the API: highlights (excerpts) or text (page text).
+
+searx.engines.exaapi.content_max_characters: int = 500
+
+    Maximum characters for the requested content.
+
+searx.engines.exaapi.request(query: str, params: OnlineParams) → None[source]
+
+    Create the API request.
+
+searx.engines.exaapi.response(resp: SXNG_Response) → EngineResults[source]
+
+    Process the API response and return results.
+
++++
+
+Geizhals
+
+Geizhals is a German website to compare the price of a product on the most common German shopping sites and find the lowest price.
+
+The sorting of the search results can be influenced by the following additions to the search term:
+
+asc or price
+
+    To sort by price in ascending order.
+desc
+
+    To sort by price in descending order.
+
++++
+
+Gitea
+
+Engine to search in collaborative software platforms based on Gitea or Forgejo.
+Configuration
+
+The engine has the following mandatory setting:
+
+    base_url
+
+Optional settings are:
+
+    sort
+
+    order
+
+    page_size
+
+- name: gitea.com
+  engine: gitea
+  base_url: https://gitea.com
+  shortcut: gitea
+
+- name: forgejo.com
+  engine: gitea
+  base_url: https://code.forgejo.org
+  shortcut: forgejo
+
+If you would like to use additional instances, just configure new engines in the settings and set the base_url.
+Implementation
+
+searx.engines.gitea.base_url: str = ''
+
+    URL of the Gitea instance.
+
+searx.engines.gitea.sort: str = 'updated'
+
+    Sort criteria, possible values:
+
+        updated (default)
+
+        alpha
+
+        created
+
+        size
+
+        id
+
+searx.engines.gitea.order = 'desc'
+
+    Sort order, possible values:
+
+        desc (default)
+
+        asc
+
+searx.engines.gitea.page_size: int = 10
+
+    Maximum number of results per page (default 10).
+
++++
+
+Github Code
+
+GitHub code search with search syntax as described in Constructing a search query in the documentation of GitHub’s REST API.
+Configuration
+
+The engine has the following mandatory setting:
+
+    ghc_auth Change the authentication method used when using the API, defaults to none.
+
+Optional settings are:
+
+    ghc_highlight_matching_lines
+
+        Control the highlighting of the matched text (turns off/on).
+
+    ghc_strip_new_lines
+
+        Strip new lines at the start or end of each code fragment.
+
+    ghc_strip_whitespace
+
+        Strip any whitespace at the start or end of each code fragment.
+
+    ghc_insert_block_separator
+
+        Add a … between each code fragment before merging them.
+
+- name: github code
+  engine: github_code
+  shortcut: ghc
+  ghc_auth:
+    type: "none"
+
+- name: github code
+  engine: github_code
+  shortcut: ghc
+  ghc_auth:
+    type: "personal_access_token"
+    token: "<token>"
+  ghc_highlight_matching_lines: true
+  ghc_strip_whitespace: true
+  ghc_strip_new_lines: true
+
+
+- name: github code
+  engine: github_code
+  shortcut: ghc
+  ghc_auth:
+    type: "bearer"
+    token: "<token>"
+
+Implementation
+
+GitHub does not return the code line indices alongside the code fragment in the search API. Since these are not super important for the user experience all the code lines are just relabeled (starting from 1) and appended (a disjoint set of code blocks in a single file might be returned from the API).
+
+searx.engines.github_code.ghc_auth = {'token': '', 'type': 'none'}
+
+    Change the method of authenticating to the github API.
+
+    type needs to be one of none, personal_access_token, or bearer. When type is not none a token is expected to be passed as well in auth.token.
+
+    If there is any privacy concerns about generating a token, one can use the API without authentication. The calls will be heavily rate limited, this is what the API returns on such calls:
+
+    API rate limit exceeded for <redacted ip>.
+    (But here's the good news: Authenticated requests get a higher rate limit)
+
+    The personal access token or a bearer for an org or a group can be generated [in the GitHub settings.
+
+searx.engines.github_code.ghc_highlight_matching_lines = True
+
+    Highlight the matching code lines.
+
+searx.engines.github_code.ghc_strip_new_lines = True
+
+    Strip leading and trailing newlines for each returned fragment. Single file might return multiple code fragments.
+
+searx.engines.github_code.ghc_strip_whitespace = False
+
+    Strip all leading and trailing whitespace for each returned fragment. Single file might return multiple code fragments. Enabling this might break code indentation.
+
+searx.engines.github_code.ghc_api_version = '2022-11-28'
+
+    The version of the GitHub REST API.
+
+searx.engines.github_code.ghc_insert_block_separator = False
+
+    Each file possibly consists of more than one code block that matches the search, if this is set to true, the blocks will be separated with ... line. This might break the lexer and thus result in the lack of code highlighting.
+
+searx.engines.github_code.extract_code(code_matches: list[dict[str, Any]]) → tuple[list[str], set[int]][source]
+
+    Iterate over multiple possible matches, for each extract a code fragment. Github additionally sends context for _word_ highlights; pygments supports highlighting lines, as such we calculate which lines to highlight while traversing the text.
+
++++
+
+GitLab
+
+Engine to search in collaborative software platforms based on GitLab with the GitLab REST API.
+Configuration
+
+The engine has the following mandatory setting:
+
+    base_url
+
+Optional settings are:
+
+    api_path
+
+- name: gitlab
+  engine: gitlab
+  base_url: https://gitlab.com
+  shortcut: gl
+  about:
+    website: https://gitlab.com/
+    wikidata_id: Q16639197
+
+- name: gnome
+  engine: gitlab
+  base_url: https://gitlab.gnome.org
+  shortcut: gn
+  about:
+    website: https://gitlab.gnome.org
+    wikidata_id: Q44316
+
+Implementations
+
+searx.engines.gitlab.base_url: str = ''
+
+    Base URL of the GitLab host.
+
+searx.engines.gitlab.api_path: str = 'api/v4/projects'
+
+    The path the project API.
+
+    The default path should work fine usually.
+
++++
+
+Google Engines
+Google API
+
+SearXNG’s implementation of the Google API is mainly done in get_google_info.
+
+For detailed description of the REST-full API see: Query Parameter Definitions. The linked API documentation can sometimes be helpful during reverse engineering. However, we cannot use it in the freely accessible WEB services; not all parameters can be applied and some engines are more special than other (e.g. Google News).
+Google WEB
+
+This is the implementation of the Google WEB engine. Some of this implementations (manly the get_google_info) are shared by other engines:
+
+    Google Images
+
+    Google News
+
+    Google Videos
+
+    Google Scholar
+
+    Google Autocomplete
+
+searx.engines.google.max_page = 50
+
+    Google max 50 pages
+
+searx.engines.google.ui_async(start: int) → str[source]
+
+    Format of the response from UI’s async request.
+
+        arc_id:<...>,use_ac:true,_fmt:prog
+
+    The arc_id is random generated every hour.
+
+searx.engines.google.get_google_info(params: OnlineParams, eng_traits: EngineTraits) → dict[str, Any][source]
+
+    Composing various (language) properties for the google engines (Google API).
+
+    This function is called by the various google engines (Google WEB, Google Images, Google News and Google Videos).
+
+    Parameters:
+
+            param (dict) – Request parameters of the engine. At least a searxng_locale key should be in the dictionary.
+
+            eng_traits – Engine’s traits fetched from google preferences (searx.enginelib.traits.EngineTraits)
+
+    Return type:
+
+        dict
+    Returns:
+
+        Py-Dictionary with the key/value pairs:
+
+        language:
+
+            The language code that is used by google (e.g. lang_en or lang_zh-TW)
+        country:
+
+            The country code that is used by google (e.g. US or TW)
+        locale:
+
+            A instance of babel.core.Locale build from the searxng_locale value.
+        subdomain:
+
+            Google subdomain google_domains that fits to the country code.
+        params:
+
+            Py-Dictionary with additional request arguments (can be passed to urllib.parse.urlencode()).
+
+                hl parameter: specifies the interface language of user interface.
+
+                lr parameter: restricts search results to documents written in a particular language.
+
+                cr parameter: restricts search results to documents originating in a particular country.
+
+                ie parameter: sets the character encoding scheme that should be used to interpret the query string (‘utf8’).
+
+                oe parameter: sets the character encoding scheme that should be used to decode the XML result (‘utf8’).
+
+        headers:
+
+            Py-Dictionary with additional HTTP headers (can be passed to request’s headers)
+
+                Accept: '*/*
+
+searx.engines.google.detect_google_sorry(resp: SXNG_Response)[source]
+
+    Detect Google’s bot-protection responses (CAPTCHA / sorry pages).
+
+    Google may block requests in several ways:
+
+        Redirect to sorry.google.com (standard CAPTCHA).
+
+        HTTP 302 redirect to /sorry/index?... on the same host – when the HTTP client doesn’t follow the redirect, the response body is a short HTML stub with a link to the sorry page.
+
+        Short HTML response (<2000 bytes) containing “/sorry/” – a meta-refresh or JS redirect variant.
+
+searx.engines.google.request(query: str, params: OnlineParams) → None[source]
+
+    Google search request
+
+searx.engines.google.response(resp: SXNG_Response)[source]
+
+    Get response from google’s search request
+
+searx.engines.google.fetch_traits(engine_traits: EngineTraits, add_domains: bool = True)[source]
+
+    Fetch languages from Google.
+
+Google Autocomplete
+
+searx.autocomplete.google_complete(query: str, sxng_locale: str) → list[str][source]
+
+    Autocomplete from Google. Supports Google’s languages and subdomains (searx.engines.google.get_google_info) by using the async REST API:
+
+    https://{subdomain}/complete/search?{args}
+
+Google Images
+
+This is the implementation of the Google Images engine using the internal Google API used by the Google Go Android app.
+
+This internal API offer results in
+
+    JSON (_fmt:json)
+
+    Protobuf (_fmt:pb)
+
+    Protobuf compressed? (_fmt:pc)
+
+    HTML (_fmt:html)
+
+    Protobuf encoded in JSON (_fmt:jspb).
+
+searx.engines.google_images.max_page = 50
+
+    Google max 50 pages
+
+searx.engines.google_images.request(query, params)[source]
+
+    Google-Image search request
+
+searx.engines.google_images.response(resp)[source]
+
+    Get response from google’s search request
+
+Google Videos
+
+This is the implementation of the Google Videos engine.
+
+Content-Security-Policy (CSP)
+
+This engine needs to allow images from the data URLs (prefixed with the data: scheme):
+
+Header set Content-Security-Policy "img-src 'self' data: ;"
+
+searx.engines.google_videos.request(query, params)[source]
+
+    Google-Video search request
+
+searx.engines.google_videos.response(resp)[source]
+
+    Get response from google’s search request
+
+Google News
+
+This is the implementation of the Google News engine.
+
+Google News has a different region handling compared to Google WEB.
+
+    the ceid argument has to be set (ceid_list)
+
+    the hl argument has to be set correctly (and different to Google WEB)
+
+    the gl argument is mandatory
+
+If one of this argument is not set correctly, the request is redirected to CONSENT dialog:
+
+https://consent.google.com/m?continue=
+
+The google news API ignores some parameters from the common Google API:
+
+    num : the number of search results is ignored / there is no paging all results for a query term are in the first response.
+
+    save : is ignored / Google-News results are always SafeSearch
+
+searx.engines.google_news.request(query: str, params: OnlineParams) → None[source]
+
+    Google-News search request
+
+searx.engines.google_news.response(resp: SXNG_Response) → EngineResults[source]
+
+    Get response from google’s search request
+
+searx.engines.google_news.ceid_list = ['AE:ar', 'AR:es-419', 'AT:de', 'AU:en', 'BD:bn', 'BE:fr', 'BE:nl', 'BG:bg', 'BR:pt-419', 'BW:en', 'CA:en', 'CA:fr', 'CH:de', 'CH:fr', 'CL:es-419', 'CN:zh-Hans', 'CO:es-419', 'CU:es-419', 'CZ:cs', 'DE:de', 'EE:et', 'EG:ar', 'ES:ca', 'ES:es', 'ET:en', 'FI:fi', 'FR:fr', 'GB:en', 'GH:en', 'GR:el', 'HK:zh-Hant', 'HU:hu', 'ID:en', 'ID:id', 'IE:en', 'IL:en', 'IL:he', 'IN:bn', 'IN:en', 'IN:gu', 'IN:hi', 'IN:ml', 'IN:mr', 'IN:pa', 'IN:ta', 'IN:te', 'IT:it', 'JP:ja', 'KE:en', 'KR:ko', 'LB:ar', 'LT:lt', 'LV:en', 'LV:lv', 'MA:fr', 'MY:en', 'MY:ms', 'NA:en', 'NG:en', 'NL:nl', 'NO:no', 'NZ:en', 'PH:en', 'PK:en', 'PL:pl', 'RO:ro', 'RS:sr', 'RU:ru', 'SA:ar', 'SE:sv', 'SG:en', 'SI:sl', 'SK:sk', 'SN:fr', 'TH:th', 'TR:tr', 'TZ:en', 'UA:ru', 'UA:uk', 'UG:en', 'US:en', 'VN:vi', 'ZA:en', 'ZW:en']
+
+    List of region/language combinations supported by Google News. Values of the ceid argument of the Google News REST API.
+
+Google Scholar
+
+Google Scholar is a freely accessible web search engine that indexes the full text or metadata of scholarly literature across an array of publishing formats and disciplines.
+
+Compared to other Google services the Scholar engine has a simple GET REST-API and there does not exists async API. Even though the API slightly vintage we can make use of the Google API to assemble the arguments of the GET request.
+Configuration
+
+- name: google scholar
+  engine: google_scholar
+  shortcut: gos
+
+Implementations
+
+searx.engines.google_scholar.max_page = 50
+
+    Google max 50 pages
+
+searx.engines.google_scholar.request(query: str, params: OnlineParams) → None[source]
+
+    Google-Scholar search request
+
+searx.engines.google_scholar.response(resp: SXNG_Response) → EngineResults[source]
+
+    Parse response from Google Scholar
+
+searx.engines.google_scholar.time_range_args(params: OnlineParams) → dict[str, int][source]
+
+    Returns a dictionary with a time range arguments based on params["time_range"].
+
+    Google Scholar supports a detailed search by year. Searching by last month or last week (as offered by SearXNG) is uncommon for scientific publications and is not supported by Google Scholar.
+
+    To limit the result list when the users selects a range, all the SearXNG ranges (day, week, month, year) are mapped to year. If no range is set an empty dictionary of arguments is returned.
+
+    Example; when user selects a time range and we find ourselves in the year 2025 (current year minus one):
+
+    { "as_ylo" : 2024 }
+
+searx.engines.google_scholar.detect_google_captcha(dom: ElementBase | _Element)[source]
+
+    In case of CAPTCHA Google Scholar open its own not a Robot dialog and is not redirected to sorry.google.com.
+
+searx.engines.google_scholar.parse_gs_a(text: str | None) → tuple[list[str], str, str, datetime | None][source]
+
+    Parse the text written in green.
+
+    Possible formats: * “{authors} - {journal}, {year} - {publisher}” * “{authors} - {year} - {publisher}” * “{authors} - {publisher}”
+
++++
+
+Hugging Face
+
+Hugging Face search engine for SearXNG.
+Configuration
+
+The engine has the following additional settings:
+
+    huggingface_endpoint
+
+Configurations for endpoints:
+
+- name: huggingface
+  engine: huggingface
+  shortcut: hf
+
+- name: huggingface datasets
+  huggingface_endpoint: datasets
+  engine: huggingface
+  shortcut: hfd
+
+- name: huggingface spaces
+  huggingface_endpoint: spaces
+  engine: huggingface
+  shortcut: hfs
+
+Implementations
+
+searx.engines.huggingface.huggingface_endpoint = 'models'
+
+    Hugging Face supports datasets, models, spaces as search endpoint.
+
+        datasets: search for datasets
+
+        models: search for models
+
+        spaces: search for spaces
+
++++
+
+Jina Engine
+
+Jina is a search AI and part of Elastic, the company behind ElasticSearch.
+
+The engine requires an API key, you can get one from the API dashboard without signup.
+
+- name: jina
+  engine: jina
+  shortcut: ji
+  api_key: "jina_..."
+  jina_engine: reader
+  inactive: false
+
+By default, Jina’s own index is used. You can change that by setting a different jina_engine.
+
+searx.engines.jina.jina_engine = 'reader'
+
+    Search mode. Currently supported values are ‘reader’, ‘google’ and ‘bing’.
+
++++
+
+Kagi Engines
+
+Kagi is a paid, privacy-focused search engine.
+
+Using it requires an API key. If you have a Kagi account, you can obtain an API key in the API portal.
+
+To enable Kagi, add the following to the engines seciton of settings.yml:
+
+- name: kagi
+  engine: kagi
+  categories: [general, web]
+  shortcut: kg
+  api_key: ""
+  kagi_categ: search
+
+- name: kagi.news
+  engine: kagi
+  categories: [news, web]
+  shortcut: kgn
+  api_key: ""
+  kagi_categ: news
+
+- name: kagi.images
+  engine: kagi
+  categories: [images, web]
+  shortcut: kgi
+  paging: false
+  api_key: ""
+  kagi_categ: images
+
+- name: kagi.videos
+  engine: kagi
+  categories: [videos, web]
+  shortcut: kgv
+  api_key: ""
+  kagi_categ: videos
+
+searx.engines.kagi.paging = True
+
+    All categories except the images category support paging.
+
+searx.engines.kagi.kagi_categ: Literal['search', 'images', 'news', 'videos'] = 'search'
+
+    Search category. Supported values: “search” (general), “images”, “news”, “videos”.
+
+searx.engines.kagi.api_key = ''
+
+    Kagi API key. Required for using this engine.
+
++++
+
+Lemmy
+
+This engine uses the Lemmy API (https://lemmy.ml/api/v3/search), which is documented at lemmy-js-client / Interface Search. Since Lemmy is federated, results are from many different, independent lemmy instances, and not only the official one.
+Configuration
+
+The engine has the following additional settings:
+
+    base_url
+
+    lemmy_type
+
+This implementation is used by different lemmy engines in the settings.yml:
+
+- name: lemmy communities
+  lemmy_type: Communities
+  ...
+- name: lemmy users
+  lemmy_type: Users
+  ...
+- name: lemmy posts
+  lemmy_type: Posts
+  ...
+- name: lemmy comments
+  lemmy_type: Comments
+  ...
+
+Implementations
+
+searx.engines.lemmy.base_url = 'https://lemmy.ml/'
+
+    By default, https://lemmy.ml is used for providing the results. If you want to use a different lemmy instance, you can specify base_url.
+
+searx.engines.lemmy.lemmy_type = 'Communities'
+
+    Any of Communities, Users, Posts, Comments
+
++++
+
+Library of Congress
+
+Library of Congress: query Photo, Print and Drawing from API endpoint photos.
+
+Note
+
+Beside the photos endpoint there are more endpoints available / we are looking forward for contributions implementing more endpoints.
+
++++
+
+Marginalia Search
+
+Marginalia Search is an independent open source Internet search engine operating out of Sweden. It is principally developed and operated by Viktor Lofgren .
+Configuration
+
+The engine has the following required settings:
+
+    api_key
+
+You can configure a Marginalia engine by:
+
+- name: marginalia
+  engine: marginalia
+  shortcut: mar
+  api_key: ...
+
+Implementations
+
+searx.engines.marginalia.api_key = None
+
+    To get an API key, please follow the instructions from Key and license
+
+class searx.engines.marginalia.ApiSearchResult[source]
+
+    Marginalia’s ApiSearchResult class definition.
+
+class searx.engines.marginalia.ApiSearchResults[source]
+
+    Marginalia’s ApiSearchResults class definition.
+
++++
+
+Mastodon
+
+Mastodon is an open source alternative to large social media platforms like Twitter/X, Facebook, …
+
+Since it’s federated and self-hostable, there’s a large amount of available instances, which can be chosen instead by modifying base_url.
+
+We use their official API for searching, but unfortunately, their Search API forbids pagination without OAuth.
+
+That’s why we use tootfinder.ch for finding posts, which doesn’t support searching for users, accounts or other types of content on Mastodon however.
+
++++
+
+Moviepilot
+
+Moviepilot is a German movie database, similar to IMDB or TMDB. It doesn’t have any official API, but it uses JSON requests internally to fetch search results and suggestions, that’s being used in this implementation.
+
+Moviepilot additionally allows to discover movies by certain categories or filters, hence we provide the following syntax:
+
+    Any normal search query -> Fetch search results by the query
+
+    A query containing one of the category identifiers fsk, genre, jahr, jahrzent, land, online, stimmung will be used to search trending items by the provided filters, which are appended to the filter category after a -.
+
+Search examples:
+
+    Normal: !mp Tom Cruise
+
+    By filter: !mp person-Ryan-Gosling
+
+    By filter: !mp fsk-0 land-deutschland genre-actionfilm
+
+    By filter: !mp jahrzehnt-2020er online-netflix
+
+For a list of all public filters, observe the url path when browsing
+
+    https://www.moviepilot.de/filme/beste.
+
++++
+
+Matrix Rooms Search (MRS)
+
+Matrix Rooms Search - a fully-featured, standalone, matrix rooms search service.
+Configuration
+
+The engine has the following mandatory settings:
+
+    base_url
+
+- name: MRS
+  engine: mrs
+  base_url: https://mrs-host
+  ...
+
+Implementation
+
+searx.engines.mrs.init(engine_settings)[source]
+
+    The base_url must be set in the configuration, if base_url is not set, a ValueError is raised during initialization.
+
++++
+
+Mwmbl Engine
+Mwmbl WEB
+
+Mwmbl is a non-profit, ad-free, free-libre and free-lunch search engine with a focus on useability and speed.
+
+Hint
+
+At the moment it is little more than an idea together with a proof of concept implementation of the web front-end and search technology on a small index. Mwmbl does not support regions, languages, safe-search or time range. search.
+Mwmbl Autocomplete
+
+searx.autocomplete.mwmbl(query: str, _sxng_locale: str) → list[str][source]
+
+    Autocomplete from Mwmbl.
+
++++
+
+Odysee
+
+Odysee is a decentralized video hosting platform.
+
+searx.engines.odysee.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch languages from Odysee’s source code.
+
++++
+
+OpenAlex
+
+The OpenAlex engine integrates the OpenAlex Works API to return scientific paper results using the Paper Results class. It is an “online” JSON engine that uses the official public API and does not require an API key.
+Key features
+
+    Uses the official Works endpoint (JSON)
+
+    Paging support via page and per-page
+
+    Relevance sorting (sort=relevance_score:desc)
+
+    Language filter support (maps SearXNG language to filter=language:<iso2>)
+
+    Maps fields commonly used in scholarly results: title, authors, abstract (reconstructed from inverted index), journal/venue, publisher, DOI, tags (concepts), PDF/HTML links, pages, volume, issue, published date, and a short citations comment
+
+    Supports OpenAlex “polite pool” by adding a mailto parameter
+
+Configuration
+
+Minimal example for settings.yml:
+
+- name: openalex
+  engine: openalex
+  shortcut: oa
+  categories: science, scientific publications
+  timeout: 5.0
+  # Recommended by OpenAlex: join the polite pool with an email address
+  mailto: "[email protected]"
+
+Notes
+
+    The mailto key is optional but recommended by OpenAlex for better service.
+
+    Language is inherited from the user’s UI language; when it is not all, the engine adds filter=language:<iso2> (e.g. language:fr). If OpenAlex has few results for that language, you may see fewer items.
+
+    Results typically include a main link. When the primary landing page from OpenAlex is a DOI resolver, the engine will use that stable link. When an open access link is available, it is exposed via the PDF and/or HTML links in the result footer.
+
+What is returned
+
+Each result uses the Paper Results class and may include:
+
+    title and content (abstract; reconstructed from the inverted index)
+
+    authors (display names)
+
+    journal (host venue display name) and publisher
+
+    doi (normalized to the plain DOI, without the https://doi.org/ prefix)
+
+    tags (OpenAlex concepts display names)
+
+    pdf_url (Open access PDF if available) and html_url (landing page)
+
+    publishedDate (parsed from publication_date)
+
+    pages, volume, number (issue)
+
+    type and a brief comments string with citation count
+
+Rate limits & polite pool
+
+OpenAlex offers a free public API with generous daily limits. For extra courtesy and improved service quality, include a contact email in each request via mailto. You can set it directly in the engine configuration as shown above. See: OpenAlex API overview.
+Troubleshooting
+
+    Few or no results in a non-English UI language: Ensure the selected language has sufficient coverage at OpenAlex, or set the UI language to English and retry.
+
+    Preference changes fail while testing locally: Make sure your server.secret_key and server.base_url are set in your instance settings so signed cookies work; see server:.
+
++++
+
+Open Library
+
+Open Library is an open, editable library catalog, building towards a web page for every book ever published.
+Configuration
+
+The service sometimes takes a very long time to respond, the timeout may need to be adjusted.
+
+- name: openlibrary
+  engine: openlibrary
+  shortcut: ol
+  timeout: 10
+
+Implementations
+
+searx.engines.openlibrary.search_api = 'https://openlibrary.org/search.json'
+
+    The engine uses the API at the endpoint search.json.
+
++++
+
+Peertube Engines
+Peertube Video
+
+Peertube and SepiaSearch do share (more or less) the same REST API and the schema of the JSON result is identical.
+
+searx.engines.peertube.base_url = 'https://peer.tube'
+
+    Base URL of the Peertube instance. A list of instances is available at:
+
+        https://instances.joinpeertube.org/instances
+
+searx.engines.peertube.request(query, params)[source]
+
+    Assemble request for the Peertube API
+
+searx.engines.peertube.video_response(resp)[source]
+
+    Parse video response from SepiaSearch and Peertube instances.
+
+searx.engines.peertube.fetch_traits(engine_traits: EngineTraits)[source]
+
+    Fetch languages from peertube’s search-index source code.
+
+    See videoLanguages in commit 8ed5c729 - Refactor and redesign client
+
+SepiaSearch
+
+SepiaSearch uses the same languages as Peertube and the response is identical to the response from the peertube engines.
+
+searx.engines.sepiasearch.request(query, params)[source]
+
+    Assemble request for the SepiaSearch API
+
++++
+
+Piped
+
+An alternative privacy-friendly YouTube frontend which is efficient by design. Piped’s architecture consists of 3 components:
+
+    backend
+
+    frontend
+
+    proxy
+
+Configuration
+
+The backend_url and frontend_url has to be set in the engine named piped and are used by all piped engines (unless an individual values for backend_url and frontend_url are configured for the engine).
+
+- name: piped
+  engine: piped
+  piped_filter: videos
+  ...
+  frontend_url: https://..
+  backend_url:
+    - https://..
+    - https://..
+
+- name: piped.music
+  engine: piped
+  network: piped
+  shortcut: ppdm
+  piped_filter: music_songs
+  ...
+
+Known Quirks
+
+The implementation to support paging is based on the nextpage method of Piped’s REST API / the frontend API. This feature is next page driven and plays well with the infinite_scroll plugin in SearXNG but it does not really fit into SearXNG’s UI to select a page by number.
+Implementations
+
+searx.engines.piped.backend_url: list[str] | str = []
+
+    Piped-Backend: The core component behind Piped. The value is an URL or a list of URLs. In the latter case instance will be selected randomly. For a complete list of official instances see Piped-Instances (JSON)
+
+searx.engines.piped.frontend_url: str | None = None
+
+    Piped-Frontend: URL to use as link and for embeds.
+
+searx.engines.piped.piped_filter = 'all'
+
+    Content filter music_songs or videos
+
++++
+
